@@ -1,0 +1,145 @@
+# ~/.bashrc: shared interactive Bash configuration.
+
+case $- in
+    *i*) ;;
+    *) return ;;
+esac
+
+HISTCONTROL=ignoreboth
+HISTSIZE=1000
+HISTFILESIZE=2000
+shopt -s histappend
+shopt -s checkwinsize
+
+if command -v lesspipe >/dev/null 2>&1; then
+    eval "$(SHELL=/bin/sh lesspipe)"
+fi
+
+{{- if eq .chezmoi.os "linux" }}
+if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
+    debian_chroot=$(cat /etc/debian_chroot)
+fi
+{{- end }}
+
+case "${TERM:-}" in
+    xterm-color|*-256color) color_prompt=yes ;;
+esac
+
+if [ "${color_prompt:-}" = yes ]; then
+    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+else
+    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+fi
+unset color_prompt
+
+case "${TERM:-}" in
+    xterm*|rxvt*) PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1" ;;
+esac
+
+{{- if eq .chezmoi.os "linux" }}
+if command -v dircolors >/dev/null 2>&1; then
+    if [ -r "$HOME/.dircolors" ]; then
+        eval "$(dircolors -b "$HOME/.dircolors")"
+    else
+        eval "$(dircolors -b)"
+    fi
+    alias ls='ls --color=auto'
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+{{- else if eq .chezmoi.os "darwin" }}
+export CLICOLOR=1
+alias ls='ls -G'
+{{- end }}
+
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+
+{{- if eq .chezmoi.os "linux" }}
+if command -v notify-send >/dev/null 2>&1; then
+    alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history | tail -n1 | sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+fi
+{{- end }}
+
+if [ -f "$HOME/.bash_aliases" ]; then
+    . "$HOME/.bash_aliases"
+fi
+
+if ! shopt -oq posix; then
+{{- if eq .chezmoi.os "linux" }}
+    if [ -f /usr/share/bash-completion/bash_completion ]; then
+        . /usr/share/bash-completion/bash_completion
+    elif [ -f /etc/bash_completion ]; then
+        . /etc/bash_completion
+    fi
+{{- else if eq .chezmoi.os "darwin" }}
+    if command -v brew >/dev/null 2>&1; then
+        bash_completion_prefix=$(brew --prefix 2>/dev/null)
+        if [ -f "$bash_completion_prefix/etc/profile.d/bash_completion.sh" ]; then
+            . "$bash_completion_prefix/etc/profile.d/bash_completion.sh"
+        elif [ -f "$bash_completion_prefix/etc/bash_completion" ]; then
+            . "$bash_completion_prefix/etc/bash_completion"
+        fi
+        unset bash_completion_prefix
+    fi
+{{- end }}
+fi
+
+path_prepend() {
+    [ -d "$1" ] || return
+    case ":$PATH:" in
+        *:"$1":*) ;;
+        *) PATH="$1${PATH:+:$PATH}" ;;
+    esac
+}
+
+export SNOPT_PATH=git
+
+if [ -f "$HOME/mosek/mosek.lic" ]; then
+    export MOSEKLM_LICENSE_FILE="$HOME/mosek/mosek.lic"
+fi
+
+{{- if eq .chezmoi.os "linux" }}
+clion_script="$HOME/.local/share/JetBrains/Toolbox/apps/clion/bin/clion.sh"
+if [ -f "$clion_script" ]; then
+    alias clion="sh \"$clion_script\""
+fi
+unset clion_script
+
+if [ -d /opt/gurobi1203/linux64 ]; then
+    export GUROBI_HOME=/opt/gurobi1203/linux64
+fi
+if [ -f "$HOME/gurobi/gurobi.lic" ]; then
+    export GRB_LICENSE_FILE="$HOME/gurobi/gurobi.lic"
+fi
+if [ -d /usr/local/cuda/bin ]; then
+    path_prepend /usr/local/cuda/bin
+    export CUDA_PATH=/usr/local/cuda
+fi
+if [ -d /home/demo/gui-install/bin ]; then
+    path_prepend /home/demo/gui-install/bin
+    if [ -d /home/demo/gui-install/share/man ]; then
+        MANPATH="/home/demo/gui-install/share/man${MANPATH:+:$MANPATH}"
+        export MANPATH
+    fi
+fi
+export DEBUGINFOD_URLS=https://debuginfod.ubuntu.com
+{{- end }}
+
+path_prepend "$HOME/.juliaup/bin"
+path_prepend "$HOME/.cargo/bin"
+
+export NVM_DIR="$HOME/.nvm"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+    . "$NVM_DIR/nvm.sh"
+fi
+if [ -s "$NVM_DIR/bash_completion" ]; then
+    . "$NVM_DIR/bash_completion"
+fi
+
+export OMP_CANCELLATION=true
+export OMP_PROC_BIND=true
+export PATH
+unset -f path_prepend

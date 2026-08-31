@@ -1,0 +1,33 @@
+# ~/.profile: shared login-shell setup.
+
+if [ -n "${BASH_VERSION:-}" ] && [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+fi
+
+path_prepend() {
+    [ -d "$1" ] || return
+    case ":$PATH:" in
+        *:"$1":*) ;;
+        *) PATH="$1${PATH:+:$PATH}" ;;
+    esac
+}
+
+path_append() {
+    [ -d "$1" ] || return
+    case ":$PATH:" in
+        *:"$1":*) ;;
+        *) PATH="${PATH:+$PATH:}$1" ;;
+    esac
+}
+
+path_prepend "$HOME/bin"
+path_prepend "$HOME/.local/bin"
+path_prepend "$HOME/.juliaup/bin"
+{{- if eq .chezmoi.os "linux" }}
+path_append "$HOME/.local/share/JetBrains/Toolbox/scripts"
+{{- else if eq .chezmoi.os "darwin" }}
+path_append "$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
+{{- end }}
+
+export PATH
+unset -f path_prepend path_append 2>/dev/null || true

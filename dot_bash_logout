@@ -1,0 +1,5 @@
+# ~/.bash_logout: executed by Bash when a login shell exits.
+
+if [ "${SHLVL:-0}" = 1 ] && command -v clear_console >/dev/null 2>&1; then
+    clear_console -q
+fi

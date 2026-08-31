@@ -1,0 +1,10 @@
+[user]
+	name = {{ .gitName | quote }}
+	email = {{ .gitEmail | quote }}
+[credential "https://github.com"]
+	helper =
+	helper = !gh auth git-credential
+[core]
+	autocrlf = input
+[init]
+	defaultBranch = main
