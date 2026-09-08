@@ -1,7 +1,15 @@
 #!/bin/sh
 set -eu
 
-export WLR_DRM_DEVICES=/dev/dri/by-path/pci-0000:00:02.0-card
+intel_card=$(readlink -f /dev/dri/by-path/pci-0000:00:02.0-card)
+if [ ! -c "$intel_card" ]; then
+    echo "Intel DRM device not found: $intel_card" >&2
+    exit 1
+fi
+
+# WLR_DRM_DEVICES uses colons as separators, so a PCI by-path cannot be passed
+# directly. Resolve it first; the resulting /dev/dri/cardN path has no colons.
+export WLR_DRM_DEVICES=$intel_card
 export XDG_CURRENT_DESKTOP=sway
 export XDG_SESSION_DESKTOP=sway
 export XDG_SESSION_TYPE=wayland
