@@ -3,3 +3,12 @@ README.md
 {{- if ne .chezmoi.os "darwin" }}
 .bash_profile
 {{- end }}
+
+{{- if ne .chezmoi.os "linux" }}
+.config/sway
+.config/sway/**
+.config/xdg-desktop-portal/sway-portals.conf
+.local/bin/start-sway-intel
+.local/bin/sway-trial-system
+.local/share/wayland-sessions/sway-intel.desktop
+{{- end }}

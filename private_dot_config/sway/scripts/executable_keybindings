@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+config="${SWAY_CONFIG_PATH:-$HOME/.config/sway/config}"
+
+catalog=$(awk '
+    /^[[:space:]]*#@[[:space:]]*/ {
+        line=$0
+        sub(/^[[:space:]]*#@[[:space:]]*/, "", line)
+        count=split(line, fields, /[[:space:]]+::[[:space:]]+/)
+        if (count >= 3) {
+            command=fields[3]
+            for (i=4; i<=count; i++) command=command " :: " fields[i]
+            printf "%s — %s\t%s\n", fields[1], fields[2], command
+        }
+    }
+' "$config")
+
+selection=$(printf '%s\n' "$catalog" \
+    | cut -f1 \
+    | wofi --dmenu --prompt "Sway commands" --width 60% --height 70%) || exit 0
+
+[[ -n "$selection" ]] || exit 0
+command=$(printf '%s\n' "$catalog" \
+    | awk -F '\t' -v selection="$selection" '$1 == selection {print substr($0, index($0, "\t") + 1); exit}')
+
+[[ -n "$command" ]] || exit 1
+exec swaymsg -- "$command"

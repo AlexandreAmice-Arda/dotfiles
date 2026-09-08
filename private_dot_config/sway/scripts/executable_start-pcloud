@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if pgrep -u "$(id -u)" -f '/pcloud.bin' >/dev/null; then
+    exit 0
+fi
+
+exec "$HOME/.config/pcloud/pcloud-launcher.sh"

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+outputs=$(swaymsg --raw --type get_outputs)
+
+name_for_serial() {
+    jq -r --arg serial "$1" '.[] | select(.serial == $serial) | .name' <<< "$outputs" | head -n 1
+}
+
+left=$(name_for_serial H7YCC6B70Y1S)
+center=$(name_for_serial PH5NY1BH326L)
+right=$(name_for_serial C9LMTF003960)
+laptop=$(jq -r '.[] | select(.name == "eDP-1") | .name' <<< "$outputs" | head -n 1)
+
+if [[ -n "$left" && -n "$center" && -n "$right" && -n "$laptop" ]]; then
+    swaymsg -- output "$left" mode 2560x1440 scale 1 transform normal pos 0 221
+    swaymsg -- output "$center" mode 2560x1600 scale 1 transform normal pos 2560 591
+    swaymsg -- output "$right" mode 2560x1440 scale 1 transform 270 pos 5120 0
+    swaymsg -- output "$laptop" mode 1920x1200 scale 1 transform normal pos 640 1661
+elif [[ -n "$laptop" ]]; then
+    # The disconnected-monitor fallback is intentionally conservative.
+    swaymsg -- output "$laptop" mode 1920x1200 scale 1 transform normal pos 0 0
+fi

@@ -1,0 +1,232 @@
+# =============================================================================
+# Sway — stable Ubuntu/Kinesis trial
+# =============================================================================
+#
+# Super is the primary modifier. Super+Space and Super+Shift+Space are
+# intentionally unused. Search and execute commands with Super+/.
+# Search annotations use: #@ shortcut :: description :: sway command
+
+set $mod Mod4
+set $term terminator
+set $menu wofi --show drun
+
+font pango:monospace 10
+default_border pixel 2
+focus_follows_mouse no
+
+include ~/.config/sway/outputs.conf
+output * bg /usr/share/backgrounds/Numbat_wallpaper_dimmed_3480x2160.png fill
+
+# Session integration
+exec systemctl --user import-environment WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
+exec mako
+exec nm-applet --indicator
+exec /usr/libexec/polkit-gnome-authentication-agent-1
+exec ~/.config/sway/scripts/start-pcloud
+exec_always ~/.config/sway/scripts/apply-outputs
+
+# Lock after 10 minutes; power displays off after 15 minutes.
+exec swayidle -w \
+    timeout 600 'swaylock -f -c 000000' \
+    timeout 900 'swaymsg "output * power off"' \
+        resume 'swaymsg "output * power on"' \
+    before-sleep 'swaylock -f -c 000000'
+
+input type:touchpad {
+    tap enabled
+    dwt enabled
+}
+
+floating_modifier $mod normal
+
+# Discoverability and launching
+#@ Super+/ :: Search and execute Sway commands :: exec ~/.config/sway/scripts/keybindings
+bindsym $mod+slash exec ~/.config/sway/scripts/keybindings
+#@ Super+Return :: Open terminal :: exec terminator
+bindsym $mod+Return exec $term
+#@ Super+d :: Open application launcher :: exec wofi --show drun
+bindsym $mod+d exec $menu
+#@ Super+Shift+q :: Close focused window :: kill
+bindsym $mod+Shift+q kill
+#@ Super+Shift+c :: Reload Sway configuration :: reload
+bindsym $mod+Shift+c reload
+#@ Super+Shift+e :: Log out of Sway with confirmation :: exec swaynag -t warning -m 'Exit Sway and return to the login screen?' -B 'Yes, exit Sway' 'swaymsg exit'
+bindsym $mod+Shift+e exec swaynag -t warning \
+    -m 'Exit Sway and return to the login screen?' \
+    -B 'Yes, exit Sway' 'swaymsg exit'
+#@ Super+Shift+x :: Lock screen :: exec swaylock -f -c 000000
+bindsym $mod+Shift+x exec swaylock -f -c 000000
+
+# Focus — home row
+#@ Super+h :: Focus left :: focus left
+bindsym $mod+h focus left
+#@ Super+j :: Focus down :: focus down
+bindsym $mod+j focus down
+#@ Super+k :: Focus up :: focus up
+bindsym $mod+k focus up
+#@ Super+l :: Focus right :: focus right
+bindsym $mod+l focus right
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+#@ Super+a :: Focus parent container :: focus parent
+bindsym $mod+a focus parent
+#@ Palette only :: Toggle focus between tiled and floating windows :: focus mode_toggle
+
+# Move windows — same directions plus Shift
+#@ Super+Shift+h :: Move focused window left :: move left
+bindsym $mod+Shift+h move left
+#@ Super+Shift+j :: Move focused window down :: move down
+bindsym $mod+Shift+j move down
+#@ Super+Shift+k :: Move focused window up :: move up
+bindsym $mod+Shift+k move up
+#@ Super+Shift+l :: Move focused window right :: move right
+bindsym $mod+Shift+l move right
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+
+# Move an entire workspace between monitors. Use the left Ctrl thumb key.
+#@ Super+Left Ctrl+h :: Move workspace to the monitor on the left :: move workspace to output left
+bindsym $mod+Ctrl+h move workspace to output left
+#@ Super+Left Ctrl+j :: Move workspace to the monitor below :: move workspace to output down
+bindsym $mod+Ctrl+j move workspace to output down
+#@ Super+Left Ctrl+k :: Move workspace to the monitor above :: move workspace to output up
+bindsym $mod+Ctrl+k move workspace to output up
+#@ Super+Left Ctrl+l :: Move workspace to the monitor on the right :: move workspace to output right
+bindsym $mod+Ctrl+l move workspace to output right
+
+# Workspaces
+set $ws1 "1"
+set $ws2 "2"
+set $ws3 "3"
+set $ws4 "4"
+set $ws5 "5"
+set $ws6 "6"
+set $ws7 "7"
+set $ws8 "8"
+set $ws9 "9"
+set $ws10 "10"
+
+#@ Super+1 :: Switch to workspace 1 :: workspace number 1
+bindsym $mod+1 workspace number $ws1
+#@ Super+2 :: Switch to workspace 2 :: workspace number 2
+bindsym $mod+2 workspace number $ws2
+#@ Super+3 :: Switch to workspace 3 :: workspace number 3
+bindsym $mod+3 workspace number $ws3
+#@ Super+4 :: Switch to workspace 4 :: workspace number 4
+bindsym $mod+4 workspace number $ws4
+#@ Super+5 :: Switch to workspace 5 :: workspace number 5
+bindsym $mod+5 workspace number $ws5
+#@ Super+6 :: Switch to workspace 6 :: workspace number 6
+bindsym $mod+6 workspace number $ws6
+#@ Super+7 :: Switch to workspace 7 :: workspace number 7
+bindsym $mod+7 workspace number $ws7
+#@ Super+8 :: Switch to workspace 8 :: workspace number 8
+bindsym $mod+8 workspace number $ws8
+#@ Super+9 :: Switch to workspace 9 :: workspace number 9
+bindsym $mod+9 workspace number $ws9
+#@ Super+0 :: Switch to workspace 10 :: workspace number 10
+bindsym $mod+0 workspace number $ws10
+
+#@ Super+Shift+1 :: Move window to workspace 1 :: move container to workspace number 1
+bindsym $mod+Shift+1 move container to workspace number $ws1
+#@ Super+Shift+2 :: Move window to workspace 2 :: move container to workspace number 2
+bindsym $mod+Shift+2 move container to workspace number $ws2
+#@ Super+Shift+3 :: Move window to workspace 3 :: move container to workspace number 3
+bindsym $mod+Shift+3 move container to workspace number $ws3
+#@ Super+Shift+4 :: Move window to workspace 4 :: move container to workspace number 4
+bindsym $mod+Shift+4 move container to workspace number $ws4
+#@ Super+Shift+5 :: Move window to workspace 5 :: move container to workspace number 5
+bindsym $mod+Shift+5 move container to workspace number $ws5
+#@ Super+Shift+6 :: Move window to workspace 6 :: move container to workspace number 6
+bindsym $mod+Shift+6 move container to workspace number $ws6
+#@ Super+Shift+7 :: Move window to workspace 7 :: move container to workspace number 7
+bindsym $mod+Shift+7 move container to workspace number $ws7
+#@ Super+Shift+8 :: Move window to workspace 8 :: move container to workspace number 8
+bindsym $mod+Shift+8 move container to workspace number $ws8
+#@ Super+Shift+9 :: Move window to workspace 9 :: move container to workspace number 9
+bindsym $mod+Shift+9 move container to workspace number $ws9
+#@ Super+Shift+0 :: Move window to workspace 10 :: move container to workspace number 10
+bindsym $mod+Shift+0 move container to workspace number $ws10
+#@ Super+Tab :: Switch to the previous workspace :: workspace back_and_forth
+bindsym $mod+Tab workspace back_and_forth
+
+# Layout
+#@ Super+b :: Make the next split horizontal :: splith
+bindsym $mod+b splith
+#@ Super+v :: Make the next split vertical :: splitv
+bindsym $mod+v splitv
+#@ Super+s :: Use stacking layout :: layout stacking
+bindsym $mod+s layout stacking
+#@ Super+w :: Use tabbed layout :: layout tabbed
+bindsym $mod+w layout tabbed
+#@ Super+e :: Toggle split layout :: layout toggle split
+bindsym $mod+e layout toggle split
+#@ Super+f :: Toggle fullscreen :: fullscreen
+bindsym $mod+f fullscreen
+#@ Super+Shift+f :: Toggle floating for the focused window :: floating toggle
+bindsym $mod+Shift+f floating toggle
+
+# Scratchpad
+#@ Super+Shift+- :: Send focused window to scratchpad :: move scratchpad
+bindsym $mod+Shift+minus move scratchpad
+#@ Super+- :: Show or cycle scratchpad windows :: scratchpad show
+bindsym $mod+minus scratchpad show
+
+# Resize mode
+#@ Super+r :: Enter resize mode; H/J/K/L resize and Enter/Escape exits :: mode "resize"
+bindsym $mod+r mode "resize"
+mode "resize" {
+    bindsym h resize shrink width 20px
+    bindsym j resize grow height 20px
+    bindsym k resize shrink height 20px
+    bindsym l resize grow width 20px
+    bindsym Left resize shrink width 20px
+    bindsym Down resize grow height 20px
+    bindsym Up resize shrink height 20px
+    bindsym Right resize grow width 20px
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+# Screenshots
+#@ Print :: Screenshot all outputs to the clipboard :: exec grim - | wl-copy
+bindsym Print exec grim - | wl-copy
+#@ Shift+Print :: Select a screenshot region and copy it :: exec grim -g "$(slurp)" - | wl-copy
+bindsym Shift+Print exec grim -g "$(slurp)" - | wl-copy
+
+# Audio, media, and brightness
+#@ Volume Up :: Raise volume 5 percent :: exec wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+
+bindsym --locked XF86AudioRaiseVolume exec wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+
+#@ Volume Down :: Lower volume 5 percent :: exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+bindsym --locked XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+#@ Volume Mute :: Toggle speaker mute :: exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+bindsym --locked XF86AudioMute exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+#@ Microphone Mute :: Toggle microphone mute :: exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+bindsym --locked XF86AudioMicMute exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+#@ Media Play/Pause :: Play or pause media :: exec playerctl play-pause
+bindsym --locked XF86AudioPlay exec playerctl play-pause
+#@ Media Next :: Play next media track :: exec playerctl next
+bindsym --locked XF86AudioNext exec playerctl next
+#@ Media Previous :: Play previous media track :: exec playerctl previous
+bindsym --locked XF86AudioPrev exec playerctl previous
+#@ Brightness Up :: Increase laptop brightness 5 percent :: exec brightnessctl set +5%
+bindsym --locked XF86MonBrightnessUp exec brightnessctl set +5%
+#@ Brightness Down :: Decrease laptop brightness 5 percent :: exec brightnessctl set 5%-
+bindsym --locked XF86MonBrightnessDown exec brightnessctl set 5%-
+
+# Common dialogs float instead of consuming a tile.
+for_window [window_role="pop-up"] floating enable
+for_window [window_role="bubble"] floating enable
+for_window [window_role="task_dialog"] floating enable
+for_window [window_type="dialog"] floating enable
+for_window [window_type="menu"] floating enable
+
+bar {
+    position top
+    status_command i3status
+}
