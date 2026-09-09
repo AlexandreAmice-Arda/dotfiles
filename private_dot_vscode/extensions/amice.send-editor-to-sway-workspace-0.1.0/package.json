@@ -61,6 +61,16 @@
         "command": "sendEditorToSway.workspace4",
         "key": "ctrl+shift+4",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "workbench.action.closeActiveEditor",
+        "key": "ctrl+shift+q",
+        "when": "editorFocus"
+      },
+      {
+        "command": "workbench.action.terminal.kill",
+        "key": "ctrl+shift+q",
+        "when": "terminalFocus"
       }
     ]
   }

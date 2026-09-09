@@ -82,18 +82,18 @@ bindsym $mod+a focus parent
 #@ Palette only :: Move focused window to the monitor on the right :: move container to output right
 
 # Move windows — same directions plus Shift
-#@ Super+Shift+h :: Move focused window left :: move left
-bindsym $mod+Shift+h move left
-#@ Super+Shift+j :: Move focused window down :: move down
-bindsym $mod+Shift+j move down
-#@ Super+Shift+k :: Move focused window up :: move up
-bindsym $mod+Shift+k move up
-#@ Super+Shift+l :: Move focused window right :: move right
-bindsym $mod+Shift+l move right
-bindsym $mod+Shift+Left move left
-bindsym $mod+Shift+Down move down
-bindsym $mod+Shift+Up move up
-bindsym $mod+Shift+Right move right
+#@ Super+Alt+h :: Move focused window left :: move left
+bindsym $mod+Mod1+h move left
+#@ Super+Alt+j :: Move focused window down :: move down
+bindsym $mod+Mod1+j move down
+#@ Super+Alt+k :: Move focused window up :: move up
+bindsym $mod+Mod1+k move up
+#@ Super+Alt+l :: Move focused window right :: move right
+bindsym $mod+Mod1+l move right
+bindsym $mod+Mod1+Left move left
+bindsym $mod+Mod1+Down move down
+bindsym $mod+Mod1+Up move up
+bindsym $mod+Mod1+Right move right
 
 # Move an entire workspace between monitors. Use the left Ctrl thumb key.
 #@ Super+Left Ctrl+h :: Move workspace to the monitor on the left :: move workspace to output left
@@ -193,10 +193,10 @@ bindsym $mod+Shift+0 move container to workspace number $ws10
 bindsym $mod+Tab workspace back_and_forth
 
 # Layout
-#@ Super+b :: Make the next split horizontal :: splith
-bindsym $mod+b splith
-#@ Super+v :: Make the next split vertical :: splitv
-bindsym $mod+v splitv
+#@ Super+Alt+b :: Make the next split horizontal :: splith
+bindsym $mod+Mod1+b splith
+#@ Super+Alt+v :: Make the next split vertical :: splitv
+bindsym $mod+Mod1+v splitv
 #@ Super+s :: Use stacking layout :: layout stacking
 bindsym $mod+s layout stacking
 #@ Super+w :: Use tabbed layout :: layout tabbed
