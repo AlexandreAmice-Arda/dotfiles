@@ -12,6 +12,7 @@ Sway workspaces 1-4.
 | `Ctrl+Shift+3` | Send Active Editor to Workspace 3 |
 | `Ctrl+Shift+4` | Send Active Editor to Workspace 4 |
 | `Ctrl+Alt+Q` | Close the active editor or integrated terminal |
+| `Alt+U` / `Alt+D` | Move up/down one page in the active file |
 
 The commands are also available from the Command Palette under the `Sway`
 category.

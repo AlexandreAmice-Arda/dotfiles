@@ -71,6 +71,16 @@
         "command": "workbench.action.terminal.kill",
         "key": "ctrl+alt+q",
         "when": "terminalFocus"
+      },
+      {
+        "command": "cursorPageUp",
+        "key": "alt+u",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "cursorPageDown",
+        "key": "alt+d",
+        "when": "editorTextFocus"
       }
     ]
   }
