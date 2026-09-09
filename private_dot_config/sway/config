@@ -28,10 +28,10 @@ exec_always ~/.config/sway/scripts/apply-outputs
 
 # Lock after 10 minutes; power displays off after 15 minutes.
 exec swayidle -w \
-    timeout 600 'swaylock -f -c 000000' \
+    timeout 600 'gtklock' \
     timeout 900 'swaymsg "output * power off"' \
         resume 'swaymsg "output * power on"' \
-    before-sleep 'swaylock -f -c 000000'
+    before-sleep 'gtklock --daemonize'
 
 input type:touchpad {
     tap enabled
@@ -43,6 +43,7 @@ floating_modifier $mod normal
 # Discoverability and launching
 #@ Super+/ :: Search and execute Sway commands :: exec ~/.config/sway/scripts/keybindings
 bindsym $mod+slash exec ~/.config/sway/scripts/keybindings
+#@ Palette only :: Configure displays graphically :: exec wdisplays
 #@ Super+Return :: Open terminal :: exec terminator
 bindsym $mod+Return exec $term
 #@ Super+d :: Open application launcher :: exec wofi --show drun
@@ -55,8 +56,8 @@ bindsym $mod+Shift+c reload
 bindsym $mod+Shift+e exec swaynag -t warning \
     -m 'Exit Sway and return to the login screen?' \
     -B 'Yes, exit Sway' 'swaymsg exit'
-#@ Super+Shift+x :: Lock screen :: exec swaylock -f -c 000000
-bindsym $mod+Shift+x exec swaylock -f -c 000000
+#@ Super+Shift+x :: Lock screen :: exec gtklock
+bindsym $mod+Shift+x exec gtklock
 
 # Focus — home row
 #@ Super+h :: Focus left :: focus left
