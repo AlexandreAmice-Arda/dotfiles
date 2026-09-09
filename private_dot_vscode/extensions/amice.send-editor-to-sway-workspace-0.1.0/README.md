@@ -7,10 +7,10 @@ Sway workspaces 1-4.
 
 | Shortcut | Command |
 | --- | --- |
-| `Ctrl+Alt+1` | Send Active Editor to Workspace 1 |
-| `Ctrl+Alt+2` | Send Active Editor to Workspace 2 |
-| `Ctrl+Alt+3` | Send Active Editor to Workspace 3 |
-| `Ctrl+Alt+4` | Send Active Editor to Workspace 4 |
+| `Ctrl+Shift+1` | Send Active Editor to Workspace 1 |
+| `Ctrl+Shift+2` | Send Active Editor to Workspace 2 |
+| `Ctrl+Shift+3` | Send Active Editor to Workspace 3 |
+| `Ctrl+Shift+4` | Send Active Editor to Workspace 4 |
 
 The commands are also available from the Command Palette under the `Sway`
 category.

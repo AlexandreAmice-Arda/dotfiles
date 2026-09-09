@@ -44,22 +44,22 @@
     "keybindings": [
       {
         "command": "sendEditorToSway.workspace1",
-        "key": "ctrl+alt+1",
+        "key": "ctrl+shift+1",
         "when": "editorTextFocus"
       },
       {
         "command": "sendEditorToSway.workspace2",
-        "key": "ctrl+alt+2",
+        "key": "ctrl+shift+2",
         "when": "editorTextFocus"
       },
       {
         "command": "sendEditorToSway.workspace3",
-        "key": "ctrl+alt+3",
+        "key": "ctrl+shift+3",
         "when": "editorTextFocus"
       },
       {
         "command": "sendEditorToSway.workspace4",
-        "key": "ctrl+alt+4",
+        "key": "ctrl+shift+4",
         "when": "editorTextFocus"
       }
     ]
