@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -u
 
+code_project=/home/amice/Documents/coding_projects/AdmmPackageSplit
+
 secret_service_ready() {
     [[ "$(busctl --user get-property \
         org.freedesktop.secrets \
@@ -47,9 +49,6 @@ launch_new_window() {
     mapfile -t before_ids < <(window_ids "$app_id")
 
     case "$app_id" in
-        code)
-            /usr/bin/code --new-window >/dev/null 2>&1 &
-            ;;
         google-chrome)
             /usr/bin/google-chrome-stable \
                 --password-store=gnome-libsecret \
@@ -142,8 +141,10 @@ start_if_missing Slack \
 start_if_missing Terminator \
     '(^|/)terminator( |$)' \
     /usr/bin/terminator
+start_if_missing "VS Code" \
+    '^/usr/share/code/code( |$)' \
+    /usr/bin/code "$code_project"
 
-ensure_workspace_windows "VS Code" code 1 2 3 4
 ensure_workspace_windows Chrome google-chrome 5 6 7 8
 
 if [[ ${SESSION_APPS_DRY_RUN:-0} != 1 ]]; then
@@ -158,6 +159,10 @@ if [[ ${SESSION_APPS_DRY_RUN:-0} != 1 ]]; then
     move_app_windows terminator 9
     move_app_windows signal 10
     move_app_windows slack 10
+
+    # VS Code owns its detached editor windows as part of one project. Let it
+    # restore them, then spread the four related windows across workspaces 1-4.
+    ~/.config/sway/scripts/arrange-code-windows --wait 15
 
     # Monitor 2 is the main monitor, so finish on its VS Code workspace.
     sleep 5

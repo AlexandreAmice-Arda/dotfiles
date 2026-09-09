@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -u
+
+wait_seconds=0
+if [[ ${1:-} == --wait ]]; then
+    wait_seconds=${2:-15}
+fi
+
+code_window_ids() {
+    swaymsg --raw --type get_tree \
+        | jq -r '[.. | objects | select(.app_id? == "code") | .id]
+            | unique
+            | sort
+            | .[]'
+}
+
+deadline=$((SECONDS + wait_seconds))
+while (( SECONDS < deadline )); do
+    mapfile -t ids < <(code_window_ids)
+    (( ${#ids[@]} >= 4 )) && break
+    sleep 0.25
+done
+
+mapfile -t ids < <(code_window_ids)
+for index in "${!ids[@]}"; do
+    (( index >= 4 )) && break
+    workspace=$((index + 1))
+    swaymsg -- "[con_id=${ids[$index]}] move container to workspace number $workspace" \
+        >/dev/null
+done
+
+if (( ${#ids[@]} < 4 )); then
+    notify-send \
+        "VS Code needs $((4 - ${#ids[@]})) more detached window(s)" \
+        "In AdmmPackageSplit, select an editor tab and press Ctrl+K, then O. Run ‘Arrange VS Code windows’ afterward."
+fi
