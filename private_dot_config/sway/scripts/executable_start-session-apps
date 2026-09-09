@@ -24,14 +24,99 @@ start_if_missing() {
         return 0
     fi
 
-    "$@" &
+    "$@" >/dev/null 2>&1 &
+}
+
+window_ids() {
+    local app_id=$1
+    swaymsg --raw --type get_tree \
+        | jq -r --arg app_id "$app_id" \
+            '.. | objects | select(.app_id? == $app_id) | .id' \
+        | awk '!seen[$0]++'
 }
 
 window_exists() {
+    [[ -n "$(window_ids "$1")" ]]
+}
+
+launch_new_window() {
     local app_id=$1
-    swaymsg --raw --type get_tree \
-        | jq --exit-status --arg app_id "$app_id" \
-            '.. | objects | select(.app_id? == $app_id)' >/dev/null
+    local -a before_ids current_ids
+    local id prior seen
+
+    mapfile -t before_ids < <(window_ids "$app_id")
+
+    case "$app_id" in
+        code)
+            /usr/bin/code --new-window >/dev/null 2>&1 &
+            ;;
+        google-chrome)
+            /usr/bin/google-chrome-stable \
+                --password-store=gnome-libsecret \
+                --new-window chrome://newtab >/dev/null 2>&1 &
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    for _ in {1..100}; do
+        mapfile -t current_ids < <(window_ids "$app_id")
+        for id in "${current_ids[@]}"; do
+            seen=0
+            for prior in "${before_ids[@]}"; do
+                [[ "$id" == "$prior" ]] && seen=1 && break
+            done
+            if (( seen == 0 )); then
+                printf '%s\n' "$id"
+                return 0
+            fi
+        done
+        sleep 0.1
+    done
+
+    return 1
+}
+
+ensure_workspace_windows() {
+    local label=$1
+    local app_id=$2
+    shift 2
+    local -a workspaces=("$@") ids
+    local index=0 workspace id
+
+    if [[ ${SESSION_APPS_DRY_RUN:-0} == 1 ]]; then
+        for workspace in "${workspaces[@]}"; do
+            printf '%s window -> workspace %s\n' "$label" "$workspace"
+        done
+        return 0
+    fi
+
+    mapfile -t ids < <(window_ids "$app_id")
+    for workspace in "${workspaces[@]}"; do
+        if (( index < ${#ids[@]} )); then
+            id=${ids[$index]}
+        else
+            if ! id=$(launch_new_window "$app_id"); then
+                notify-send --urgency=critical \
+                    "Sway startup incomplete" \
+                    "Could not create the $label window for workspace $workspace."
+                ((index += 1))
+                continue
+            fi
+            ids+=("$id")
+        fi
+
+        swaymsg -- "[con_id=$id] move container to workspace number $workspace" >/dev/null
+        ((index += 1))
+    done
+}
+
+move_app_windows() {
+    local app_id=$1
+    local workspace=$2
+    swaymsg -- "[app_id=\"^${app_id}$\"] move container to workspace number $workspace" \
+        >/dev/null 2>&1 || true
 }
 
 if [[ ${SESSION_APPS_DRY_RUN:-0} != 1 ]]; then
@@ -54,24 +139,27 @@ start_if_missing Signal \
 start_if_missing Slack \
     '(^|/)(slack|slack-desktop)( |$)' \
     /usr/bin/slack --password-store=gnome-libsecret
-start_if_missing "Visual Studio Code" \
-    '^/usr/share/code/code( |$)' \
-    /usr/bin/code
-start_if_missing "Google Chrome" \
-    '(^/opt/google/chrome/chrome|^/usr/bin/google-chrome-stable)( |$)' \
-    /usr/bin/google-chrome-stable --password-store=gnome-libsecret
+start_if_missing Terminator \
+    '(^|/)terminator( |$)' \
+    /usr/bin/terminator
+
+ensure_workspace_windows "VS Code" code 1 2 3 4
+ensure_workspace_windows Chrome google-chrome 5 6 7 8
 
 if [[ ${SESSION_APPS_DRY_RUN:-0} != 1 ]]; then
-    # Slack can honor its old "start minimized" preference even when launched
-    # normally. A second invocation asks the single running instance to show
-    # its main window without creating another process.
+    # Slack can honor its old "start minimized" preference. A second invocation
+    # asks the single running instance to show its main window.
     sleep 3
     if ! window_exists slack; then
-        /usr/bin/slack --password-store=gnome-libsecret &
+        /usr/bin/slack --password-store=gnome-libsecret >/dev/null 2>&1 &
+        sleep 2
     fi
 
-    # Applications can request focus while restoring. Settle on the requested
-    # communications workspace after the startup burst finishes.
-    sleep 7
-    swaymsg -- workspace number 1 >/dev/null
+    move_app_windows terminator 9
+    move_app_windows signal 10
+    move_app_windows slack 10
+
+    # Monitor 2 is the main monitor, so finish on its VS Code workspace.
+    sleep 5
+    swaymsg -- workspace number 2 >/dev/null
 fi

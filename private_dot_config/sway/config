@@ -20,7 +20,7 @@ output * bg /usr/share/backgrounds/Numbat_wallpaper_dimmed_3480x2160.png fill
 # Session integration
 exec systemctl --user import-environment WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
 exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
-exec mako
+exec ~/.config/sway/scripts/start-mako
 exec nm-applet --indicator
 exec /usr/libexec/polkit-gnome-authentication-agent-1
 exec_always ~/.config/sway/scripts/apply-outputs
@@ -116,22 +116,28 @@ set $ws8 "8"
 set $ws9 "9"
 set $ws10 "10"
 
-# Prefer stable make/model/serial identities because DP connector numbers can
-# change after a reboot. Each line also covers the alternate two-Dell setup.
+# Monitor roles use stable identities because DP connector numbers can change
+# after a reboot. The alternate two-Dell setup is included as a fallback.
 workspace $ws1 output "Dell Inc. DELL U2715H H7YCC6B70Y1S" "Dell Inc. DELL SE2719HR 19K8JB3" eDP-1
 workspace $ws2 output "Dell Inc. DELL U3011 PH5NY1BH326L" "Dell Inc. DELL SE2719HR 6N45XC3" eDP-1
-workspace $ws3 output "Ancor Communications Inc ASUS PB278 C9LMTF003960" "Dell Inc. DELL SE2719HR 6N45XC3" eDP-1
+workspace $ws3 output "Ancor Communications Inc ASUS PB278 C9LMTF003960" eDP-1
 workspace $ws4 output eDP-1
+workspace $ws5 output "Dell Inc. DELL U2715H H7YCC6B70Y1S" "Dell Inc. DELL SE2719HR 19K8JB3" eDP-1
+workspace $ws6 output "Dell Inc. DELL U3011 PH5NY1BH326L" "Dell Inc. DELL SE2719HR 6N45XC3" eDP-1
+workspace $ws7 output "Ancor Communications Inc ASUS PB278 C9LMTF003960" eDP-1
+workspace $ws8 output eDP-1
+workspace $ws9 output "Dell Inc. DELL U2715H H7YCC6B70Y1S" "Dell Inc. DELL SE2719HR 19K8JB3" eDP-1
+workspace $ws10 output eDP-1
 
-# Place both native-Wayland and XWayland variants consistently.
-assign [app_id="^signal$"] workspace number $ws1
-assign [class="(?i)^signal$"] workspace number $ws1
-assign [app_id="^slack$"] workspace number $ws1
-assign [class="(?i)^slack$"] workspace number $ws1
-assign [app_id="^code$"] workspace number $ws2
-assign [class="(?i)^code$"] workspace number $ws2
-assign [app_id="^google-chrome$"] workspace number $ws4
-assign [class="(?i)^google-chrome$"] workspace number $ws4
+# Fixed-purpose applications use both native-Wayland and XWayland variants.
+# VS Code and Chrome are distributed across multiple workspaces by the startup
+# helper; later windows remain on the workspace where the user opens them.
+assign [app_id="^terminator$"] workspace number $ws9
+assign [class="(?i)^terminator$"] workspace number $ws9
+assign [app_id="^signal$"] workspace number $ws10
+assign [class="(?i)^signal$"] workspace number $ws10
+assign [app_id="^slack$"] workspace number $ws10
+assign [class="(?i)^slack$"] workspace number $ws10
 
 # pCloud must stay running for the mount, but its main window should not take a
 # tile. Super+- can reveal it from the scratchpad when needed.
