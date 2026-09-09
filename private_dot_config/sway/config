@@ -49,8 +49,8 @@ bindsym $mod+slash exec ~/.config/sway/scripts/keybindings
 bindsym $mod+Return exec $term
 #@ Super+d :: Open application launcher :: exec wofi --show drun
 bindsym $mod+d exec $menu
-#@ Super+Shift+q :: Close focused window :: kill
-bindsym $mod+Shift+q kill
+#@ Super+Alt+q :: Close focused window :: kill
+bindsym $mod+Mod1+q kill
 #@ Super+Shift+c :: Reload Sway configuration :: reload
 bindsym $mod+Shift+c reload
 #@ Super+Shift+e :: Log out of Sway with confirmation :: exec swaynag -t warning -m 'Exit Sway and return to the login screen?' -B 'Yes, exit Sway' 'swaymsg exit'

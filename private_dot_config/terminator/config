@@ -1,0 +1,15 @@
+[global_config]
+[keybindings]
+[profiles]
+  [[default]]
+    custom_command = exec tmux new-session -A -s main
+    use_custom_command = True
+[layouts]
+  [[default]]
+    [[[window0]]]
+      type = Window
+      parent = ""
+    [[[child1]]]
+      type = Terminal
+      parent = window0
+[plugins]

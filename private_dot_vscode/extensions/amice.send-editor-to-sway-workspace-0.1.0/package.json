@@ -64,12 +64,12 @@
       },
       {
         "command": "workbench.action.closeActiveEditor",
-        "key": "ctrl+shift+q",
+        "key": "ctrl+alt+q",
         "when": "editorFocus"
       },
       {
         "command": "workbench.action.terminal.kill",
-        "key": "ctrl+shift+q",
+        "key": "ctrl+alt+q",
         "when": "terminalFocus"
       }
     ]
