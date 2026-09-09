@@ -10,6 +10,8 @@ name_for_serial() {
 left=$(name_for_serial H7YCC6B70Y1S)
 center=$(name_for_serial PH5NY1BH326L)
 right=$(name_for_serial C9LMTF003960)
+home_left=$(name_for_serial 19K8JB3)
+home_right=$(name_for_serial 6N45XC3)
 laptop=$(jq -r '.[] | select(.name == "eDP-1") | .name' <<< "$outputs" | head -n 1)
 
 if [[ -n "$left" && -n "$center" && -n "$right" && -n "$laptop" ]]; then
@@ -17,6 +19,11 @@ if [[ -n "$left" && -n "$center" && -n "$right" && -n "$laptop" ]]; then
     swaymsg -- output "$center" mode 2560x1600 scale 1 transform normal pos 2560 591
     swaymsg -- output "$right" mode 2560x1440 scale 1 transform 270 pos 5120 0
     swaymsg -- output "$laptop" mode 1920x1200 scale 1 transform normal pos 640 1661
+elif [[ -n "$home_left" && -n "$home_right" && -n "$laptop" ]]; then
+    # Layout captured from wdisplays for the two Dell SE2719HR monitors.
+    swaymsg -- output "$home_left" mode 1920x1080 scale 1 transform normal pos 0 185
+    swaymsg -- output "$home_right" mode 1920x1080 scale 1 transform normal pos 1920 185
+    swaymsg -- output "$laptop" mode 1920x1200 scale 1 transform normal pos 1147 1265
 elif [[ -n "$laptop" ]]; then
     # The disconnected-monitor fallback is intentionally conservative.
     swaymsg -- output "$laptop" mode 1920x1200 scale 1 transform normal pos 0 0

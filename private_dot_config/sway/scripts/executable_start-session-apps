@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+set -u
+
+secret_service_ready() {
+    [[ "$(busctl --user get-property \
+        org.freedesktop.secrets \
+        /org/freedesktop/secrets/collection/login \
+        org.freedesktop.Secret.Collection Locked 2>/dev/null)" == "b false" ]]
+}
+
+start_if_missing() {
+    local label=$1
+    local pattern=$2
+    shift 2
+
+    if pgrep --uid "$UID" --full -- "$pattern" >/dev/null; then
+        return 0
+    fi
+
+    if [[ ${SESSION_APPS_DRY_RUN:-0} == 1 ]]; then
+        printf '%s:' "$label"
+        printf ' %q' "$@"
+        printf '\n'
+        return 0
+    fi
+
+    "$@" &
+}
+
+window_exists() {
+    local app_id=$1
+    swaymsg --raw --type get_tree \
+        | jq --exit-status --arg app_id "$app_id" \
+            '.. | objects | select(.app_id? == $app_id)' >/dev/null
+}
+
+if [[ ${SESSION_APPS_DRY_RUN:-0} != 1 ]]; then
+    for _ in {1..50}; do
+        secret_service_ready && break
+        sleep 0.2
+    done
+
+    if ! secret_service_ready; then
+        notify-send --urgency=critical \
+            "Sway startup paused" \
+            "The login keyring did not unlock, so credential-using apps were not started."
+        exit 1
+    fi
+fi
+
+start_if_missing Signal \
+    '^/opt/Signal/signal-desktop( |$)' \
+    /opt/Signal/signal-desktop --password-store=gnome-libsecret
+start_if_missing Slack \
+    '(^|/)(slack|slack-desktop)( |$)' \
+    /usr/bin/slack --password-store=gnome-libsecret
+start_if_missing "Visual Studio Code" \
+    '^/usr/share/code/code( |$)' \
+    /usr/bin/code
+start_if_missing "Google Chrome" \
+    '(^/opt/google/chrome/chrome|^/usr/bin/google-chrome-stable)( |$)' \
+    /usr/bin/google-chrome-stable --password-store=gnome-libsecret
+
+if [[ ${SESSION_APPS_DRY_RUN:-0} != 1 ]]; then
+    # Slack can honor its old "start minimized" preference even when launched
+    # normally. A second invocation asks the single running instance to show
+    # its main window without creating another process.
+    sleep 3
+    if ! window_exists slack; then
+        /usr/bin/slack --password-store=gnome-libsecret &
+    fi
+
+    # Applications can request focus while restoring. Settle on the requested
+    # communications workspace after the startup burst finishes.
+    sleep 7
+    swaymsg -- workspace number 1 >/dev/null
+fi
