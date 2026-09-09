@@ -22,9 +22,10 @@ while (( SECONDS < deadline )); do
 done
 
 mapfile -t ids < <(code_window_ids)
+workspaces=(2 1 3 4)
 for index in "${!ids[@]}"; do
     (( index >= 4 )) && break
-    workspace=$((index + 1))
+    workspace=${workspaces[$index]}
     swaymsg -- "[con_id=${ids[$index]}] move container to workspace number $workspace" \
         >/dev/null
 done
