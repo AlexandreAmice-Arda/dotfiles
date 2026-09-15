@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+selection=$(printf '%s\n' \
+    '󰸉  Wallpaper · Midnight' \
+    '󰖔  Wallpaper · Dusk' \
+    '󰖨  Wallpaper · Dawn' \
+    '󰍹  Terminal · Opaque 100%' \
+    '󰍹  Terminal · Subtle 95%' \
+    '󰍹  Terminal · Visible 89%' \
+    | wofi --dmenu --prompt 'Appearance' --width 460 --height 360 --cache-file /dev/null) || exit 0
+
+case "$selection" in
+    *Midnight) exec "$HOME/.local/bin/apply-appearance" --mood midnight ;;
+    *Dusk) exec "$HOME/.local/bin/apply-appearance" --mood dusk ;;
+    *Dawn) exec "$HOME/.local/bin/apply-appearance" --mood dawn ;;
+    *'100%') exec "$HOME/.local/bin/apply-appearance" --opacity 1.00 ;;
+    *'95%') exec "$HOME/.local/bin/apply-appearance" --opacity 0.95 ;;
+    *'89%') exec "$HOME/.local/bin/apply-appearance" --opacity 0.89 ;;
+esac

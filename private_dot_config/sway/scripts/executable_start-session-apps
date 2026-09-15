@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -u
 
-code_project=/home/amice/Documents/coding_projects/AdmmPackageSplit
+code_project=${SWAY_CODE_PROJECT:-$HOME/Documents/coding_projects/AdmmPackageSplit}
 
 secret_service_ready() {
     [[ "$(busctl --user get-property \
@@ -138,9 +138,9 @@ start_if_missing Signal \
 start_if_missing Slack \
     '(^|/)(slack|slack-desktop)( |$)' \
     /usr/bin/slack --password-store=gnome-libsecret
-start_if_missing Terminator \
-    '(^|/)terminator( |$)' \
-    /usr/bin/terminator
+start_if_missing Foot \
+    '(^|/)foot( |$)' \
+    /usr/bin/foot
 start_if_missing "VS Code" \
     '^/usr/share/code/code( |$)' \
     /usr/bin/code "$code_project"
@@ -156,7 +156,7 @@ if [[ ${SESSION_APPS_DRY_RUN:-0} != 1 ]]; then
         sleep 2
     fi
 
-    move_app_windows terminator 9
+    move_app_windows foot 9
     move_app_windows signal 10
     move_app_windows slack 10
 

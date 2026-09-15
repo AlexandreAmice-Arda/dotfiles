@@ -1,13 +1,53 @@
 README.md
+WALLPAPER-PROVENANCE.md
+Brewfile
+packages
+packages/**
 
 {{- if ne .chezmoi.os "darwin" }}
 .bash_profile
 {{- end }}
 
 {{- if ne .chezmoi.os "linux" }}
+.config/foot
+.config/foot/**
+.config/gtklock
+.config/gtklock/**
 .config/sway
 .config/sway/**
+.config/swaync
+.config/swaync/**
+.config/waybar
+.config/waybar/**
+.config/wlogout
+.config/wlogout/**
+.config/wofi
+.config/wofi/**
 .config/xdg-desktop-portal/sway-portals.conf
+.local/bin/apply-appearance
+.local/bin/desktop-temperature
+.local/bin/start-sway-intel
+.local/bin/swaync
+.local/bin/swaync-client
+.local/bin/sway-trial-system
+.local/bin/waybar
+.local/bin/wlogout
+.local/share/wayland-sessions/sway-intel.desktop
+{{- end }}
+
+{{- if ne .chezmoi.os "darwin" }}
+.config/aerospace
+.config/aerospace/**
+.config/ghostty
+.config/ghostty/**
+{{- end }}
+
+{{- if ne .desktopProfile "amice-workstation" }}
+.config/sway/scripts/apply-outputs
+.config/sway/scripts/arrange-code-windows
+.config/sway/scripts/start-mako
+.config/sway/scripts/start-pcloud
+.config/sway/scripts/start-session-apps
 .local/bin/start-sway-intel
 .local/bin/sway-trial-system
 .local/share/wayland-sessions/sway-intel.desktop

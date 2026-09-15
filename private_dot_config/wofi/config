@@ -1,0 +1,11 @@
+show=drun
+width=540
+height=440
+location=center
+allow_images=true
+insensitive=true
+matching=fuzzy
+prompt=Search
+term=foot
+key_expand=Tab
+key_exit=Escape

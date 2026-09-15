@@ -1,0 +1,47 @@
+desktop:
+  theme:
+    background: "1a1b26"
+    surface: "24283b"
+    surface_alt: "414868"
+    foreground: "c0caf5"
+    muted: "565f89"
+    blue: "7aa2f7"
+    cyan: "7dcfff"
+    purple: "bb9af7"
+    pink: "f7768e"
+    green: "9ece6a"
+    yellow: "e0af68"
+  directions:
+    - name: left
+      label: Left
+      key: h
+    - name: down
+      label: Down
+      key: j
+    - name: up
+      label: Up
+      key: k
+    - name: right
+      label: Right
+      key: l
+  workspaces:
+    - name: "1"
+      key: "1"
+    - name: "2"
+      key: "2"
+    - name: "3"
+      key: "3"
+    - name: "4"
+      key: "4"
+    - name: "5"
+      key: "5"
+    - name: "6"
+      key: "6"
+    - name: "7"
+      key: "7"
+    - name: "8"
+      key: "8"
+    - name: "9"
+      key: "9"
+    - name: "10"
+      key: "0"

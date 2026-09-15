@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -u
+
+read_temperature() {
+    local input label value
+
+    for input in /sys/class/hwmon/hwmon*/temp*_input; do
+        [[ -r "$input" ]] || continue
+        label=${input%_input}_label
+        label=$(cat "$label" 2>/dev/null || true)
+        case "${label,,}" in
+            *package*|*tctl*|*cpu*) ;;
+            *) continue ;;
+        esac
+        value=$(cat "$input" 2>/dev/null || true)
+        [[ $value =~ ^[0-9]+$ ]] && { printf '%s\n' "$value"; return; }
+    done
+
+    for input in /sys/class/thermal/thermal_zone*/temp /sys/class/hwmon/hwmon*/temp*_input; do
+        [[ -r "$input" ]] || continue
+        value=$(cat "$input" 2>/dev/null || true)
+        [[ $value =~ ^[0-9]+$ ]] && { printf '%s\n' "$value"; return; }
+    done
+}
+
+millidegrees=$(read_temperature || true)
+if [[ ! $millidegrees =~ ^[0-9]+$ ]]; then
+    printf '{"text":"","tooltip":"CPU temperature unavailable"}\n'
+    exit 0
+fi
+
+celsius=$((millidegrees / 1000))
+class=normal
+icon=''
+if (( celsius >= 85 )); then
+    class=critical
+    icon=''
+fi
+printf '{"text":"%s %d°","tooltip":"CPU temperature: %d°C","class":"%s"}\n' \
+    "$icon" "$celsius" "$celsius" "$class"

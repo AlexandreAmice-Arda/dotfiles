@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+shell_root="${TOKYO_NIGHT_SHELL_ROOT:-$HOME/.local/opt/tokyo-night-shell}"
+for executable in /usr/bin/wlogout /usr/local/bin/wlogout "$shell_root/usr/bin/wlogout"; do
+    [[ -x "$executable" ]] || continue
+    if [[ "$executable" == "$shell_root"/* ]]; then
+        export LD_LIBRARY_PATH="$shell_root/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+        export XDG_DATA_DIRS="$shell_root/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
+    fi
+    exec "$executable" "$@"
+done
+printf 'wlogout is not installed\n' >&2
+exit 127

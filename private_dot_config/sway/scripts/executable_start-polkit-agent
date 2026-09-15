@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if pgrep -u "$UID" -f '^/usr/(lib|libexec)/.*/polkit.*authentication-agent[^ ]*$' >/dev/null 2>&1; then
+    exit 0
+fi
+
+for agent in \
+    /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 \
+    /usr/libexec/polkit-gnome-authentication-agent-1 \
+    /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1; do
+    if [[ -x "$agent" ]]; then
+        exec "$agent"
+    fi
+done
+
+command -v notify-send >/dev/null 2>&1 \
+    && notify-send --urgency=critical 'Sway setup' 'No graphical polkit authentication agent was found.'
+exit 1

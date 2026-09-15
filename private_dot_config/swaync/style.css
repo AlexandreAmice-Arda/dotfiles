@@ -1,0 +1,72 @@
+@define-color candy-bg rgba(26, 27, 38, 0.97);
+@define-color candy-surface #24283b;
+@define-color candy-hover #414868;
+@define-color candy-text #c0caf5;
+@define-color candy-muted #565f89;
+@define-color candy-blue #7aa2f7;
+@define-color candy-cyan #7dcfff;
+@define-color candy-purple #bb9af7;
+@define-color candy-pink #f7768e;
+
+* { font-family: "JetBrains Mono", "BitstreamVeraSansMono Nerd Font"; color: @candy-text; }
+.control-center {
+  background: @candy-bg;
+  border: 1px solid @candy-purple;
+  border-radius: 18px;
+  margin: 8px;
+}
+.control-center-list, .floating-notifications, .notification-row { background: transparent; }
+.blank-window { background: rgba(10, 11, 18, 0.25); }
+.notification {
+  background: @candy-surface;
+  border: 1px solid @candy-hover;
+  border-radius: 14px;
+  margin: 7px 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+.notification-row:focus .notification, .notification-row:hover .notification {
+  border-color: @candy-blue;
+  background: #292e45;
+}
+.notification-content, .notification-default-action, .notification-action {
+  color: @candy-text;
+  background: transparent;
+  border-color: @candy-hover;
+}
+.notification-default-action:hover, .notification-action:hover { background: @candy-hover; }
+.low .notification { border-left: 3px solid @candy-cyan; }
+.normal .notification { border-left: 3px solid @candy-purple; }
+.critical .notification { border-left: 3px solid @candy-pink; }
+.summary { color: @candy-text; font-size: 14px; font-weight: 700; }
+.body { color: #a9b1d6; font-size: 13px; }
+.time { color: @candy-muted; font-size: 11px; }
+.close-button {
+  color: @candy-pink;
+  background: rgba(247, 118, 142, 0.13);
+  border-radius: 999px;
+  min-width: 24px;
+  min-height: 24px;
+}
+.close-button:hover { color: @candy-bg; background: @candy-pink; }
+.widget-title { color: @candy-purple; margin: 14px 14px 8px; font-size: 20px; font-weight: 700; }
+.widget-title > button {
+  color: @candy-bg;
+  background: @candy-pink;
+  border: none;
+  border-radius: 10px;
+  box-shadow: none;
+  padding: 5px 10px;
+}
+.widget-title > button:hover { background: #ff9eae; }
+.widget-dnd {
+  color: @candy-cyan;
+  background: @candy-surface;
+  border: 1px solid @candy-hover;
+  border-radius: 12px;
+  margin: 6px 14px 12px;
+  padding: 8px 10px;
+}
+.widget-dnd > switch { background: @candy-hover; border: none; border-radius: 999px; box-shadow: none; }
+.widget-dnd > switch:checked { background: @candy-purple; }
+.widget-dnd > switch slider { background: @candy-text; border-radius: 999px; }
+.control-center-list-placeholder { color: @candy-muted; }

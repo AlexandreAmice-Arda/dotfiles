@@ -1,0 +1,30 @@
+* {
+  background-image: none;
+  font-family: "JetBrains Mono", "BitstreamVeraSansMono Nerd Font";
+  font-size: 15px;
+  font-weight: 700;
+}
+window { background: rgba(10, 11, 18, 0.78); }
+button {
+  color: #c0caf5;
+  background-color: #24283b;
+  border: 2px solid #414868;
+  border-radius: 20px;
+  padding: 42px 24px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+button:focus, button:active, button:hover {
+  color: #1a1b26;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(192, 202, 245, 0.18);
+}
+#lock { border-color: #bb9af7; }
+#lock:hover, #lock:focus { background-color: #bb9af7; }
+#suspend { border-color: #7aa2f7; }
+#suspend:hover, #suspend:focus { background-color: #7aa2f7; }
+#logout { border-color: #7dcfff; }
+#logout:hover, #logout:focus { background-color: #7dcfff; }
+#reboot { border-color: #e0af68; }
+#reboot:hover, #reboot:focus { background-color: #e0af68; }
+#shutdown { border-color: #f7768e; }
+#shutdown:hover, #shutdown:focus { background-color: #f7768e; }

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+exec "$HOME/.local/bin/wlogout" \
+    --protocol layer-shell \
+    --buttons-per-row 5 \
+    --column-spacing 18 \
+    --row-spacing 18 \
+    --margin 220 \
+    --layout "$HOME/.config/wlogout/layout" \
+    --css "$HOME/.config/wlogout/style.css"

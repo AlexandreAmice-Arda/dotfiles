@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+shell_root="${TOKYO_NIGHT_SHELL_ROOT:-$HOME/.local/opt/tokyo-night-shell}"
+for executable in /usr/bin/swaync /usr/local/bin/swaync "$shell_root/usr/bin/swaync"; do
+    [[ -x "$executable" ]] || continue
+    if [[ "$executable" == "$shell_root"/* ]]; then
+        export LD_LIBRARY_PATH="$shell_root/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+        export XDG_DATA_DIRS="$shell_root/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
+        export XDG_CONFIG_DIRS="$shell_root/etc/xdg${XDG_CONFIG_DIRS:+:$XDG_CONFIG_DIRS}"
+        export GSETTINGS_SCHEMA_DIR="$shell_root/usr/share/glib-2.0/schemas"
+    fi
+    exec "$executable" "$@"
+done
+printf 'swaync is not installed\n' >&2
+exit 127

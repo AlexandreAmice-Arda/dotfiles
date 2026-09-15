@@ -1,8 +1,11 @@
 {{- $gitName := promptStringOnce . "gitName" "Git name" -}}
 {{- $gitEmail := promptStringOnce . "gitEmail" "Git email" -}}
+{{- $profiles := list "portable" "amice-workstation" -}}
+{{- $desktopProfile := promptChoiceOnce . "desktopProfile" "Desktop profile" $profiles "portable" -}}
 sourceDir = {{ .chezmoi.sourceDir | quote }}
 umask = 0o022
 
 [data]
     gitName = {{ $gitName | quote }}
     gitEmail = {{ $gitEmail | quote }}
+    desktopProfile = {{ $desktopProfile | quote }}

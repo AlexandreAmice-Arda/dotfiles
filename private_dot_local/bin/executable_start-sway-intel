@@ -13,5 +13,6 @@ export WLR_DRM_DEVICES=$intel_card
 export XDG_CURRENT_DESKTOP=sway
 export XDG_SESSION_DESKTOP=sway
 export XDG_SESSION_TYPE=wayland
+export WLR_NO_HARDWARE_CURSORS=1
 
 exec /usr/bin/sway --unsupported-gpu "$@"

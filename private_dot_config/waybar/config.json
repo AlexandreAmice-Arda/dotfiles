@@ -1,0 +1,150 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 38,
+  "margin-top": 4,
+  "margin-left": 8,
+  "margin-right": 8,
+  "spacing": 4,
+  "fixed-center": true,
+  "modules-left": [
+    "custom/hub",
+    "sway/workspaces",
+    "sway/mode"
+  ],
+  "modules-center": [
+    "clock"
+  ],
+  "modules-right": [
+    "custom/notification",
+    "bluetooth",
+    "pulseaudio",
+    "cpu",
+    "memory",
+    "custom/temperature",
+    "backlight",
+    "battery",
+    "tray",
+    "custom/appearance",
+    "custom/power"
+  ],
+  "custom/hub": {
+    "format": "",
+    "tooltip-format": "Control center\nLeft click: system controls\nRight click: applications",
+    "on-click": "~/.config/sway/scripts/system-menu",
+    "on-click-right": "wofi --show drun"
+  },
+  "sway/workspaces": {
+    "all-outputs": true,
+    "disable-scroll": true,
+    "format": "{name}",
+    "persistent-workspaces": {
+      "1": [], "2": [], "3": [], "4": [], "5": [],
+      "6": [], "7": [], "8": [], "9": [], "10": []
+    }
+  },
+  "sway/mode": {
+    "format": " {}",
+    "tooltip": false
+  },
+  "clock": {
+    "interval": 1,
+    "format": "{:%a · %H:%M}",
+    "format-alt": "{:%A · %d %B %Y · %H:%M}",
+    "tooltip-format": "<tt><small>{calendar}</small></tt>",
+    "calendar": {
+      "mode": "month",
+      "weeks-pos": "right",
+      "on-scroll": 1,
+      "format": {
+        "months": "<span color='#bb9af7'><b>{}</b></span>",
+        "days": "<span color='#c0caf5'>{}</span>",
+        "weeks": "<span color='#565f89'>W{}</span>",
+        "weekdays": "<span color='#7dcfff'><b>{}</b></span>",
+        "today": "<span color='#f7768e'><b><u>{}</u></b></span>"
+      }
+    }
+  },
+  "custom/notification": {
+    "tooltip": false,
+    "format": "{icon}",
+    "format-icons": {
+      "notification": "", "none": "", "dnd-notification": "",
+      "dnd-none": "", "inhibited-notification": "",
+      "inhibited-none": "", "dnd-inhibited-notification": "",
+      "dnd-inhibited-none": ""
+    },
+    "return-type": "json",
+    "exec": "~/.local/bin/swaync-client --subscribe-waybar",
+    "on-click": "~/.local/bin/swaync-client --toggle-panel --skip-wait",
+    "on-click-middle": "~/.local/bin/swaync-client --hide-latest --skip-wait",
+    "on-click-right": "~/.local/bin/swaync-client --toggle-dnd --skip-wait"
+  },
+  "bluetooth": {
+    "format": "",
+    "format-disabled": " off",
+    "format-off": " off",
+    "format-connected": " {num_connections}",
+    "format-no-controller": "",
+    "tooltip-format": "Bluetooth: {status}\nConnected devices: {num_connections}",
+    "on-click": "env XDG_CURRENT_DESKTOP=GNOME gnome-control-center bluetooth"
+  },
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "format-muted": " {volume}% muted",
+    "format-icons": {
+      "headphone": "", "headset": "", "phone": "",
+      "portable": "", "car": "", "default": ["", "", ""]
+    },
+    "scroll-step": 5,
+    "on-click": "pavucontrol",
+    "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+    "tooltip-format": "{desc}\nVolume: {volume}%\nScroll: adjust · Right click: mute"
+  },
+  "cpu": {
+    "interval": 3,
+    "format": " {usage}%",
+    "tooltip": true,
+    "on-click": "gnome-system-monitor"
+  },
+  "memory": {
+    "interval": 3,
+    "format": " {percentage}%",
+    "tooltip-format": "Memory: {used:0.1f} GiB / {total:0.1f} GiB",
+    "on-click": "gnome-system-monitor"
+  },
+  "custom/temperature": {
+    "exec": "~/.local/bin/desktop-temperature",
+    "return-type": "json",
+    "interval": 5,
+    "format": "{}",
+    "on-click": "gnome-system-monitor"
+  },
+  "backlight": {
+    "format": " {percent}%",
+    "scroll-step": 5,
+    "tooltip-format": "Display brightness: {percent}%\nScroll to adjust"
+  },
+  "battery": {
+    "interval": 5,
+    "states": { "warning": 25, "critical": 12 },
+    "format": "{icon} {capacity}%",
+    "format-charging": " {capacity}%",
+    "format-plugged": " {capacity}%",
+    "format-full": "",
+    "format-icons": ["", "", "", "", ""],
+    "tooltip-format": "{timeTo} · {power:.1f} W",
+    "on-click": "env XDG_CURRENT_DESKTOP=GNOME gnome-control-center power"
+  },
+  "tray": { "icon-size": 15, "spacing": 8 },
+  "custom/appearance": {
+    "format": "◐",
+    "tooltip-format": "Appearance: wallpaper and terminal opacity",
+    "on-click": "~/.config/sway/scripts/appearance-menu"
+  },
+  "custom/power": {
+    "format": "",
+    "tooltip-format": "Session and power",
+    "on-click": "~/.config/sway/scripts/power-menu"
+  }
+}

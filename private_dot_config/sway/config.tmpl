@@ -7,30 +7,47 @@
 # Search annotations use: #@ shortcut :: description :: sway command
 
 set $mod Mod4
-set $term terminator
+set $term foot
 set $menu wofi --show drun
 
-font pango:monospace 10
+font pango:JetBrains Mono 10
 default_border pixel 2
+gaps inner 6
+gaps outer 3
 focus_follows_mouse no
 
+# Keep a complete, consistent cursor set across native Wayland applications.
+seat * xcursor_theme Adwaita 24
+
+# Generated from the shared Tokyo Night palette in .chezmoidata.yaml.
+client.focused          #{{ .desktop.theme.blue }} #{{ .desktop.theme.background }} #{{ .desktop.theme.foreground }} #{{ .desktop.theme.blue }} #{{ .desktop.theme.blue }}
+client.focused_inactive #{{ .desktop.theme.surface_alt }} #{{ .desktop.theme.background }} #a9b1d6 #{{ .desktop.theme.surface_alt }} #{{ .desktop.theme.surface_alt }}
+client.unfocused        #{{ .desktop.theme.surface }} #{{ .desktop.theme.background }} #{{ .desktop.theme.muted }} #{{ .desktop.theme.surface }} #{{ .desktop.theme.surface }}
+client.urgent           #{{ .desktop.theme.pink }} #{{ .desktop.theme.pink }} #{{ .desktop.theme.background }} #{{ .desktop.theme.pink }} #{{ .desktop.theme.pink }}
+client.placeholder      #{{ .desktop.theme.surface_alt }} #{{ .desktop.theme.background }} #{{ .desktop.theme.muted }} #{{ .desktop.theme.surface_alt }} #{{ .desktop.theme.surface_alt }}
+
 include ~/.config/sway/outputs.conf
-output * bg /usr/share/backgrounds/Numbat_wallpaper_dimmed_3480x2160.png fill
+output * bg ~/.local/share/tokyo-night/wallpapers/midnight.png fill
 
 # Session integration
-exec systemctl --user import-environment WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
-exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP
-exec ~/.config/sway/scripts/start-mako
+exec systemctl --user import-environment DISPLAY WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
+exec dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
+exec ~/.local/bin/swaync
+exec_always ~/.config/sway/scripts/start-waybar
 exec nm-applet --indicator
-exec /usr/libexec/polkit-gnome-authentication-agent-1
+exec ~/.config/sway/scripts/start-polkit-agent
+{{ if eq .desktopProfile "amice-workstation" -}}
 exec_always ~/.config/sway/scripts/apply-outputs
+{{ end -}}
+exec_always ~/.local/bin/apply-appearance --restore --quiet
 
-# Lock after 10 minutes; power displays off after 15 minutes.
-exec swayidle -w \
-    timeout 600 'gtklock' \
-    timeout 900 'swaymsg "output * power off"' \
-        resume 'swaymsg "output * power on"' \
-    before-sleep 'gtklock --daemonize'
+# Idle locking/display power-off remains opt-in until the lock screen is tested
+# on each machine profile.
+# exec swayidle -w \
+#     timeout 600 'gtklock' \
+#     timeout 900 'swaymsg "output * power off"' \
+#         resume 'swaymsg "output * power on"' \
+#     before-sleep 'gtklock --daemonize'
 
 input type:touchpad {
     tap enabled
@@ -44,8 +61,10 @@ floating_modifier $mod normal
 #@ Super+/ :: Search and execute Sway commands :: exec ~/.config/sway/scripts/keybindings
 bindsym $mod+slash exec ~/.config/sway/scripts/keybindings
 #@ Palette only :: Configure displays graphically :: exec wdisplays
+{{ if eq .desktopProfile "amice-workstation" -}}
 #@ Palette only :: Arrange restored VS Code windows on monitors 1-4 :: exec ~/.config/sway/scripts/arrange-code-windows
-#@ Super+Return :: Open terminal :: exec terminator
+{{ end -}}
+#@ Super+Return :: Open Foot and attach to tmux main :: exec foot
 bindsym $mod+Return exec $term
 #@ Super+d :: Open application launcher :: exec wofi --show drun
 bindsym $mod+d exec $menu
@@ -59,20 +78,22 @@ bindsym $mod+Shift+e exec swaynag -t warning \
     -B 'Yes, exit Sway' 'swaymsg exit'
 #@ Super+Shift+x :: Lock screen :: exec gtklock
 bindsym $mod+Shift+x exec gtklock
+#@ Super+Alt+Space :: Open graphical system controls :: exec ~/.config/sway/scripts/system-menu
+bindsym $mod+Mod1+space exec ~/.config/sway/scripts/system-menu
+#@ Super+p :: Open lock, suspend, logout, restart, and shutdown menu :: exec ~/.config/sway/scripts/power-menu
+bindsym $mod+p exec ~/.config/sway/scripts/power-menu
+#@ Super+n :: Hide the latest notification popup but keep it in history :: exec ~/.local/bin/swaync-client --hide-latest --skip-wait
+bindsym $mod+n exec ~/.local/bin/swaync-client --hide-latest --skip-wait
+#@ Super+Shift+n :: Toggle notification history :: exec ~/.local/bin/swaync-client --toggle-panel --skip-wait
+bindsym $mod+Shift+n exec ~/.local/bin/swaync-client --toggle-panel --skip-wait
+#@ Super+Left Ctrl+n :: Clear all notifications :: exec ~/.local/bin/swaync-client --close-all --skip-wait
+bindsym $mod+Ctrl+n exec ~/.local/bin/swaync-client --close-all --skip-wait
 
-# Focus — home row
-#@ Super+h :: Focus left :: focus left
-bindsym $mod+h focus left
-#@ Super+j :: Focus down :: focus down
-bindsym $mod+j focus down
-#@ Super+k :: Focus up :: focus up
-bindsym $mod+k focus up
-#@ Super+l :: Focus right :: focus right
-bindsym $mod+l focus right
-bindsym $mod+Left focus left
-bindsym $mod+Down focus down
-bindsym $mod+Up focus up
-bindsym $mod+Right focus right
+# Focus — generated from .chezmoidata.yaml
+{{ range .desktop.directions }}
+#@ Super+{{ .key }} :: Focus {{ lower .label }} :: focus {{ .name }}
+bindsym $mod+{{ .key }} focus {{ .name }}
+{{ end }}
 #@ Super+a :: Focus parent container :: focus parent
 bindsym $mod+a focus parent
 #@ Palette only :: Toggle focus between tiled and floating windows :: focus mode_toggle
@@ -81,19 +102,12 @@ bindsym $mod+a focus parent
 #@ Palette only :: Move focused window to the monitor above :: move container to output up
 #@ Palette only :: Move focused window to the monitor on the right :: move container to output right
 
-# Move windows — same directions plus Shift
-#@ Super+Alt+h :: Move focused window left :: move left
-bindsym $mod+Mod1+h move left
-#@ Super+Alt+j :: Move focused window down :: move down
-bindsym $mod+Mod1+j move down
-#@ Super+Alt+k :: Move focused window up :: move up
-bindsym $mod+Mod1+k move up
-#@ Super+Alt+l :: Move focused window right :: move right
-bindsym $mod+Mod1+l move right
-bindsym $mod+Mod1+Left move left
-bindsym $mod+Mod1+Down move down
-bindsym $mod+Mod1+Up move up
-bindsym $mod+Mod1+Right move right
+# Move windows — generated from .chezmoidata.yaml
+{{ range .desktop.directions }}
+#@ Super+Alt+{{ .key }} :: Move focused window {{ .name }} :: move {{ .name }}
+bindsym $mod+Mod1+{{ .key }} move {{ .name }}
+bindsym $mod+Mod1+{{ .label }} move {{ .name }}
+{{ end }}
 
 # Move an entire workspace between monitors. Use the left Ctrl thumb key.
 #@ Super+Left Ctrl+h :: Move workspace to the monitor on the left :: move workspace to output left
@@ -105,20 +119,14 @@ bindsym $mod+Ctrl+k move workspace to output up
 #@ Super+Left Ctrl+l :: Move workspace to the monitor on the right :: move workspace to output right
 bindsym $mod+Ctrl+l move workspace to output right
 
-# Workspaces
-set $ws1 "1"
-set $ws2 "2"
-set $ws3 "3"
-set $ws4 "4"
-set $ws5 "5"
-set $ws6 "6"
-set $ws7 "7"
-set $ws8 "8"
-set $ws9 "9"
-set $ws10 "10"
+# Workspaces — generated from .chezmoidata.yaml
+{{ range .desktop.workspaces }}
+set $ws{{ .name }} "{{ .name }}"
+{{ end }}
 
-# Monitor roles use stable identities because DP connector numbers can change
-# after a reboot. The alternate two-Dell setup is included as a fallback.
+{{ if eq .desktopProfile "amice-workstation" -}}
+# Workstation-only monitor roles use stable identities because DP connector
+# numbers can change after a reboot. Portable hosts let Sway place workspaces.
 workspace $ws1 output "Dell Inc. DELL U2715H H7YCC6B70Y1S" "Dell Inc. DELL SE2719HR 19K8JB3" eDP-1
 workspace $ws2 output "Dell Inc. DELL U3011 PH5NY1BH326L" "Dell Inc. DELL SE2719HR 6N45XC3" eDP-1
 workspace $ws3 output "Ancor Communications Inc ASUS PB278 C9LMTF003960" eDP-1
@@ -129,12 +137,16 @@ workspace $ws7 output "Ancor Communications Inc ASUS PB278 C9LMTF003960" eDP-1
 workspace $ws8 output eDP-1
 workspace $ws9 output "Dell Inc. DELL U2715H H7YCC6B70Y1S" "Dell Inc. DELL SE2719HR 19K8JB3" eDP-1
 workspace $ws10 output eDP-1
+{{ end }}
 
 # Fixed-purpose applications use both native-Wayland and XWayland variants.
 # VS Code and Chrome are distributed across multiple workspaces by the startup
 # helper; later windows remain on the workspace where the user opens them.
+assign [app_id="^foot$"] workspace number $ws9
+assign [class="(?i)^foot$"] workspace number $ws9
 assign [app_id="^terminator$"] workspace number $ws9
 assign [class="(?i)^terminator$"] workspace number $ws9
+{{ if eq .desktopProfile "amice-workstation" -}}
 assign [app_id="^signal$"] workspace number $ws10
 assign [class="(?i)^signal$"] workspace number $ws10
 assign [app_id="^slack$"] workspace number $ws10
@@ -144,51 +156,19 @@ assign [class="(?i)^slack$"] workspace number $ws10
 # tile. Super+- can reveal it from the scratchpad when needed.
 for_window [app_id="^pcloud$"] move scratchpad
 for_window [class="(?i)^pcloud$"] move scratchpad
+{{ end }}
 
+{{ if eq .desktopProfile "amice-workstation" -}}
 exec ~/.config/sway/scripts/start-pcloud
 exec ~/.config/sway/scripts/start-session-apps
+{{ end }}
 
-#@ Super+1 :: Switch to workspace 1 :: workspace number 1
-bindsym $mod+1 workspace number $ws1
-#@ Super+2 :: Switch to workspace 2 :: workspace number 2
-bindsym $mod+2 workspace number $ws2
-#@ Super+3 :: Switch to workspace 3 :: workspace number 3
-bindsym $mod+3 workspace number $ws3
-#@ Super+4 :: Switch to workspace 4 :: workspace number 4
-bindsym $mod+4 workspace number $ws4
-#@ Super+5 :: Switch to workspace 5 :: workspace number 5
-bindsym $mod+5 workspace number $ws5
-#@ Super+6 :: Switch to workspace 6 :: workspace number 6
-bindsym $mod+6 workspace number $ws6
-#@ Super+7 :: Switch to workspace 7 :: workspace number 7
-bindsym $mod+7 workspace number $ws7
-#@ Super+8 :: Switch to workspace 8 :: workspace number 8
-bindsym $mod+8 workspace number $ws8
-#@ Super+9 :: Switch to workspace 9 :: workspace number 9
-bindsym $mod+9 workspace number $ws9
-#@ Super+0 :: Switch to workspace 10 :: workspace number 10
-bindsym $mod+0 workspace number $ws10
-
-#@ Super+Shift+1 :: Move window to workspace 1 :: move container to workspace number 1
-bindsym $mod+Shift+1 move container to workspace number $ws1
-#@ Super+Shift+2 :: Move window to workspace 2 :: move container to workspace number 2
-bindsym $mod+Shift+2 move container to workspace number $ws2
-#@ Super+Shift+3 :: Move window to workspace 3 :: move container to workspace number 3
-bindsym $mod+Shift+3 move container to workspace number $ws3
-#@ Super+Shift+4 :: Move window to workspace 4 :: move container to workspace number 4
-bindsym $mod+Shift+4 move container to workspace number $ws4
-#@ Super+Shift+5 :: Move window to workspace 5 :: move container to workspace number 5
-bindsym $mod+Shift+5 move container to workspace number $ws5
-#@ Super+Shift+6 :: Move window to workspace 6 :: move container to workspace number 6
-bindsym $mod+Shift+6 move container to workspace number $ws6
-#@ Super+Shift+7 :: Move window to workspace 7 :: move container to workspace number 7
-bindsym $mod+Shift+7 move container to workspace number $ws7
-#@ Super+Shift+8 :: Move window to workspace 8 :: move container to workspace number 8
-bindsym $mod+Shift+8 move container to workspace number $ws8
-#@ Super+Shift+9 :: Move window to workspace 9 :: move container to workspace number 9
-bindsym $mod+Shift+9 move container to workspace number $ws9
-#@ Super+Shift+0 :: Move window to workspace 10 :: move container to workspace number 10
-bindsym $mod+Shift+0 move container to workspace number $ws10
+{{ range .desktop.workspaces }}
+#@ Super+{{ .key }} :: Switch to workspace {{ .name }} :: workspace number {{ .name }}
+bindsym $mod+{{ .key }} workspace number $ws{{ .name }}
+#@ Super+Shift+{{ .key }} :: Move window to workspace {{ .name }} :: move container to workspace number {{ .name }}
+bindsym $mod+Shift+{{ .key }} move container to workspace number $ws{{ .name }}
+{{ end }}
 #@ Super+Tab :: Switch to the previous workspace :: workspace back_and_forth
 bindsym $mod+Tab workspace back_and_forth
 
@@ -255,6 +235,10 @@ bindsym --locked XF86AudioPrev exec playerctl previous
 bindsym --locked XF86MonBrightnessUp exec brightnessctl set +5%
 #@ Brightness Down :: Decrease laptop brightness 5 percent :: exec brightnessctl set 5%-
 bindsym --locked XF86MonBrightnessDown exec brightnessctl set 5%-
+#@ Super+Alt+= :: Increase laptop brightness 5 percent :: exec brightnessctl set +5%
+bindsym $mod+Mod1+equal exec brightnessctl set +5%
+#@ Super+Alt+- :: Decrease laptop brightness 5 percent :: exec brightnessctl set 5%-
+bindsym $mod+Mod1+minus exec brightnessctl set 5%-
 
 # Common dialogs float instead of consuming a tile.
 for_window [window_role="pop-up"] floating enable
@@ -262,8 +246,3 @@ for_window [window_role="bubble"] floating enable
 for_window [window_role="task_dialog"] floating enable
 for_window [window_type="dialog"] floating enable
 for_window [window_type="menu"] floating enable
-
-bar {
-    position top
-    status_command i3status
-}
