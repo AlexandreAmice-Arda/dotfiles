@@ -8,7 +8,12 @@ fi
 
 code_window_ids() {
     swaymsg --raw --type get_tree \
-        | jq -r '[.. | objects | select(.app_id? == "code") | .id]
+        | jq -r '[.. | objects
+            | select(
+                .app_id? == "code"
+                or ((.window_properties.class? // "") | ascii_downcase) == "code"
+              )
+            | .id]
             | unique
             | sort
             | .[]'

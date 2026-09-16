@@ -1,20 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-outputs=${SWAY_OUTPUTS_JSON:-$(swaymsg --raw --type get_outputs)}
-
-name_for_serial() {
-    jq -r --arg serial "$1" '.[] | select(.active and .serial == $serial) | .name' <<< "$outputs" | head -n 1
-}
-
 {{ if eq .desktopProfile "amice-workstation" -}}
-main_output=$(name_for_serial PH5NY1BH326L)
-[[ -n "$main_output" ]] || main_output=$(name_for_serial 6N45XC3)
-{{ else -}}
+outputs=${SWAY_OUTPUTS_JSON:-$(swaymsg --raw --type get_outputs)}
 main_output=""
+{{ range .desktop.profiles.amice_workstation.primary_output_serials -}}
+[[ -n "$main_output" ]] || main_output=$(jq -r --arg serial "{{ . }}" \
+    '.[] | select(.active and .serial == $serial) | .name' <<< "$outputs" | head -n 1)
 {{ end -}}
-[[ -n "$main_output" ]] || main_output=$(jq -r '.[] | select(.active and .focused) | .name' <<< "$outputs" | head -n 1)
-[[ -n "$main_output" ]] || main_output=$(jq -r '.[] | select(.active) | .name' <<< "$outputs" | head -n 1)
+[[ -n "$main_output" ]] || main_output=$(jq -r \
+    '.[] | select(.active and .focused) | .name' <<< "$outputs" | head -n 1)
+[[ -n "$main_output" ]] || main_output=$(jq -r \
+    '.[] | select(.active) | .name' <<< "$outputs" | head -n 1)
 
 if [[ -z "$main_output" ]]; then
     notify-send --urgency=critical 'Waybar could not start' 'No active display was found.'
@@ -24,18 +21,15 @@ fi
 runtime_config="${XDG_RUNTIME_DIR:-/tmp}/waybar-main-${UID}.json"
 jq -n --arg output "$main_output" --arg include "$HOME/.config/waybar/config.json" \
     '{output: $output, include: [$include]}' > "$runtime_config"
+config=$runtime_config
+{{ else -}}
+config="$HOME/.config/waybar/config.json"
+main_output=all
+{{ end -}}
 
 if [[ ${WAYBAR_DRY_RUN:-0} == 1 ]]; then
     printf '%s\n' "$main_output"
     exit 0
 fi
 
-pkill -u "$UID" -x waybar 2>/dev/null || true
-while read -r subscriber_pid; do
-    [[ -r "/proc/$subscriber_pid/cmdline" ]] || continue
-    subscriber_argv=$(tr '\0' ' ' < "/proc/$subscriber_pid/cmdline")
-    [[ $subscriber_argv == *'swaync-client --subscribe-waybar '* ]] \
-        && kill "$subscriber_pid" 2>/dev/null || true
-done < <(pgrep -u "$UID" -x swaync-client 2>/dev/null || true)
-
-exec "$HOME/.local/bin/waybar" --config "$runtime_config" --style "$HOME/.config/waybar/style.css"
+exec "$HOME/.local/bin/waybar" --config "$config" --style "$HOME/.config/waybar/style.css"

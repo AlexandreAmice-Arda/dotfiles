@@ -1,6 +1,9 @@
 {{- $gitName := promptStringOnce . "gitName" "Git name" -}}
 {{- $gitEmail := promptStringOnce . "gitEmail" "Git email" -}}
-{{- $profiles := list "portable" "amice-workstation" -}}
+{{- $profiles := list "portable" -}}
+{{- if eq .chezmoi.os "linux" -}}
+{{-   $profiles = list "portable" "amice-workstation" -}}
+{{- end -}}
 {{- $desktopProfile := promptChoiceOnce . "desktopProfile" "Desktop profile" $profiles "portable" -}}
 sourceDir = {{ .chezmoi.sourceDir | quote }}
 umask = 0o022

@@ -1,0 +1,17 @@
+{{- if eq .chezmoi.os "linux" -}}
+#!/bin/sh
+set -eu
+
+state_dir={{ joinPath .chezmoi.homeDir ".local/state/tokyo-night" | quote }}
+wallpaper_dir={{ joinPath .chezmoi.homeDir ".local/share/tokyo-night/wallpapers" | quote }}
+
+umask 077
+mkdir -p "$state_dir"
+[ -f "$state_dir/mood" ] || printf 'midnight\n' > "$state_dir/mood"
+[ -f "$state_dir/opacity" ] || printf '0.95\n' > "$state_dir/opacity"
+[ -f "$state_dir/foot-opacity.ini" ] \
+    || printf '[colors]\nalpha=0.95\n' > "$state_dir/foot-opacity.ini"
+if [ ! -e "$state_dir/wallpaper.png" ] && [ ! -L "$state_dir/wallpaper.png" ]; then
+    ln -s "$wallpaper_dir/midnight.png" "$state_dir/wallpaper.png"
+fi
+{{- end }}

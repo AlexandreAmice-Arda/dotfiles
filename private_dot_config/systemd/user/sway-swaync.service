@@ -1,0 +1,10 @@
+[Unit]
+Description=Sway notification center
+PartOf=sway-session.target
+After=sway-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/swaync
+Restart=on-failure
+RestartSec=2

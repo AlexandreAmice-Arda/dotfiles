@@ -26,27 +26,39 @@ start_if_missing() {
         return 0
     fi
 
+    if [[ ! -x $1 ]]; then
+        notify-send "Skipped optional application" "$label is not installed at $1."
+        return 0
+    fi
+
     "$@" >/dev/null 2>&1 &
 }
 
 window_ids() {
     local app_id=$1
+    local xwayland_class=$2
     swaymsg --raw --type get_tree \
-        | jq -r --arg app_id "$app_id" \
-            '.. | objects | select(.app_id? == $app_id) | .id' \
+        | jq -r --arg app_id "$app_id" --arg class "${xwayland_class,,}" \
+            '.. | objects
+            | select(
+                .app_id? == $app_id
+                or ((.window_properties.class? // "") | ascii_downcase) == $class
+              )
+            | .id' \
         | awk '!seen[$0]++'
 }
 
 window_exists() {
-    [[ -n "$(window_ids "$1")" ]]
+    [[ -n "$(window_ids "$1" "$2")" ]]
 }
 
 launch_new_window() {
     local app_id=$1
+    local xwayland_class=$2
     local -a before_ids current_ids
     local id prior seen
 
-    mapfile -t before_ids < <(window_ids "$app_id")
+    mapfile -t before_ids < <(window_ids "$app_id" "$xwayland_class")
 
     case "$app_id" in
         google-chrome)
@@ -60,7 +72,7 @@ launch_new_window() {
     esac
 
     for _ in {1..100}; do
-        mapfile -t current_ids < <(window_ids "$app_id")
+        mapfile -t current_ids < <(window_ids "$app_id" "$xwayland_class")
         for id in "${current_ids[@]}"; do
             seen=0
             for prior in "${before_ids[@]}"; do
@@ -80,7 +92,8 @@ launch_new_window() {
 ensure_workspace_windows() {
     local label=$1
     local app_id=$2
-    shift 2
+    local xwayland_class=$3
+    shift 3
     local -a workspaces=("$@") ids
     local index=0 workspace id
 
@@ -91,12 +104,12 @@ ensure_workspace_windows() {
         return 0
     fi
 
-    mapfile -t ids < <(window_ids "$app_id")
+    mapfile -t ids < <(window_ids "$app_id" "$xwayland_class")
     for workspace in "${workspaces[@]}"; do
         if (( index < ${#ids[@]} )); then
             id=${ids[$index]}
         else
-            if ! id=$(launch_new_window "$app_id"); then
+            if ! id=$(launch_new_window "$app_id" "$xwayland_class"); then
                 notify-send --urgency=critical \
                     "Sway startup incomplete" \
                     "Could not create the $label window for workspace $workspace."
@@ -113,31 +126,14 @@ ensure_workspace_windows() {
 
 move_app_windows() {
     local app_id=$1
-    local workspace=$2
+    local xwayland_class=$2
+    local workspace=$3
     swaymsg -- "[app_id=\"^${app_id}$\"] move container to workspace number $workspace" \
+        >/dev/null 2>&1 || true
+    swaymsg -- "[class=\"(?i)^${xwayland_class}$\"] move container to workspace number $workspace" \
         >/dev/null 2>&1 || true
 }
 
-if [[ ${SESSION_APPS_DRY_RUN:-0} != 1 ]]; then
-    for _ in {1..50}; do
-        secret_service_ready && break
-        sleep 0.2
-    done
-
-    if ! secret_service_ready; then
-        notify-send --urgency=critical \
-            "Sway startup paused" \
-            "The login keyring did not unlock, so credential-using apps were not started."
-        exit 1
-    fi
-fi
-
-start_if_missing Signal \
-    '^/opt/Signal/signal-desktop( |$)' \
-    /opt/Signal/signal-desktop --password-store=gnome-libsecret
-start_if_missing Slack \
-    '(^|/)(slack|slack-desktop)( |$)' \
-    /usr/bin/slack --password-store=gnome-libsecret
 start_if_missing Foot \
     '(^|/)foot( |$)' \
     /usr/bin/foot
@@ -145,20 +141,47 @@ start_if_missing "VS Code" \
     '^/usr/share/code/code( |$)' \
     /usr/bin/code "$code_project"
 
-ensure_workspace_windows Chrome google-chrome 5 6 7 8
+credentials_ready=1
+if [[ ${SESSION_APPS_DRY_RUN:-0} != 1 ]]; then
+    for _ in {1..50}; do
+        secret_service_ready && break
+        sleep 0.2
+    done
+
+    if ! secret_service_ready; then
+        credentials_ready=0
+        notify-send \
+            "Credential applications skipped" \
+            "The login keyring is locked. Foot and VS Code were still started."
+    fi
+fi
+
+if (( credentials_ready )); then
+    start_if_missing Signal \
+        '^/opt/Signal/signal-desktop( |$)' \
+        /opt/Signal/signal-desktop --password-store=gnome-libsecret
+    start_if_missing Slack \
+        '(^|/)(slack|slack-desktop)( |$)' \
+        /usr/bin/slack --password-store=gnome-libsecret
+    if [[ -x /usr/bin/google-chrome-stable || ${SESSION_APPS_DRY_RUN:-0} == 1 ]]; then
+        ensure_workspace_windows Chrome google-chrome Google-chrome 5 6 7 8
+    fi
+fi
 
 if [[ ${SESSION_APPS_DRY_RUN:-0} != 1 ]]; then
     # Slack can honor its old "start minimized" preference. A second invocation
     # asks the single running instance to show its main window.
     sleep 3
-    if ! window_exists slack; then
+    if (( credentials_ready )) && ! window_exists slack Slack; then
         /usr/bin/slack --password-store=gnome-libsecret >/dev/null 2>&1 &
         sleep 2
     fi
 
-    move_app_windows foot 9
-    move_app_windows signal 10
-    move_app_windows slack 10
+    move_app_windows foot foot 9
+    if (( credentials_ready )); then
+        move_app_windows signal Signal 10
+        move_app_windows slack Slack 10
+    fi
 
     # VS Code owns its detached editor windows as part of one project. Let it
     # restore them, then spread the four related windows across workspaces 1-4.

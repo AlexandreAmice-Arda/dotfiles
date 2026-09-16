@@ -28,7 +28,8 @@ async function swaymsg(args) {
 function findFocusedCodeWindow(node, workspaceNumber = undefined) {
   const currentWorkspace = node.type === 'workspace' ? node.num : workspaceNumber;
 
-  if (node.focused && node.app_id === 'code') {
+  const xwaylandClass = node.window_properties?.class?.toLowerCase();
+  if (node.focused && (node.app_id === 'code' || xwaylandClass === 'code')) {
     return {
       containerId: node.id,
       workspaceNumber: currentWorkspace,

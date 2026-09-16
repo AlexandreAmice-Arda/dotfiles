@@ -1,10 +1,32 @@
 desktop:
+  support:
+    ubuntu_minimum: "24.04"
+    macos_minimum_major: 13
+    qualified_ubuntu:
+      - "24.04"
+    qualified_macos: []
+  power:
+    lock_seconds: 600
+    display_off_seconds: 900
+    battery_suspend_seconds: 1800
+  fonts:
+    interface: "JetBrains Mono"
+    icons: "FontAwesome"
+  layout:
+    gaps_inner: 6
+    gaps_outer: 3
+    terminal_font_size: 11
+    terminal_padding_x: 12
+    terminal_padding_y: 10
   theme:
     background: "1a1b26"
+    background_deep: "10111a"
     surface: "24283b"
     surface_alt: "414868"
+    surface_hover: "292e45"
     foreground: "c0caf5"
-    muted: "565f89"
+    foreground_alt: "a9b1d6"
+    muted: "737aa2"
     blue: "7aa2f7"
     cyan: "7dcfff"
     purple: "bb9af7"
@@ -45,3 +67,61 @@ desktop:
       key: "9"
     - name: "10"
       key: "0"
+  profiles:
+    amice_workstation:
+      primary_output_serials:
+        - "PH5NY1BH326L"
+        - "6N45XC3"
+      displays:
+        office_left:
+          serial: "H7YCC6B70Y1S"
+          mode: "2560x1440"
+          transform: "normal"
+          position: "0 221"
+        office_center:
+          serial: "PH5NY1BH326L"
+          mode: "2560x1600"
+          transform: "normal"
+          position: "2560 591"
+        office_right:
+          serial: "C9LMTF003960"
+          mode: "2560x1440"
+          transform: "270"
+          position: "5120 0"
+        home_left:
+          serial: "19K8JB3"
+          mode: "1920x1080"
+          transform: "normal"
+          position: "0 185"
+        home_right:
+          serial: "6N45XC3"
+          mode: "1920x1080"
+          transform: "normal"
+          position: "1920 185"
+        laptop:
+          name: "eDP-1"
+          mode: "1920x1200"
+          office_position: "640 1661"
+          home_position: "1147 1265"
+          fallback_position: "0 0"
+      workspace_outputs:
+        - workspace: "1"
+          candidates: ["Dell Inc. DELL U2715H H7YCC6B70Y1S", "Dell Inc. DELL SE2719HR 19K8JB3", "eDP-1"]
+        - workspace: "2"
+          candidates: ["Dell Inc. DELL U3011 PH5NY1BH326L", "Dell Inc. DELL SE2719HR 6N45XC3", "eDP-1"]
+        - workspace: "3"
+          candidates: ["Ancor Communications Inc ASUS PB278 C9LMTF003960", "eDP-1"]
+        - workspace: "4"
+          candidates: ["eDP-1"]
+        - workspace: "5"
+          candidates: ["Dell Inc. DELL U2715H H7YCC6B70Y1S", "Dell Inc. DELL SE2719HR 19K8JB3", "eDP-1"]
+        - workspace: "6"
+          candidates: ["Dell Inc. DELL U3011 PH5NY1BH326L", "Dell Inc. DELL SE2719HR 6N45XC3", "eDP-1"]
+        - workspace: "7"
+          candidates: ["Ancor Communications Inc ASUS PB278 C9LMTF003960", "eDP-1"]
+        - workspace: "8"
+          candidates: ["eDP-1"]
+        - workspace: "9"
+          candidates: ["Dell Inc. DELL U2715H H7YCC6B70Y1S", "Dell Inc. DELL SE2719HR 19K8JB3", "eDP-1"]
+        - workspace: "10"
+          candidates: ["eDP-1"]

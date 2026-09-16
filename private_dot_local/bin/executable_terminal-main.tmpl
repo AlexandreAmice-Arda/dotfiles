@@ -1,0 +1,26 @@
+#!/bin/sh
+set -eu
+
+find_tmux() {
+    for candidate in \
+        "$(command -v tmux 2>/dev/null || true)" \
+        /opt/homebrew/bin/tmux \
+        /usr/local/bin/tmux \
+        /usr/bin/tmux
+    do
+        [ -n "$candidate" ] && [ -x "$candidate" ] && { printf '%s\n' "$candidate"; return; }
+    done
+    return 1
+}
+
+tmux_bin=$(find_tmux) || {
+    printf 'tmux is not installed or is not reachable from this GUI session\n' >&2
+    exit 127
+}
+
+if [ "${1:-}" = --check ]; then
+    printf '%s\n' "$tmux_bin"
+    exit 0
+fi
+
+exec "$tmux_bin" new-session -A -s main

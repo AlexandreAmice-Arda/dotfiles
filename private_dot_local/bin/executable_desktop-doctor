@@ -1,66 +1,18 @@
 #!/usr/bin/env bash
 set -u
 
-errors=0
-warnings=0
-
-ok() { printf 'ok      %s\n' "$*"; }
-warn() { printf 'warning %s\n' "$*"; warnings=$((warnings + 1)); }
-fail() { printf 'error   %s\n' "$*"; errors=$((errors + 1)); }
+doctor_lib="$HOME/.local/libexec/desktop-doctor"
+# shellcheck source=/dev/null
+source "$doctor_lib/common"
 
 printf 'Desktop doctor\nOS: %s  Architecture: %s\n\n' "$(uname -s)" "$(uname -m)"
 
-if [[ $(uname -s) == Darwin ]]; then
-    for command_name in chezmoi tmux aerospace; do
-        command -v "$command_name" >/dev/null 2>&1 && ok "$command_name" || fail "missing command: $command_name"
-    done
-    [[ -r "$HOME/.config/aerospace/aerospace.toml" ]] \
-        && ok 'AeroSpace config present' || fail 'AeroSpace config missing'
-else
-    for command_name in sway swaymsg jq foot tmux wofi gtklock brightnessctl wpctl grim slurp wl-copy; do
-        command -v "$command_name" >/dev/null 2>&1 && ok "$command_name" || fail "missing command: $command_name"
-    done
+case $(uname -s) in
+    Darwin) source "$doctor_lib/darwin" ;;
+    Linux) source "$doctor_lib/linux" ;;
+    *) fail "unsupported operating system: $(uname -s)" ;;
+esac
 
-    if command -v sway >/dev/null 2>&1 && [[ -r "$HOME/.config/sway/config" ]]; then
-        sway --unsupported-gpu --validate --config "$HOME/.config/sway/config" >/dev/null 2>&1 \
-            && ok 'Sway config valid' || fail 'Sway config invalid'
-    fi
-    if command -v foot >/dev/null 2>&1 && [[ -r "$HOME/.config/foot/foot.ini" ]]; then
-        foot --check-config --config "$HOME/.config/foot/foot.ini" >/dev/null 2>&1 \
-            && ok 'Foot config valid' || fail 'Foot config invalid'
-    fi
-    for file in "$HOME/.config/waybar/config.json" "$HOME/.config/swaync/config.json"; do
-        [[ -r "$file" ]] || { warn "optional config missing: $file"; continue; }
-        jq empty "$file" >/dev/null 2>&1 && ok "valid JSON: $file" || fail "invalid JSON: $file"
-    done
-
-    backlight=$(find /sys/class/backlight -mindepth 1 -maxdepth 1 -type l -o -type d 2>/dev/null | head -n 1)
-    if [[ -z "$backlight" ]]; then
-        warn 'no backlight device detected'
-    elif [[ -w "$backlight/brightness" ]]; then
-        ok "backlight writable: ${backlight##*/}"
-    elif getent group video 2>/dev/null | awk -F: -v user="$USER" '
-        { split($4, members, ","); for (i in members) if (members[i] == user) found=1 }
-        END { exit !found }
-    '; then
-        fail 'video-group membership is recorded but inactive; completely log out, then log in'
-    else
-        fail "backlight is not writable; add $USER to the video group and log in again"
-    fi
-
-    for wallpaper in midnight dusk dawn; do
-        [[ -r "$HOME/.local/share/tokyo-night/wallpapers/$wallpaper.png" ]] \
-            && ok "wallpaper: $wallpaper" || fail "missing wallpaper: $wallpaper"
-    done
-fi
-
-if command -v chezmoi >/dev/null 2>&1; then
-    if [[ -n $(chezmoi status 2>/dev/null) ]]; then
-        warn 'chezmoi-managed files differ from source; review `chezmoi status`'
-    else
-        ok 'chezmoi managed state clean'
-    fi
-fi
-
-printf '\nResult: %d error(s), %d warning(s)\n' "$errors" "$warnings"
-(( errors == 0 ))
+check_tmux_config
+check_chezmoi_state
+finish

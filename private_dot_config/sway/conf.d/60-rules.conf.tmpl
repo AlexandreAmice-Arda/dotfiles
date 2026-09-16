@@ -1,0 +1,21 @@
+# Common dialogs float rather than consuming a tile.
+for_window [window_role="pop-up"] floating enable
+for_window [window_role="bubble"] floating enable
+for_window [window_role="task_dialog"] floating enable
+for_window [window_type="dialog"] floating enable
+for_window [window_type="menu"] floating enable
+
+{{ if eq .desktopProfile "amice-workstation" -}}
+# Personal routing exists only in the explicit workstation profile.
+assign [app_id="^foot$"] workspace number $ws9
+assign [class="(?i)^foot$"] workspace number $ws9
+assign [app_id="^terminator$"] workspace number $ws9
+assign [class="(?i)^terminator$"] workspace number $ws9
+assign [app_id="^signal$"] workspace number $ws10
+assign [class="(?i)^signal$"] workspace number $ws10
+assign [app_id="^slack$"] workspace number $ws10
+assign [class="(?i)^slack$"] workspace number $ws10
+
+for_window [app_id="^pcloud$"] move scratchpad
+for_window [class="(?i)^pcloud$"] move scratchpad
+{{ end }}

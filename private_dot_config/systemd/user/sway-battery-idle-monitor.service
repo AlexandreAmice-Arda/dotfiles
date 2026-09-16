@@ -1,0 +1,8 @@
+[Unit]
+Description=Suspend an idle Sway session after external power is disconnected
+PartOf=sway-session.target
+After=sway-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/suspend-if-on-battery --watch

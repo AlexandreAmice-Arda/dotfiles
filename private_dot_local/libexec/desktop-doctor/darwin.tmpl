@@ -1,0 +1,48 @@
+for command_name in brew chezmoi gh tmux aerospace; do
+    require_command "$command_name"
+done
+
+macos_major=$(sw_vers -productVersion | cut -d. -f1)
+if [ "$macos_major" -ge {{ .desktop.support.macos_minimum_major }} ] 2>/dev/null; then
+    ok "supported macOS major version: $macos_major"
+else
+    fail "macOS {{ .desktop.support.macos_minimum_major }} or newer is required; found $(sw_vers -productVersion)"
+fi
+case " {{ range .desktop.support.qualified_macos }}{{ . }} {{ end }}" in
+    *" $macos_major "*) ok "hardware-qualified macOS major version: $macos_major" ;;
+    *) warn "macOS $macos_major is generation-compatible but not hardware-qualified here" ;;
+esac
+
+case "${SHELL:-}" in
+    */zsh|*/bash) ok "supported login shell: ${SHELL:-unknown}" ;;
+    *) fail "unsupported login shell: ${SHELL:-unknown}" ;;
+esac
+
+require_file "$HOME/.config/aerospace/aerospace.toml"
+require_file "$HOME/.config/ghostty/config.ghostty"
+require_file "$HOME/.local/bin/terminal-main"
+"$HOME/.local/bin/terminal-main" --check >/dev/null 2>&1 \
+    && ok 'GUI terminal can resolve tmux' || fail 'GUI terminal cannot resolve tmux'
+
+ghostty_app=/Applications/Ghostty.app/Contents/MacOS/ghostty
+[ -x "$ghostty_app" ] && ok 'Ghostty application installed' || fail 'Ghostty application missing'
+
+for shadow in \
+    "$HOME/.aerospace.toml" \
+    "$HOME/Library/Application Support/com.mitchellh.ghostty/config" \
+    "$HOME/Library/Application Support/com.mitchellh.ghostty/config.ghostty"
+do
+    [ ! -e "$shadow" ] || warn "shadow configuration can override managed settings: $shadow"
+done
+
+if pgrep -x AeroSpace >/dev/null 2>&1; then
+    loaded_config=$(aerospace config --config-path 2>/dev/null || true)
+    [ "$loaded_config" = "$HOME/.config/aerospace/aerospace.toml" ] \
+        && ok 'AeroSpace loaded the managed config' \
+        || fail "AeroSpace loaded an unexpected config: ${loaded_config:-none}"
+    aerospace list-workspaces --all >/dev/null 2>&1 \
+        && ok 'AeroSpace CLI and Accessibility access work' \
+        || fail 'AeroSpace cannot query workspaces; check Accessibility permission'
+else
+    warn 'AeroSpace is not running; launch it before final qualification'
+fi

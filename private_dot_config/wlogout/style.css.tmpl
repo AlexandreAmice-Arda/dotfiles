@@ -1,0 +1,32 @@
+{{ template "tokyo-night.css" . }}
+
+* {
+  background-image: none;
+  font-family: "{{ .desktop.fonts.interface }}", "{{ .desktop.fonts.icons }}";
+  font-size: 15px;
+  font-weight: 700;
+}
+window { background: alpha(@tn_background_deep, 0.78); }
+button {
+  color: @tn_foreground;
+  background-color: @tn_surface;
+  border: 2px solid @tn_surface_alt;
+  border-radius: 20px;
+  padding: 42px 24px;
+  box-shadow: 0 12px 30px alpha(black, 0.35);
+}
+button:focus, button:active, button:hover {
+  color: @tn_background;
+  outline: none;
+  box-shadow: 0 0 0 4px alpha(@tn_foreground, 0.18);
+}
+#lock { border-color: @tn_purple; }
+#lock:hover, #lock:focus { background-color: @tn_purple; }
+#suspend { border-color: @tn_blue; }
+#suspend:hover, #suspend:focus { background-color: @tn_blue; }
+#logout { border-color: @tn_cyan; }
+#logout:hover, #logout:focus { background-color: @tn_cyan; }
+#reboot { border-color: @tn_yellow; }
+#reboot:hover, #reboot:focus { background-color: @tn_yellow; }
+#shutdown { border-color: @tn_pink; }
+#shutdown:hover, #shutdown:focus { background-color: @tn_pink; }

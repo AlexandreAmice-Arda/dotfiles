@@ -2,14 +2,14 @@
 set -euo pipefail
 
 selection=$(printf '%s\n' \
-    '󰸉  Appearance' \
-    '  Wi-Fi' \
-    '  Bluetooth' \
-    '  Audio' \
-    '  Displays' \
-    '  Power settings' \
-    '  Notifications' \
-    '  Power menu' \
+    'Appearance' \
+    'Wi-Fi' \
+    'Bluetooth' \
+    'Audio' \
+    'Displays' \
+    'Power settings' \
+    'Notifications' \
+    'Power menu' \
     | wofi --dmenu --prompt 'Control center' --width 440 --height 440 --cache-file /dev/null) || exit 0
 
 case "$selection" in

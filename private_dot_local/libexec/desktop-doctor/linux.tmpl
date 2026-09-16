@@ -1,0 +1,93 @@
+if [ -r /etc/os-release ]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
+else
+    ID=unknown
+    VERSION_ID=0
+fi
+if [ "${ID:-}" = ubuntu ] \
+    && dpkg --compare-versions "${VERSION_ID:-0}" ge {{ .desktop.support.ubuntu_minimum }}; then
+    ok "supported Ubuntu version: ${VERSION_ID}"
+else
+    fail "Ubuntu {{ .desktop.support.ubuntu_minimum }} or newer is required; found ${ID:-unknown} ${VERSION_ID:-unknown}"
+fi
+case " {{ range .desktop.support.qualified_ubuntu }}{{ . }} {{ end }}" in
+    *" ${VERSION_ID:-unknown} "*) ok "hardware-qualified Ubuntu release: ${VERSION_ID}" ;;
+    *) warn "Ubuntu ${VERSION_ID:-unknown} is generation-compatible but not hardware-qualified here" ;;
+esac
+
+for command_name in \
+    sway swaymsg swayidle jq foot tmux wofi gtklock brightnessctl wpctl \
+    playerctl grim slurp wl-copy notify-send nm-applet pavucontrol \
+    gnome-control-center gnome-system-monitor
+do
+    require_command "$command_name"
+done
+
+for wrapper in waybar swaync swaync-client wlogout; do
+    require_file "$HOME/.local/bin/$wrapper"
+done
+require_file "$HOME/.local/bin/suspend-if-on-battery"
+
+if command -v sway >/dev/null 2>&1 && [ -r "$HOME/.config/sway/config" ]; then
+    sway --unsupported-gpu --validate --config "$HOME/.config/sway/config" >/dev/null 2>&1 \
+        && ok 'Sway config valid' || fail 'Sway config invalid'
+fi
+if command -v foot >/dev/null 2>&1 && [ -r "$HOME/.config/foot/foot.ini" ]; then
+    foot --check-config --config "$HOME/.config/foot/foot.ini" >/dev/null 2>&1 \
+        && ok 'Foot config valid' || fail 'Foot config invalid'
+fi
+
+for file in "$HOME/.config/waybar/config.json" "$HOME/.config/swaync/config.json"; do
+    [ -r "$file" ] || { fail "missing config: $file"; continue; }
+    jq empty "$file" >/dev/null 2>&1 && ok "valid JSON: $file" || fail "invalid JSON: $file"
+done
+
+if command -v fc-match >/dev/null 2>&1; then
+    icon_font='{{ .desktop.fonts.icons }}'
+    font_family=$(fc-match -f '%{family}\n' "$icon_font" | head -n 1)
+    case "$font_family" in
+        *"$icon_font"*) ok "$icon_font available" ;;
+        *) fail "$icon_font is unavailable; Waybar icons will not render" ;;
+    esac
+fi
+
+portal_wlr=""
+for candidate in /usr/libexec/xdg-desktop-portal-wlr /usr/lib/xdg-desktop-portal-wlr; do
+    [ -x "$candidate" ] && portal_wlr=$candidate && break
+done
+[ -n "$portal_wlr" ] && ok 'wlr screen-sharing portal installed' \
+    || fail 'xdg-desktop-portal-wlr is not installed'
+
+backlight=$(find /sys/class/backlight -mindepth 1 -maxdepth 1 \( -type l -o -type d \) 2>/dev/null | head -n 1)
+if [ -z "$backlight" ]; then
+    warn 'no backlight device detected'
+elif [ -w "$backlight/brightness" ]; then
+    ok "backlight writable: ${backlight##*/}"
+elif getent group video 2>/dev/null | awk -F: -v user="$USER" '
+    { split($4, members, ","); for (i in members) if (members[i] == user) found=1 }
+    END { exit !found }
+'; then
+    fail 'video-group membership is recorded but inactive; completely log out, then log in'
+else
+    fail 'backlight access is unavailable; rerun install-ubuntu --grant-backlight if needed'
+fi
+
+for wallpaper in midnight dusk dawn; do
+    require_file "$HOME/.local/share/tokyo-night/wallpapers/$wallpaper.png"
+    require_file "$HOME/.local/share/tokyo-night/wallpapers/$wallpaper-portrait.png"
+done
+require_file "$HOME/.local/state/tokyo-night/foot-opacity.ini"
+require_file "$HOME/.local/state/tokyo-night/wallpaper.png"
+
+if [ -x "$HOME/.local/bin/suspend-if-on-battery" ]; then
+    power_policy=$("$HOME/.local/bin/suspend-if-on-battery" --dry-run 2>&1)
+    [ -n "$power_policy" ] && ok "battery idle policy: $power_policy"
+fi
+
+if [ -n "${SWAYSOCK:-}" ] && command -v systemctl >/dev/null 2>&1; then
+    for unit in sway-waybar sway-swaync sway-idle sway-nm-applet sway-polkit-agent; do
+        systemctl --user is-active --quiet "$unit.service" \
+            && ok "active service: $unit" || fail "inactive service: $unit"
+    done
+fi

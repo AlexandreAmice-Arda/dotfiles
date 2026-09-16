@@ -1,0 +1,53 @@
+#!/bin/sh
+set -eu
+
+power_supply_root=${POWER_SUPPLY_ROOT:-/sys/class/power_supply}
+
+# A host may expose several peripheral batteries. Only BAT* devices represent
+# the computer battery, and "Discharging" is the reliable signal that external
+# power is absent.
+power_state() {
+    found_system_battery=false
+    for status_file in "$power_supply_root"/BAT*/status; do
+        [ -r "$status_file" ] || continue
+        found_system_battery=true
+        status=$(tr -d '\r\n' < "$status_file")
+        if [ "$status" = Discharging ]; then
+            printf 'discharging\n'
+            return
+        fi
+    done
+
+    if [ "$found_system_battery" = true ]; then
+        printf 'external-power\n'
+    else
+        printf 'no-battery\n'
+    fi
+}
+
+case "${1:-}" in
+    "")
+        [ "$(power_state)" = discharging ] || exit 0
+        exec "$HOME/.local/bin/session-action" suspend
+        ;;
+    --dry-run)
+        case $(power_state) in
+            discharging) printf 'System battery is discharging; would lock and suspend.\n' ;;
+            external-power) printf 'External power detected; would remain awake.\n' ;;
+            no-battery) printf 'No system battery detected; would remain awake.\n' ;;
+        esac
+        ;;
+    --watch)
+        while :; do
+            case $(power_state) in
+                discharging) exec "$HOME/.local/bin/session-action" suspend ;;
+                no-battery) exit 0 ;;
+            esac
+            sleep 30
+        done
+        ;;
+    *)
+        printf 'usage: %s [--dry-run|--watch]\n' "$0" >&2
+        exit 2
+        ;;
+esac

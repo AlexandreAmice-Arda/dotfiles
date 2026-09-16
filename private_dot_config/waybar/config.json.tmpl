@@ -7,29 +7,16 @@
   "margin-right": 8,
   "spacing": 4,
   "fixed-center": true,
-  "modules-left": [
-    "custom/hub",
-    "sway/workspaces",
-    "sway/mode"
-  ],
-  "modules-center": [
-    "clock"
-  ],
+  "modules-left": ["custom/hub", "sway/workspaces", "sway/mode"],
+  "modules-center": ["clock"],
   "modules-right": [
-    "custom/notification",
-    "bluetooth",
-    "pulseaudio",
-    "cpu",
-    "memory",
-    "custom/temperature",
-    "backlight",
-    "battery",
-    "tray",
-    "custom/appearance",
-    "custom/power"
+    "custom/notification", "bluetooth", "pulseaudio", "cpu", "memory",
+    "custom/temperature", "backlight", "battery", "tray",
+    "custom/appearance", "custom/power"
   ],
+
   "custom/hub": {
-    "format": "",
+    "format": "◆",
     "tooltip-format": "Control center\nLeft click: system controls\nRight click: applications",
     "on-click": "~/.config/sway/scripts/system-menu",
     "on-click-right": "wofi --show drun"
@@ -39,14 +26,10 @@
     "disable-scroll": true,
     "format": "{name}",
     "persistent-workspaces": {
-      "1": [], "2": [], "3": [], "4": [], "5": [],
-      "6": [], "7": [], "8": [], "9": [], "10": []
+      {{- range $index, $workspace := .desktop.workspaces }}{{ if $index }}, {{ end }}"{{ $workspace.name }}": []{{ end }}
     }
   },
-  "sway/mode": {
-    "format": " {}",
-    "tooltip": false
-  },
+  "sway/mode": { "format": " {}", "tooltip": false },
   "clock": {
     "interval": 1,
     "format": "{:%a · %H:%M}",
@@ -57,16 +40,15 @@
       "weeks-pos": "right",
       "on-scroll": 1,
       "format": {
-        "months": "<span color='#bb9af7'><b>{}</b></span>",
-        "days": "<span color='#c0caf5'>{}</span>",
-        "weeks": "<span color='#565f89'>W{}</span>",
-        "weekdays": "<span color='#7dcfff'><b>{}</b></span>",
-        "today": "<span color='#f7768e'><b><u>{}</u></b></span>"
+        "months": "<span color='#{{ .desktop.theme.purple }}'><b>{}</b></span>",
+        "days": "<span color='#{{ .desktop.theme.foreground }}'>{}</span>",
+        "weeks": "<span color='#{{ .desktop.theme.muted }}'>W{}</span>",
+        "weekdays": "<span color='#{{ .desktop.theme.cyan }}'><b>{}</b></span>",
+        "today": "<span color='#{{ .desktop.theme.pink }}'><b><u>{}</u></b></span>"
       }
     }
   },
   "custom/notification": {
-    "tooltip": false,
     "format": "{icon}",
     "format-icons": {
       "notification": "", "none": "", "dnd-notification": "",
@@ -78,7 +60,8 @@
     "exec": "~/.local/bin/swaync-client --subscribe-waybar",
     "on-click": "~/.local/bin/swaync-client --toggle-panel --skip-wait",
     "on-click-middle": "~/.local/bin/swaync-client --hide-latest --skip-wait",
-    "on-click-right": "~/.local/bin/swaync-client --toggle-dnd --skip-wait"
+    "on-click-right": "~/.local/bin/swaync-client --toggle-dnd --skip-wait",
+    "tooltip-format": "Notifications\nLeft: history · Middle: hide latest · Right: do not disturb"
   },
   "bluetooth": {
     "format": "",

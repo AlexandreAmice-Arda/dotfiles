@@ -1,0 +1,10 @@
+[Unit]
+Description=Waybar for Sway
+PartOf=sway-session.target
+After=sway-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.config/sway/scripts/start-waybar
+Restart=on-failure
+RestartSec=2

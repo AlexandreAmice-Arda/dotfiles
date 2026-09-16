@@ -5,11 +5,16 @@ Brewfile
 packages
 packages/**
 
+# Login-shell adapters are platform-specific.
 {{- if ne .chezmoi.os "darwin" }}
 .bash_profile
+.zprofile
+.zshrc
 {{- end }}
 
+# Ubuntu Sway target.
 {{- if ne .chezmoi.os "linux" }}
+10_initialize_desktop_state.sh
 .config/foot
 .config/foot/**
 .config/gtklock
@@ -24,18 +29,25 @@ packages/**
 .config/wlogout/**
 .config/wofi
 .config/wofi/**
+.config/systemd/user/sway-*.service
+.config/systemd/user/sway-session.target
 .config/xdg-desktop-portal/sway-portals.conf
 .local/bin/apply-appearance
+.local/bin/lock-desktop
+.local/bin/session-action
 .local/bin/desktop-temperature
-.local/bin/start-sway-intel
 .local/bin/swaync
 .local/bin/swaync-client
-.local/bin/sway-trial-system
 .local/bin/waybar
 .local/bin/wlogout
-.local/share/wayland-sessions/sway-intel.desktop
+.local/libexec/desktop-doctor/linux
 {{- end }}
 
+{{- if ne .chezmoi.os "darwin" }}
+.local/libexec/desktop-doctor/darwin
+{{- end }}
+
+# macOS AeroSpace target.
 {{- if ne .chezmoi.os "darwin" }}
 .config/aerospace
 .config/aerospace/**
@@ -43,13 +55,18 @@ packages/**
 .config/ghostty/**
 {{- end }}
 
-{{- if ne .desktopProfile "amice-workstation" }}
+# Hardware and personal applications for the original Ubuntu workstation.
+{{- if or (ne .chezmoi.os "linux") (ne .desktopProfile "amice-workstation") }}
+.config/terminator
+.config/terminator/**
 .config/sway/scripts/apply-outputs
 .config/sway/scripts/arrange-code-windows
-.config/sway/scripts/start-mako
 .config/sway/scripts/start-pcloud
 .config/sway/scripts/start-session-apps
 .local/bin/start-sway-intel
 .local/bin/sway-trial-system
+.local/share/applications/signal-desktop.desktop
 .local/share/wayland-sessions/sway-intel.desktop
+.vscode/extensions/amice.send-editor-to-sway-workspace-0.1.0
+.vscode/extensions/amice.send-editor-to-sway-workspace-0.1.0/**
 {{- end }}

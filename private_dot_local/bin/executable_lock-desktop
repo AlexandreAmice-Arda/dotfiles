@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+
+if pgrep -u "$(id -u)" -x gtklock >/dev/null 2>&1; then
+    exit 0
+fi
+
+gtklock --daemonize
+
+# Do not return to a suspend caller until the lock process exists.
+attempt=0
+while ! pgrep -u "$(id -u)" -x gtklock >/dev/null 2>&1; do
+    attempt=$((attempt + 1))
+    [ "$attempt" -lt 20 ] || {
+        printf 'gtklock did not start\n' >&2
+        exit 1
+    }
+    sleep 0.05
+done

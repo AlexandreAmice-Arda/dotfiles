@@ -1,0 +1,16 @@
+# Tokyo Night presentation. Palette values come from .chezmoidata.yaml.
+font pango:{{ .desktop.fonts.interface }} 10
+default_border pixel 2
+gaps inner {{ .desktop.layout.gaps_inner }}
+gaps outer {{ .desktop.layout.gaps_outer }}
+focus_follows_mouse no
+
+seat * xcursor_theme Adwaita 24
+
+client.focused          #{{ .desktop.theme.blue }} #{{ .desktop.theme.background }} #{{ .desktop.theme.foreground }} #{{ .desktop.theme.blue }} #{{ .desktop.theme.blue }}
+client.focused_inactive #{{ .desktop.theme.surface_alt }} #{{ .desktop.theme.background }} #a9b1d6 #{{ .desktop.theme.surface_alt }} #{{ .desktop.theme.surface_alt }}
+client.unfocused        #{{ .desktop.theme.surface }} #{{ .desktop.theme.background }} #{{ .desktop.theme.muted }} #{{ .desktop.theme.surface }} #{{ .desktop.theme.surface }}
+client.urgent           #{{ .desktop.theme.pink }} #{{ .desktop.theme.pink }} #{{ .desktop.theme.background }} #{{ .desktop.theme.pink }} #{{ .desktop.theme.pink }}
+client.placeholder      #{{ .desktop.theme.surface_alt }} #{{ .desktop.theme.background }} #{{ .desktop.theme.muted }} #{{ .desktop.theme.surface_alt }} #{{ .desktop.theme.surface_alt }}
+
+output * bg ~/.local/share/tokyo-night/wallpapers/midnight.png fill

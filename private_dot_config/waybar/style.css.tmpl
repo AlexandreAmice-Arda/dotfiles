@@ -1,0 +1,101 @@
+{{ template "tokyo-night.css" . }}
+
+* {
+  min-height: 0;
+  border: none;
+  border-radius: 0;
+  font-family: "{{ .desktop.fonts.interface }}", "{{ .desktop.fonts.icons }}";
+  font-size: 12px;
+  font-weight: 600;
+}
+
+window#waybar { background: transparent; color: @tn_foreground; }
+
+.modules-left, .modules-center, .modules-right {
+  background: alpha(@tn_surface, 0.97);
+  border: 1px solid @tn_surface_alt;
+  border-radius: 12px;
+  margin: 0 0 4px 0;
+  padding: 0 5px;
+}
+
+.modules-left { margin-left: 0; }
+.modules-right { margin-right: 0; }
+
+button {
+  color: @tn_foreground;
+  background: transparent;
+  box-shadow: none;
+  text-shadow: none;
+  border-radius: 8px;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+button:hover { background: @tn_surface_alt; color: white; }
+
+#custom-hub {
+  color: @tn_cyan;
+  background: alpha(@tn_cyan, 0.11);
+  border-radius: 8px;
+  margin: 3px 4px 3px 0;
+  padding: 0 11px;
+  font-size: 16px;
+}
+#custom-hub:hover { color: @tn_background; background: @tn_cyan; }
+
+#workspaces { margin: 3px 0; }
+#workspaces button { color: @tn_muted; margin: 0 2px; padding: 0 7px; min-width: 16px; }
+#workspaces button.visible { color: @tn_purple; background: alpha(@tn_purple, 0.12); }
+#workspaces button.focused { color: @tn_background; background: @tn_blue; }
+#workspaces button.urgent { color: @tn_background; background: @tn_pink; }
+
+#mode {
+  color: @tn_yellow;
+  margin: 3px 0 3px 5px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: alpha(@tn_yellow, 0.12);
+}
+#clock { color: @tn_foreground; padding: 0 14px; }
+
+#custom-notification, #bluetooth, #pulseaudio, #cpu, #memory,
+#custom-temperature, #backlight, #battery, #tray, #custom-appearance, #custom-power {
+  margin: 3px 1px;
+  padding: 0 8px;
+  border-radius: 8px;
+}
+
+#custom-notification { color: @tn_purple; }
+#bluetooth, #cpu { color: @tn_blue; }
+#pulseaudio { color: @tn_cyan; }
+#pulseaudio.muted { color: @tn_pink; }
+#memory { color: @tn_purple; }
+#custom-temperature, #battery { color: @tn_green; }
+#custom-temperature.critical, #battery.critical { color: @tn_pink; }
+#backlight { color: @tn_yellow; }
+#battery.warning { color: @tn_yellow; }
+#battery.charging, #battery.plugged { color: @tn_cyan; }
+#custom-appearance { color: @tn_purple; }
+#custom-power {
+  color: @tn_pink;
+  background: alpha(@tn_pink, 0.11);
+  margin-left: 4px;
+  font-size: 14px;
+}
+
+#custom-notification:hover, #bluetooth:hover, #pulseaudio:hover, #cpu:hover,
+#memory:hover, #custom-temperature:hover, #backlight:hover, #battery:hover,
+#custom-appearance:hover, #custom-power:hover {
+  color: @tn_background;
+  background: @tn_foreground;
+}
+
+#tray > .passive { -gtk-icon-effect: dim; }
+#tray > .needs-attention { -gtk-icon-effect: highlight; }
+
+tooltip {
+  color: @tn_foreground;
+  background: @tn_background_deep;
+  border: 1px solid @tn_blue;
+  border-radius: 10px;
+}
+tooltip label { color: @tn_foreground; padding: 6px; }

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+lock="$HOME/.local/bin/lock-desktop"
+battery_monitor=sway-battery-idle-monitor.service
+
+# Timings are policy, so they live in .chezmoidata.yaml rather than being
+# duplicated across Sway and service files.
+exec swayidle -w \
+    timeout {{ .desktop.power.lock_seconds }} "$lock" \
+    timeout {{ .desktop.power.display_off_seconds }} 'swaymsg "output * power off"' \
+        resume 'swaymsg "output * power on"' \
+    timeout {{ .desktop.power.battery_suspend_seconds }} \
+        "systemctl --user start $battery_monitor" \
+        resume "systemctl --user stop $battery_monitor" \
+    before-sleep "$lock" \
+    lock "$lock"

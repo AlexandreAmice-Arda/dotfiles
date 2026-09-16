@@ -1,0 +1,110 @@
+# Search annotations use: #@ shortcut :: description :: sway command
+# Super is the window-manager modifier; Super+Space remains unassigned.
+
+# Launching and session controls
+#@ Super+/ :: Search and execute Sway commands :: exec ~/.config/sway/scripts/keybindings
+bindsym $mod+slash exec ~/.config/sway/scripts/keybindings
+#@ Palette only :: Configure displays graphically :: exec wdisplays
+{{ if eq .desktopProfile "amice-workstation" -}}
+#@ Palette only :: Arrange restored VS Code windows :: exec ~/.config/sway/scripts/arrange-code-windows
+{{ end -}}
+#@ Super+Return :: Open Foot and attach to tmux main :: exec foot
+bindsym $mod+Return exec $term
+#@ Super+d :: Open application launcher :: exec wofi --show drun
+bindsym $mod+d exec $menu
+#@ Super+Alt+q :: Close focused window :: kill
+bindsym $mod+Mod1+q kill
+#@ Super+Shift+c :: Reload desktop configuration :: exec ~/.config/sway/scripts/reload-desktop
+bindsym $mod+Shift+c exec ~/.config/sway/scripts/reload-desktop
+#@ Super+Shift+e :: Log out with confirmation :: exec ~/.local/bin/session-action logout
+bindsym $mod+Shift+e exec ~/.local/bin/session-action logout
+#@ Super+Shift+x :: Lock screen :: exec ~/.local/bin/lock-desktop
+bindsym $mod+Shift+x exec ~/.local/bin/lock-desktop
+#@ Super+Alt+Space :: Open graphical system controls :: exec ~/.config/sway/scripts/system-menu
+bindsym $mod+Mod1+space exec ~/.config/sway/scripts/system-menu
+#@ Super+p :: Open lock, suspend, logout, restart, and shutdown menu :: exec ~/.config/sway/scripts/power-menu
+bindsym $mod+p exec ~/.config/sway/scripts/power-menu
+
+# Notifications
+#@ Super+n :: Hide latest notification :: exec ~/.local/bin/swaync-client --hide-latest --skip-wait
+bindsym $mod+n exec ~/.local/bin/swaync-client --hide-latest --skip-wait
+#@ Super+Shift+n :: Toggle notification history :: exec ~/.local/bin/swaync-client --toggle-panel --skip-wait
+bindsym $mod+Shift+n exec ~/.local/bin/swaync-client --toggle-panel --skip-wait
+#@ Super+Left Ctrl+n :: Clear notifications :: exec ~/.local/bin/swaync-client --close-all --skip-wait
+bindsym $mod+Ctrl+n exec ~/.local/bin/swaync-client --close-all --skip-wait
+
+# Focus and movement
+{{ range .desktop.directions -}}
+#@ Super+{{ .key }} :: Focus {{ lower .label }} :: focus {{ .name }}
+bindsym $mod+{{ .key }} focus {{ .name }}
+#@ Super+Alt+{{ .key }} :: Move focused window {{ .name }} :: move {{ .name }}
+bindsym $mod+Mod1+{{ .key }} move {{ .name }}
+bindsym $mod+Mod1+{{ .label }} move {{ .name }}
+{{ end }}
+#@ Super+a :: Focus parent container :: focus parent
+bindsym $mod+a focus parent
+#@ Palette only :: Toggle focus between tiled and floating windows :: focus mode_toggle
+{{ range .desktop.directions -}}
+#@ Palette only :: Move focused window to output {{ .name }} :: move container to output {{ .name }}
+{{ end }}
+
+# Whole-workspace movement
+{{ range .desktop.directions -}}
+#@ Super+Left Ctrl+{{ .key }} :: Move workspace to output {{ .name }} :: move workspace to output {{ .name }}
+bindsym $mod+Ctrl+{{ .key }} move workspace to output {{ .name }}
+{{ end }}
+
+# Workspace selection and window routing
+{{ range .desktop.workspaces -}}
+#@ Super+{{ .key }} :: Switch to workspace {{ .name }} :: workspace number {{ .name }}
+bindsym $mod+{{ .key }} workspace number $ws{{ .name }}
+#@ Super+Shift+{{ .key }} :: Move window to workspace {{ .name }} :: move container to workspace number {{ .name }}
+bindsym $mod+Shift+{{ .key }} move container to workspace number $ws{{ .name }}
+{{ end }}
+#@ Super+Tab :: Switch to previous workspace :: workspace back_and_forth
+bindsym $mod+Tab workspace back_and_forth
+
+# Layout
+bindsym $mod+Mod1+b splith
+bindsym $mod+Mod1+v splitv
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+bindsym $mod+f fullscreen
+bindsym $mod+Shift+f floating toggle
+
+# Scratchpad
+bindsym $mod+Shift+minus move scratchpad
+bindsym $mod+minus scratchpad show
+
+# Resize mode
+bindsym $mod+r mode "resize"
+mode "resize" {
+    bindsym h resize shrink width 20px
+    bindsym j resize grow height 20px
+    bindsym k resize shrink height 20px
+    bindsym l resize grow width 20px
+    bindsym Left resize shrink width 20px
+    bindsym Down resize grow height 20px
+    bindsym Up resize shrink height 20px
+    bindsym Right resize grow width 20px
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+# Screenshots
+bindsym Print exec grim - | wl-copy
+bindsym Shift+Print exec grim -g "$(slurp)" - | wl-copy
+
+# Audio, media, and brightness work even while the session is locked.
+bindsym --locked XF86AudioRaiseVolume exec wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+
+bindsym --locked XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+bindsym --locked XF86AudioMute exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+bindsym --locked XF86AudioMicMute exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+bindsym --locked XF86AudioPlay exec playerctl play-pause
+bindsym --locked XF86AudioNext exec playerctl next
+bindsym --locked XF86AudioPrev exec playerctl previous
+bindsym --locked XF86MonBrightnessUp exec brightnessctl set +5%
+bindsym --locked XF86MonBrightnessDown exec brightnessctl set 5%-
+bindsym $mod+Mod1+equal exec brightnessctl set +5%
+bindsym $mod+Mod1+minus exec brightnessctl set 5%-

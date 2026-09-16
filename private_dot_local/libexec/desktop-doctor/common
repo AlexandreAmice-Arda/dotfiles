@@ -1,0 +1,53 @@
+errors=0
+warnings=0
+
+ok() { printf 'ok      %s\n' "$*"; }
+warn() { printf 'warning %s\n' "$*"; warnings=$((warnings + 1)); }
+fail() { printf 'error   %s\n' "$*"; errors=$((errors + 1)); }
+
+require_command() {
+    command -v "$1" >/dev/null 2>&1 && ok "$1" || fail "missing command: $1"
+}
+
+require_file() {
+    [ -r "$1" ] && ok "file: $1" || fail "missing file: $1"
+}
+
+check_tmux_config() {
+    command -v tmux >/dev/null 2>&1 || return
+    socket="desktop-doctor-$$"
+    if tmux -L "$socket" -f "$HOME/.tmux.conf" new-session -d >/dev/null 2>&1; then
+        tmux -L "$socket" kill-server >/dev/null 2>&1 || true
+        ok 'tmux config valid'
+    else
+        fail 'tmux config invalid'
+    fi
+}
+
+check_chezmoi_state() {
+    command -v chezmoi >/dev/null 2>&1 || return
+    if ! status_output=$(chezmoi status 2>&1); then
+        fail "chezmoi status failed: $status_output"
+        return
+    else
+        # Always-run initialization scripts are reported as R, and these two
+        # existing XDG data directories are intentionally more private (0700)
+        # than chezmoi's portable directory default (0755).
+        status_output=$(printf '%s\n' "$status_output" | awk '
+            $1 == "R" && $2 == "10_initialize_desktop_state.sh" { next }
+            $1 == "M" && ($2 == ".local/share" || $2 == ".local/share/applications") { next }
+            { print }
+        ')
+    fi
+
+    if [ -n "$status_output" ]; then
+        warn 'chezmoi-managed files differ from source; review `chezmoi status`'
+    else
+        ok 'chezmoi managed state clean'
+    fi
+}
+
+finish() {
+    printf '\nResult: %d error(s), %d warning(s)\n' "$errors" "$warnings"
+    (( errors == 0 ))
+}

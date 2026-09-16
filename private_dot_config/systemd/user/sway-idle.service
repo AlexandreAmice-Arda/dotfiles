@@ -1,0 +1,10 @@
+[Unit]
+Description=Idle locking and display power management for Sway
+PartOf=sway-session.target
+After=sway-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.config/sway/scripts/idle-manager
+Restart=on-failure
+RestartSec=2

@@ -5,60 +5,156 @@ source_root=$(cd -- "$(dirname -- "$0")/.." && pwd)
 work_dir=$(mktemp -d)
 trap 'rm -rf -- "$work_dir"' EXIT
 
-render() {
-    chezmoi execute-template < "$source_root/$1" > "$work_dir/$2"
-    printf 'ok      rendered %s\n' "$1"
+ok() { printf 'ok      %s\n' "$*"; }
+warn() { printf 'warning %s\n' "$*" >&2; }
+fail() { printf 'error   %s\n' "$*" >&2; exit 1; }
+
+materialize() {
+    local label=$1 os=$2 profile=$3 home override
+    home="$work_dir/$label/home"
+    mkdir -p "$home"
+    override=$(jq -nc \
+        --arg os "$os" --arg home "$home" --arg profile "$profile" \
+        '{desktopProfile:$profile, gitName:"Validation User",
+          gitEmail:"validation@example.invalid",
+          chezmoi:{os:$os, homeDir:$home}}')
+
+    chezmoi --source "$source_root" --destination "$home" \
+        --persistent-state "$work_dir/$label/state.boltdb" \
+        --override-data "$override" --no-tty apply --force
+    ok "materialized $label target"
+    printf '%s\n' "$home"
 }
 
-chezmoi --override-data '{"desktopProfile":"portable"}' execute-template \
-    < "$source_root/private_dot_config/sway/config.tmpl" > "$work_dir/sway-portable.conf"
-printf 'ok      rendered Sway portable profile\n'
-chezmoi --override-data '{"desktopProfile":"amice-workstation"}' execute-template \
-    < "$source_root/private_dot_config/sway/config.tmpl" > "$work_dir/sway-workstation.conf"
-printf 'ok      rendered Sway workstation profile\n'
-render private_dot_config/foot/foot.ini.tmpl foot.ini
-render private_dot_config/aerospace/aerospace.toml.tmpl aerospace.toml
-render private_dot_config/ghostty/config.tmpl ghostty.conf
-chezmoi --override-data '{"desktopProfile":"portable"}' execute-template \
-    < "$source_root/private_dot_config/sway/scripts/executable_start-waybar.tmpl" > "$work_dir/start-waybar-portable"
-chezmoi --override-data '{"desktopProfile":"amice-workstation"}' execute-template \
-    < "$source_root/private_dot_config/sway/scripts/executable_start-waybar.tmpl" > "$work_dir/start-waybar-workstation"
-printf 'ok      rendered both Waybar launch profiles\n'
+check_shell_tree() {
+    local root=$1 script
+    while IFS= read -r -d '' script; do
+        case $(head -n 1 "$script") in
+            '#!'*sh*) bash -n "$script" ;;
+        esac
+    done < <(find "$root" -type f -perm -u+x -print0)
+}
 
-if command -v sway >/dev/null 2>&1; then
-    sway --unsupported-gpu --validate --config "$work_dir/sway-portable.conf"
-    sway --unsupported-gpu --validate --config "$work_dir/sway-workstation.conf"
-    printf 'ok      both Sway profiles\n'
-fi
+require_file() {
+    [ -f "$1" ] || fail "missing rendered file: $1"
+}
 
-if command -v foot >/dev/null 2>&1; then
-    foot --check-config --config "$work_dir/foot.ini"
-    printf 'ok      Foot config\n'
-fi
+require_absent() {
+    [ ! -e "$1" ] || fail "platform/profile leak: $1"
+}
 
-if command -v python3 >/dev/null 2>&1; then
-    python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' "$work_dir/aerospace.toml"
-    printf 'ok      AeroSpace TOML\n'
-fi
+linux_portable=$(materialize linux-portable linux portable | tail -n 1)
+linux_workstation=$(materialize linux-workstation linux amice-workstation | tail -n 1)
+mac_portable=$(materialize mac-portable darwin portable | tail -n 1)
 
-for json_file in \
-    "$source_root/private_dot_config/waybar/config.json" \
-    "$source_root/private_dot_config/swaync/config.json"
-do
-    jq empty "$json_file"
-    printf 'ok      JSON %s\n' "${json_file#"$source_root/"}"
+# Profile and platform boundaries are part of the contract, not merely syntax.
+require_absent "$linux_portable/.config/sway/scripts/apply-outputs"
+require_absent "$linux_portable/.config/terminator"
+require_file "$linux_workstation/.config/sway/scripts/apply-outputs"
+require_file "$linux_workstation/.config/terminator/config"
+require_file "$mac_portable/.config/aerospace/aerospace.toml"
+require_file "$mac_portable/.config/ghostty/config.ghostty"
+require_file "$mac_portable/.zshrc"
+require_absent "$mac_portable/.config/sway"
+require_absent "$mac_portable/.config/terminator"
+require_absent "$mac_portable/.local/share/applications/signal-desktop.desktop"
+require_absent "$mac_portable/.vscode/extensions/amice.send-editor-to-sway-workspace-0.1.0"
+ok 'platform and profile boundaries'
+
+for home in "$linux_portable" "$linux_workstation"; do
+    require_file "$home/.local/state/tokyo-night/foot-opacity.ini"
+    require_file "$home/.local/state/tokyo-night/wallpaper.png"
+
+    if command -v sway >/dev/null 2>&1; then
+        if ! HOME="$home" sway --unsupported-gpu --validate \
+            --config "$home/.config/sway/config" >"$work_dir/sway.log" 2>&1; then
+            cat "$work_dir/sway.log" >&2
+            fail "invalid Sway config in $home"
+        fi
+    else
+        warn 'sway unavailable; skipped Sway parser'
+    fi
+
+    if command -v foot >/dev/null 2>&1; then
+        if ! HOME="$home" foot --check-config \
+            --config "$home/.config/foot/foot.ini" >"$work_dir/foot.log" 2>&1; then
+            cat "$work_dir/foot.log" >&2
+            fail "invalid Foot config in $home"
+        fi
+    else
+        warn 'foot unavailable; skipped Foot parser'
+    fi
+
+    jq empty "$home/.config/waybar/config.json"
+    jq empty "$home/.config/swaync/config.json"
+    check_shell_tree "$home"
 done
+ok 'Linux configs and shell syntax'
 
-while IFS= read -r script; do
-    bash -n "$script"
-done < <(find "$source_root/private_dot_local/bin" "$source_root/private_dot_config/sway/scripts" \
-    -type f -name 'executable_*' ! -name '*.tmpl' -print)
-bash -n "$work_dir/start-waybar-portable" "$work_dir/start-waybar-workstation"
-printf 'ok      shell syntax\n'
+power_fixture="$work_dir/power-supply/BAT0"
+mkdir -p "$power_fixture"
+printf 'Discharging\n' > "$power_fixture/status"
+power_result=$(POWER_SUPPLY_ROOT="$work_dir/power-supply" \
+    "$linux_portable/.local/bin/suspend-if-on-battery" --dry-run)
+[[ $power_result == *'would lock and suspend'* ]] \
+    || fail 'battery idle policy did not select suspend while discharging'
+printf 'Charging\n' > "$power_fixture/status"
+power_result=$(POWER_SUPPLY_ROOT="$work_dir/power-supply" \
+    "$linux_portable/.local/bin/suspend-if-on-battery" --dry-run)
+[[ $power_result == *'would remain awake'* ]] \
+    || fail 'battery idle policy did not remain awake while charging'
+ok 'battery-aware suspend policy'
 
-if command -v git >/dev/null 2>&1; then
-    git -C "$source_root" diff --check
-    printf 'ok      whitespace\n'
+python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' \
+    "$mac_portable/.config/aerospace/aerospace.toml"
+check_shell_tree "$mac_portable"
+if command -v zsh >/dev/null 2>&1; then
+    zsh -n "$mac_portable/.zprofile" "$mac_portable/.zshrc"
+else
+    warn 'zsh unavailable; skipped native Zsh parser'
 fi
+ok 'macOS configs and shell syntax'
+
+if command -v systemd-analyze >/dev/null 2>&1; then
+    unit_dir="$work_dir/units"
+    mkdir -p "$unit_dir"
+    for unit in \
+        "$linux_portable/.config/systemd/user/"sway-*.service \
+        "$linux_portable/.config/systemd/user/sway-session.target"
+    do
+        # systemd expands %h through the account database, not $HOME. Point
+        # verifier-only copies at the clean-room home it is actually checking.
+        sed "s|%h|$linux_portable|g" "$unit" > "$unit_dir/${unit##*/}"
+    done
+    SYSTEMD_UNIT_PATH="$unit_dir:/usr/lib/systemd/user" \
+        systemd-analyze --user verify "$unit_dir/"*
+    ok 'systemd user units'
+else
+    warn 'systemd-analyze unavailable; skipped unit parser'
+fi
+
+if command -v shellcheck >/dev/null 2>&1; then
+    while IFS= read -r -d '' script; do
+        case $(head -n 1 "$script") in
+            '#!'*sh*) shellcheck "$script" ;;
+        esac
+    done < <(find "$linux_workstation" "$mac_portable" -type f -perm -u+x -print0)
+    shellcheck "$source_root/packages/install-ubuntu" "$source_root/packages/validate-desktop"
+    ok 'ShellCheck'
+else
+    warn 'shellcheck unavailable; syntax checks still ran (install the package for linting)'
+fi
+
+personal_pattern='/home/(amice|demo)|PH5NY1BH326L|H7YCC6B70Y1S|6N45XC3'
+personal_pattern+='|C9LMTF003960|SNOPT_PATH|MOSEKLM|GUROBI_HOME|CUDA_PATH'
+personal_pattern+='|AdmmPackageSplit|start-pcloud|sway-trial-system'
+if rg -n "$personal_pattern" "$linux_portable" "$mac_portable"; then
+    fail 'personal or workstation-specific data leaked into a portable target'
+fi
+ok 'portable targets contain no known workstation paths or display identities'
+
+git -C "$source_root" diff --check
+git -C "$source_root" diff --cached --check
+ok 'Git whitespace'
 
 printf '\nDesktop source validation passed.\n'

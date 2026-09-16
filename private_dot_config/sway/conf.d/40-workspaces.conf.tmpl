@@ -1,0 +1,12 @@
+# Workspace variables shared with generated bindings and application rules.
+{{ range .desktop.workspaces -}}
+set $ws{{ .name }} "{{ .name }}"
+{{ end }}
+
+{{ if eq .desktopProfile "amice-workstation" -}}
+# Only this profile contains known output identities. Portable hosts rely on
+# Sway's automatic output placement.
+{{ range .desktop.profiles.amice_workstation.workspace_outputs -}}
+workspace $ws{{ .workspace }} output{{ range .candidates }} "{{ . }}"{{ end }}
+{{ end }}
+{{ end }}

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+swaymsg reload >/dev/null
+systemctl --user daemon-reload
+systemctl --user restart \
+    sway-waybar.service \
+    sway-swaync.service \
+    sway-idle.service
+notify-send 'Sway reloaded' 'Window manager, bar, notifications, and idle policy are using the latest configuration.'

@@ -1,2 +1,4 @@
 set bind-tty-special-chars off
 "\C-w": backward-kill-word
+# VTE terminals commonly encode Ctrl-Backspace as Ctrl-H.
+"\C-h": backward-kill-word

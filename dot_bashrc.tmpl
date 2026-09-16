@@ -95,6 +95,7 @@ path_prepend() {
     esac
 }
 
+{{- if and (eq .chezmoi.os "linux") (eq .desktopProfile "amice-workstation") }}
 export SNOPT_PATH=git
 
 if [ -f "$HOME/mosek/mosek.lic" ]; then
@@ -127,6 +128,7 @@ if [ -d /home/demo/gui-install/bin ]; then
 fi
 export DEBUGINFOD_URLS=https://debuginfod.ubuntu.com
 {{- end }}
+{{- end }}
 
 path_prepend "$HOME/.juliaup/bin"
 path_prepend "$HOME/.cargo/bin"
@@ -139,7 +141,15 @@ if [ -s "$NVM_DIR/bash_completion" ]; then
     . "$NVM_DIR/bash_completion"
 fi
 
+{{- if and (eq .chezmoi.os "linux") (eq .desktopProfile "amice-workstation") }}
 export OMP_CANCELLATION=true
 export OMP_PROC_BIND=true
+{{- end }}
+
+# Machine- or employer-specific additions belong here, outside chezmoi.
+if [ -r "$HOME/.bashrc.local" ]; then
+    . "$HOME/.bashrc.local"
+fi
+
 export PATH
 unset -f path_prepend

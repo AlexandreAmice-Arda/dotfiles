@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+action=${1:-}
+
+case "$action" in
+    lock)
+        exec "$HOME/.local/bin/lock-desktop"
+        ;;
+    suspend)
+        "$HOME/.local/bin/lock-desktop"
+        sleep 0.25
+        exec systemctl suspend
+        ;;
+    logout)
+        message='Log out of Sway?'
+        button='Log out'
+        command='swaymsg exit'
+        ;;
+    reboot)
+        message='Restart this computer? Unsaved work will be lost.'
+        button='Restart'
+        command='systemctl reboot'
+        ;;
+    poweroff)
+        message='Shut down this computer? Unsaved work will be lost.'
+        button='Shut down'
+        command='systemctl poweroff'
+        ;;
+    *)
+        printf 'usage: %s {lock|suspend|logout|reboot|poweroff}\n' "$0" >&2
+        exit 2
+        ;;
+esac
+
+exec swaynag -t warning -m "$message" -B "$button" "$command"

@@ -2,6 +2,19 @@
 set -eu
 
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+grant_backlight=0
+minimum_version=$(awk '$1 == "ubuntu_minimum:" { gsub(/"/, "", $2); print $2; exit }' \
+    "$repo_dir/.chezmoidata.yaml")
+[ -n "$minimum_version" ] || {
+    printf 'Could not read desktop.support.ubuntu_minimum.\n' >&2
+    exit 1
+}
+
+case "${1:-}" in
+    "") ;;
+    --grant-backlight) grant_backlight=1 ;;
+    *) printf 'usage: %s [--grant-backlight]\n' "$0" >&2; exit 2 ;;
+esac
 
 if [ "$(uname -s)" != Linux ] || [ ! -r /etc/os-release ]; then
     printf 'This installer supports Ubuntu only.\n' >&2
@@ -13,15 +26,41 @@ if [ "${ID:-}" != ubuntu ]; then
     printf 'Unsupported Linux distribution: %s\n' "${ID:-unknown}" >&2
     exit 1
 fi
+if ! dpkg --compare-versions "${VERSION_ID:-0}" ge "$minimum_version"; then
+    printf 'Ubuntu %s is unsupported; Ubuntu %s or newer is required.\n' \
+        "${VERSION_ID:-unknown}" "$minimum_version" >&2
+    exit 1
+fi
 
 packages=$(sed '/^[[:space:]]*#/d; /^[[:space:]]*$/d' "$repo_dir/packages/ubuntu.txt")
+sudo apt-get update
+sudo apt-get install -y software-properties-common
+sudo add-apt-repository -y universe
 sudo apt-get update
 # shellcheck disable=SC2086
 sudo apt-get install -y $packages
 
-if ! id -nG "$USER" | tr ' ' '\n' | grep -qx video; then
-    sudo usermod -aG video "$USER"
-    printf 'Added %s to the video group; log out completely before testing brightness.\n' "$USER"
+has_backlight=0
+find /sys/class/backlight -mindepth 1 -maxdepth 1 -print -quit | grep -q . \
+    && has_backlight=1
+
+video_members=$(getent group video 2>/dev/null | cut -d: -f4 || true)
+case ",$video_members," in
+    *,"$USER",*) video_membership_recorded=1 ;;
+    *) video_membership_recorded=0 ;;
+esac
+
+if [ "$grant_backlight" -eq 1 ] && [ "$has_backlight" -eq 1 ]; then
+    if id -nG "$USER" | tr ' ' '\n' | grep -qx video; then
+        printf 'Backlight group access is already active for %s.\n' "$USER"
+    elif [ "$video_membership_recorded" -eq 0 ]; then
+        sudo usermod -aG video "$USER"
+        printf 'Added %s to the video group; log out completely before testing brightness.\n' "$USER"
+    else
+        printf 'Backlight group access is recorded; log out completely, then log in.\n'
+    fi
+elif [ "$grant_backlight" -eq 0 ] && [ "$has_backlight" -eq 1 ]; then
+    printf 'Backlight access was not changed. If brightness is denied, rerun with --grant-backlight.\n'
 fi
 
 printf 'Ubuntu desktop dependencies installed. Run `chezmoi apply`, then `desktop-doctor`.\n'

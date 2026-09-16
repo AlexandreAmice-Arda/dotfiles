@@ -1,0 +1,10 @@
+[Unit]
+Description=Graphical polkit authentication agent for Sway
+PartOf=sway-session.target
+After=sway-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.config/sway/scripts/start-polkit-agent
+Restart=on-failure
+RestartSec=2

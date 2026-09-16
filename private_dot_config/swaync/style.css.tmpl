@@ -1,0 +1,64 @@
+{{ template "tokyo-night.css" . }}
+
+* { font-family: "{{ .desktop.fonts.interface }}", "{{ .desktop.fonts.icons }}"; color: @tn_foreground; }
+.control-center {
+  background: alpha(@tn_background, 0.97);
+  border: 1px solid @tn_purple;
+  border-radius: 18px;
+  margin: 8px;
+}
+.control-center-list, .floating-notifications, .notification-row { background: transparent; }
+.blank-window { background: alpha(@tn_background_deep, 0.25); }
+.notification {
+  background: @tn_surface;
+  border: 1px solid @tn_surface_alt;
+  border-radius: 14px;
+  margin: 7px 10px;
+  box-shadow: 0 6px 18px alpha(black, 0.28);
+}
+.notification-row:focus .notification, .notification-row:hover .notification {
+  border-color: @tn_blue;
+  background: @tn_surface_hover;
+}
+.notification-content, .notification-default-action, .notification-action {
+  color: @tn_foreground;
+  background: transparent;
+  border-color: @tn_surface_alt;
+}
+.notification-default-action:hover, .notification-action:hover { background: @tn_surface_alt; }
+.low .notification { border-left: 3px solid @tn_cyan; }
+.normal .notification { border-left: 3px solid @tn_purple; }
+.critical .notification { border-left: 3px solid @tn_pink; }
+.summary { color: @tn_foreground; font-size: 14px; font-weight: 700; }
+.body { color: @tn_foreground_alt; font-size: 13px; }
+.time { color: @tn_muted; font-size: 12px; }
+.close-button {
+  color: @tn_pink;
+  background: alpha(@tn_pink, 0.13);
+  border-radius: 999px;
+  min-width: 24px;
+  min-height: 24px;
+}
+.close-button:hover { color: @tn_background; background: @tn_pink; }
+.widget-title { color: @tn_purple; margin: 14px 14px 8px; font-size: 20px; font-weight: 700; }
+.widget-title > button {
+  color: @tn_background;
+  background: @tn_pink;
+  border: none;
+  border-radius: 10px;
+  box-shadow: none;
+  padding: 5px 10px;
+}
+.widget-title > button:hover { background: #ff9eae; }
+.widget-dnd {
+  color: @tn_cyan;
+  background: @tn_surface;
+  border: 1px solid @tn_surface_alt;
+  border-radius: 12px;
+  margin: 6px 14px 12px;
+  padding: 8px 10px;
+}
+.widget-dnd > switch { background: @tn_surface_alt; border: none; border-radius: 999px; box-shadow: none; }
+.widget-dnd > switch:checked { background: @tn_purple; }
+.widget-dnd > switch slider { background: @tn_foreground; border-radius: 999px; }
+.control-center-list-placeholder { color: @tn_muted; }

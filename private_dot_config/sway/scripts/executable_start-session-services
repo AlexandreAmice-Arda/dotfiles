@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+session_variables=(
+    DISPLAY WAYLAND_DISPLAY SWAYSOCK
+    XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP XDG_SESSION_TYPE
+)
+
+systemctl --user import-environment "${session_variables[@]}"
+dbus-update-activation-environment --systemd "${session_variables[@]}"
+systemctl --user daemon-reload
+
+# Clean up a service target left by an ungraceful prior compositor exit.
+systemctl --user stop sway-session.target
+systemctl --user start sway-session.target
+
+# This process belongs to Sway. When Sway closes, the subscription ends and
+# all supervised session services are stopped together.
+swaymsg --monitor --type subscribe '["shutdown"]' >/dev/null 2>&1 || true
+systemctl --user stop sway-session.target

@@ -1,0 +1,35 @@
+{{ template "tokyo-night.css" . }}
+
+window {
+  color: @tn_foreground;
+  background: alpha(@tn_background, 0.98);
+  border: 2px solid @tn_purple;
+  border-radius: 18px;
+  font-family: "{{ .desktop.fonts.interface }}", "{{ .desktop.fonts.icons }}";
+  font-size: 14px;
+}
+#outer-box { margin: 12px; }
+#input {
+  color: @tn_foreground;
+  background: @tn_surface;
+  border: 1px solid @tn_surface_alt;
+  border-radius: 12px;
+  box-shadow: none;
+  margin: 4px 4px 12px;
+  padding: 10px 13px;
+}
+#input:focus { border-color: @tn_cyan; }
+#scroll { margin: 0 4px 4px; }
+#entry {
+  color: @tn_foreground_alt;
+  background: transparent;
+  border-radius: 11px;
+  padding: 8px 10px;
+}
+#entry:selected {
+  color: @tn_background;
+  background: linear-gradient(90deg, @tn_blue, @tn_purple);
+  outline: none;
+}
+#img { margin-right: 10px; }
+#text { color: inherit; }

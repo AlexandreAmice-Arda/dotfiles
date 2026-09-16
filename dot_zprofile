@@ -1,0 +1,5 @@
+# Default macOS login-shell setup.
+
+if [ -r "$HOME/.profile" ]; then
+    . "$HOME/.profile"
+fi

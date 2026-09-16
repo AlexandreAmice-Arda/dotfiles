@@ -1,0 +1,14 @@
+@define-color tn_background #{{ .desktop.theme.background }};
+@define-color tn_background_deep #{{ .desktop.theme.background_deep }};
+@define-color tn_surface #{{ .desktop.theme.surface }};
+@define-color tn_surface_alt #{{ .desktop.theme.surface_alt }};
+@define-color tn_surface_hover #{{ .desktop.theme.surface_hover }};
+@define-color tn_foreground #{{ .desktop.theme.foreground }};
+@define-color tn_foreground_alt #{{ .desktop.theme.foreground_alt }};
+@define-color tn_muted #{{ .desktop.theme.muted }};
+@define-color tn_blue #{{ .desktop.theme.blue }};
+@define-color tn_cyan #{{ .desktop.theme.cyan }};
+@define-color tn_purple #{{ .desktop.theme.purple }};
+@define-color tn_pink #{{ .desktop.theme.pink }};
+@define-color tn_green #{{ .desktop.theme.green }};
+@define-color tn_yellow #{{ .desktop.theme.yellow }};

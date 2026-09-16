@@ -2,12 +2,12 @@
 set -euo pipefail
 
 selection=$(printf '%s\n' \
-    '󰸉  Wallpaper · Midnight' \
-    '󰖔  Wallpaper · Dusk' \
-    '󰖨  Wallpaper · Dawn' \
-    '󰍹  Terminal · Opaque 100%' \
-    '󰍹  Terminal · Subtle 95%' \
-    '󰍹  Terminal · Visible 89%' \
+    'Wallpaper · Midnight' \
+    'Wallpaper · Dusk' \
+    'Wallpaper · Dawn' \
+    'Terminal · Opaque 100%' \
+    'Terminal · Subtle 95%' \
+    'Terminal · Visible 89%' \
     | wofi --dmenu --prompt 'Appearance' --width 460 --height 360 --cache-file /dev/null) || exit 0
 
 case "$selection" in

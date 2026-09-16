@@ -1,0 +1,12 @@
+# Small, native zsh layer. Shared PATH setup lives in ~/.profile.
+
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=2000
+SAVEHIST=2000
+setopt append_history hist_ignore_dups
+
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+
+autoload -Uz compinit && compinit

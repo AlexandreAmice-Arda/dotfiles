@@ -26,6 +26,11 @@ path_prepend "$HOME/.juliaup/bin"
 {{- if eq .chezmoi.os "linux" }}
 path_append "$HOME/.local/share/JetBrains/Toolbox/scripts"
 {{- else if eq .chezmoi.os "darwin" }}
+if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -x /usr/local/bin/brew ]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+fi
 path_append "$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
 {{- end }}
 
