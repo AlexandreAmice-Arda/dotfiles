@@ -21,7 +21,8 @@ materialize() {
 
     chezmoi --source "$source_root" --destination "$home" \
         --persistent-state "$work_dir/$label/state.boltdb" \
-        --override-data "$override" --no-tty apply --force
+        --override-data "$override" --no-tty apply --force \
+        --exclude externals
     ok "materialized $label target"
     printf '%s\n' "$home"
 }
@@ -51,6 +52,12 @@ mac_portable=$(materialize mac-portable darwin portable | tail -n 1)
 require_absent "$linux_portable/.config/sway/scripts/apply-outputs"
 require_absent "$linux_portable/.config/terminator"
 require_file "$linux_workstation/.config/sway/scripts/apply-outputs"
+require_file "$linux_workstation/.config/sway/scripts/start-work-session"
+require_absent "$linux_workstation/.config/sway/scripts/start-session-apps"
+require_file "$linux_workstation/.config/systemd/user/sway-signal.service"
+require_file "$linux_workstation/.config/systemd/user/sway-slack.service"
+require_absent "$linux_portable/.config/systemd/user/sway-signal.service"
+require_absent "$linux_portable/.config/systemd/user/sway-slack.service"
 require_file "$linux_workstation/.config/terminator/config"
 require_file "$mac_portable/.config/aerospace/aerospace.toml"
 require_file "$mac_portable/.config/ghostty/config.ghostty"
@@ -90,6 +97,20 @@ for home in "$linux_portable" "$linux_workstation"; do
     check_shell_tree "$home"
 done
 ok 'Linux configs and shell syntax'
+
+keybinding_catalog=$(
+    SWAY_CONFIG_PATH="$linux_workstation/.config/sway/config" \
+        "$linux_workstation/.config/sway/scripts/keybindings" --print
+)
+for expected_entry in \
+    'Open or resume an independent persistent terminal' \
+    'Show workspace windows as tabs' \
+    'Create another tmux window in this terminal session'
+do
+    grep -Fq "$expected_entry" <<< "$keybinding_catalog" \
+        || fail "missing command-palette entry: $expected_entry"
+done
+ok 'Sway command palette includes generated fragments and terminal references'
 
 power_fixture="$work_dir/power-supply/BAT0"
 mkdir -p "$power_fixture"
@@ -139,7 +160,9 @@ if command -v shellcheck >/dev/null 2>&1; then
             '#!'*sh*) shellcheck "$script" ;;
         esac
     done < <(find "$linux_workstation" "$mac_portable" -type f -perm -u+x -print0)
-    shellcheck "$source_root/packages/install-ubuntu" "$source_root/packages/validate-desktop"
+    shellcheck "$source_root/packages/check-ubuntu" \
+        "$source_root/packages/install-ubuntu" \
+        "$source_root/packages/validate-desktop"
     ok 'ShellCheck'
 else
     warn 'shellcheck unavailable; syntax checks still ran (install the package for linting)'

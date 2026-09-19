@@ -23,4 +23,53 @@ if [ "${1:-}" = --check ]; then
     exit 0
 fi
 
-exec "$tmux_bin" new-session -A -s main
+# Do not accidentally request a nested client when a terminal is launched
+# from a shell that already happens to be inside tmux.
+unset TMUX TMUX_PANE
+
+if [ "${1:-}" = --shared ]; then
+    exec "$tmux_bin" new-session -A -s main
+fi
+
+if [ "$#" -ne 0 ]; then
+    printf 'usage: terminal-main [--check|--shared]\n' >&2
+    exit 2
+fi
+
+# A terminal window should have its own tmux session, not mirror another
+# window. Reattach the oldest numbered session without a client so closed
+# terminals resume naturally; create the next numbered session otherwise.
+# tmux-resurrect saves every session, so the same rule also works after reboot.
+detached_session=$(
+    "$tmux_bin" list-sessions \
+        -F '#{session_name}:#{session_attached}' 2>/dev/null \
+        | awk -F: '
+            $1 ~ /^terminal-[0-9]+$/ && $2 == 0 {
+                number=$1
+                sub(/^terminal-/, "", number)
+                if (!found || number < oldest) {
+                    found=1
+                    oldest=number
+                    session=$1
+                }
+            }
+            END { if (found) print session }
+        ' || true
+)
+
+if [ -n "$detached_session" ]; then
+    exec "$tmux_bin" attach-session -t "$detached_session"
+fi
+
+next_number=$(
+    "$tmux_bin" list-sessions -F '#{session_name}' 2>/dev/null \
+        | awk '
+            /^terminal-[0-9]+$/ {
+                sub(/^terminal-/, "")
+                if ($0 > maximum) maximum=$0
+            }
+            END { print maximum + 1 }
+        ' || printf '1\n'
+)
+
+exec "$tmux_bin" new-session -s "terminal-$next_number"

@@ -7,6 +7,8 @@ source "$doctor_lib/common"
 
 printf 'Desktop doctor\nOS: %s  Architecture: %s\n\n' "$(uname -s)" "$(uname -m)"
 
+# These generated, platform-specific files exist only in the target home.
+# shellcheck disable=SC1091
 case $(uname -s) in
     Darwin) source "$doctor_lib/darwin" ;;
     Linux) source "$doctor_lib/linux" ;;
@@ -14,5 +16,6 @@ case $(uname -s) in
 esac
 
 check_tmux_config
+check_tmux_persistence
 check_chezmoi_state
 finish

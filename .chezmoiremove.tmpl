@@ -1,0 +1,7 @@
+{{- if eq .chezmoi.os "linux" }}
+.config/systemd/user/sway-rfkill.service
+{{-   if eq .desktopProfile "amice-workstation" }}
+.config/sway/scripts/start-session-apps
+.config/sway/scripts/start-messaging
+{{-   end }}
+{{- end }}

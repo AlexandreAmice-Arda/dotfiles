@@ -44,13 +44,16 @@ After cloning the source repository, install the reviewed Ubuntu package set:
 chezmoi cd
 ./packages/install-ubuntu --grant-backlight
 chezmoi apply -v
+./packages/check-ubuntu
 desktop-doctor
 ```
 
 `--grant-backlight` adds the current user to the `video` group only when a
 backlight device exists. A complete logout/login is required when that
 membership changes. Omit the flag on desktops that have no controllable laptop
-panel.
+panel. `check-ubuntu` verifies every package in the reviewed manifest;
+`desktop-doctor` then checks that the commands, services, personal workstation
+applications, and hardware integrations actually work.
 
 ### macOS desktop dependencies
 
@@ -63,6 +66,9 @@ chezmoi apply -v
 desktop-doctor
 ```
 
+Run `brew bundle check --file Brewfile` at any time to verify the macOS package
+manifest without changing the machine.
+
 Grant AeroSpace the Accessibility permission requested by macOS. AeroSpace
 uses Option as its window-manager modifier; Sway uses Super. Both render their
 direction and workspace bindings from `.chezmoidata.yaml`.
@@ -73,9 +79,21 @@ already exists, move it aside so it cannot override the managed XDG config.
 AeroSpace provides its own virtual workspaces; separate Mission Control Spaces
 are unnecessary for this setup.
 
-Ghostty and Foot both open the same persistent tmux session, so terminal state
-survives terminal-window restarts and the interaction model is consistent on
-both platforms. The terminal application itself remains platform-native.
+Ghostty and Foot each resume the oldest detached `terminal-N` tmux session, or
+create the next numbered session when every existing terminal is in use. This
+keeps native terminal windows independent while preserving each one's shell
+structure. Pinned tmux-resurrect and tmux-continuum plugins save that structure
+every five minutes and rebuild sessions, windows, panes, layouts, and working
+directories when the first terminal opens after a reboot. The terminal
+application itself remains platform-native. Run `terminal-main --shared` when
+two terminal windows should intentionally share the legacy `main` session.
+
+Process memory cannot survive a reboot, so commands are never replayed
+automatically and pane text is not persisted. This avoids rerunning stale or
+dangerous commands and storing terminal secrets. Resume stateful applications
+with their own mechanism after tmux restores—for Codex, run `codex resume` (or
+`codex resume --last`). In tmux, `Ctrl+B`, then `Ctrl+S` forces a snapshot and
+`Ctrl+B`, then `Ctrl+R` restores one manually.
 
 ### Validate the generator
 
@@ -113,7 +131,10 @@ not as absolute home paths inside a portable template.
 
 ### Core keys
 
-- `Super+Enter`: open the platform terminal and attach tmux session `main`.
+- `Super+Enter`: open or resume an independent persistent terminal session.
+- `Super+Ctrl+Enter` (Sway): open the deliberately shared tmux `main` session.
+- `Super+Shift+Enter` (workstation profile): launch and arrange the personal
+  project applications; they do not open merely because Sway started.
 - `Ctrl+Alt+B`: split the terminal side-by-side.
 - `Ctrl+Alt+V`: split the terminal top/bottom.
 - `Ctrl+Backspace`: erase the previous shell word; it is not consumed by tmux.
@@ -133,6 +154,11 @@ battery is discharging. The three values are together under `desktop.power` in
 The half-circle `◐` near the right end of Waybar opens wallpaper and terminal
 opacity choices. The power icon beside it opens lock, suspend, logout, restart,
 and shutdown actions.
+
+The Ubuntu system menu is a graphical front door to standalone Sway-friendly
+tools: NetworkManager connections, Blueman Bluetooth, pavucontrol audio,
+wdisplays outputs, and power profile selection. It deliberately avoids GNOME
+Settings panels, whose behavior depends on services from a full GNOME session.
 
 Preview and apply source changes:
 
@@ -168,9 +194,9 @@ and the terminal workflow are all part of that portable base.
 ### Original Intel/NVIDIA workstation trial
 
 The `amice-workstation` profile additionally keeps the original saved monitor
-roles and startup applications. It can install a separate GDM entry that uses
-the Intel GPU for scan-out and leaves NVIDIA available for offloaded
-applications:
+roles, automatic cloud and messaging applications, and an explicit launcher
+for project applications. It can install a separate GDM entry that uses the
+Intel GPU for scan-out and leaves NVIDIA available for offloaded applications:
 
 ```sh
 chezmoi diff
@@ -182,11 +208,18 @@ At GDM, select **Sway (Intel hybrid trial)**. Super is the window-manager
 modifier, Super+/ opens the executable command palette, and all Super+Space
 bindings are intentionally absent.
 
-Super+Enter opens Foot attached to the persistent tmux session named `main`.
-Super+Alt+Space opens the control center. Choose **Appearance** there—or click
-the palette icon near the right side of Waybar—to switch Midnight, Dusk, and
-Dawn wallpaper moods or select terminal opacity. Rotated Sway outputs receive
-the portrait wallpaper automatically.
+Sway starts desktop infrastructure, pCloud, Signal, and Slack at login; the two
+messaging applications are supervised user services with journal logs, and
+their windows are collected on workspace 10. Press Super+Shift+Enter when
+you want VS Code and the arranged Chrome project workspaces; the same action is
+available in the Super+/ command palette.
+Super+Enter opens Foot with its own persistent tmux session, resuming a
+detached terminal before creating another one. Super+Ctrl+Enter opens the
+shared `main` session when mirrored clients are intentional. Super+Alt+Space
+opens the control center.
+Choose **Appearance** there—or click the palette icon near the right side of
+Waybar—to switch Midnight, Dusk, and Dawn wallpaper moods or select terminal
+opacity. Rotated Sway outputs receive the portrait wallpaper automatically.
 
 Run `desktop-doctor` after setup or whenever a desktop integration stops
 working. It validates configuration, dependencies, wallpaper assets, and

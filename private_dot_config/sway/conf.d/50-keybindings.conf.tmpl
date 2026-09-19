@@ -1,4 +1,5 @@
-# Search annotations use: #@ shortcut :: description :: sway command
+# Executable search entries use: #@ shortcut :: description :: sway command
+# Reference-only entries omit the final command.
 # Super is the window-manager modifier; Super+Space remains unassigned.
 
 # Launching and session controls
@@ -7,9 +8,13 @@ bindsym $mod+slash exec ~/.config/sway/scripts/keybindings
 #@ Palette only :: Configure displays graphically :: exec wdisplays
 {{ if eq .desktopProfile "amice-workstation" -}}
 #@ Palette only :: Arrange restored VS Code windows :: exec ~/.config/sway/scripts/arrange-code-windows
+#@ Super+Shift+Return :: Start personal work applications :: exec ~/.config/sway/scripts/start-work-session
+bindsym $mod+Shift+Return exec ~/.config/sway/scripts/start-work-session
 {{ end -}}
-#@ Super+Return :: Open Foot and attach to tmux main :: exec foot
+#@ Super+Return :: Open or resume an independent persistent terminal :: exec foot
 bindsym $mod+Return exec $term
+#@ Super+Left Ctrl+Return :: Open a deliberately shared tmux main session :: exec foot ~/.local/bin/terminal-main --shared
+bindsym $mod+Ctrl+Return exec foot ~/.local/bin/terminal-main --shared
 #@ Super+d :: Open application launcher :: exec wofi --show drun
 bindsym $mod+d exec $menu
 #@ Super+Alt+q :: Close focused window :: kill
@@ -65,19 +70,29 @@ bindsym $mod+Shift+{{ .key }} move container to workspace number $ws{{ .name }}
 bindsym $mod+Tab workspace back_and_forth
 
 # Layout
+#@ Super+Alt+b :: Split the next desktop window side-by-side :: splith
 bindsym $mod+Mod1+b splith
+#@ Super+Alt+v :: Split the next desktop window top-to-bottom :: splitv
 bindsym $mod+Mod1+v splitv
+#@ Super+s :: Stack workspace windows :: layout stacking
 bindsym $mod+s layout stacking
+#@ Super+w :: Show workspace windows as tabs :: layout tabbed
 bindsym $mod+w layout tabbed
+#@ Super+e :: Toggle horizontal and vertical tiled layout :: layout toggle split
 bindsym $mod+e layout toggle split
+#@ Super+f :: Toggle full screen for the focused window :: fullscreen
 bindsym $mod+f fullscreen
+#@ Super+Shift+f :: Toggle the focused window between tiled and floating :: floating toggle
 bindsym $mod+Shift+f floating toggle
 
 # Scratchpad
+#@ Super+Shift+- :: Send the focused window to the scratchpad :: move scratchpad
 bindsym $mod+Shift+minus move scratchpad
+#@ Super+- :: Show or cycle scratchpad windows :: scratchpad show
 bindsym $mod+minus scratchpad show
 
 # Resize mode
+#@ Super+r :: Enter desktop resize mode; arrows or H/J/K/L resize, Escape exits :: mode "resize"
 bindsym $mod+r mode "resize"
 mode "resize" {
     bindsym h resize shrink width 20px
@@ -91,6 +106,16 @@ mode "resize" {
     bindsym Return mode "default"
     bindsym Escape mode "default"
 }
+
+# Terminal references are intentionally non-executable palette entries.
+#@ Ctrl+Alt+b / Ctrl+Alt+v :: Split the current tmux pane side-by-side / top-to-bottom
+#@ Ctrl+j/k/l :: Focus the tmux pane down / up / right
+#@ Ctrl+Alt+h/j/k/l :: Move the current tmux pane
+#@ Ctrl+Alt+Shift+Arrow :: Resize the current tmux pane
+#@ Ctrl+Alt+f / Ctrl+Alt+q :: Zoom / close the current tmux pane
+#@ Ctrl+b, then c :: Create another tmux window in this terminal session
+#@ Ctrl+b, then n/p :: Select the next / previous tmux window
+#@ Ctrl+b, then Ctrl+s/Ctrl+r :: Save / restore terminal structure
 
 # Screenshots
 bindsym Print exec grim - | wl-copy

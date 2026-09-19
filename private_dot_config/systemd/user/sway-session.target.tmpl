@@ -2,3 +2,7 @@
 Description=Services belonging to the active Sway session
 Wants=sway-waybar.service sway-swaync.service sway-idle.service
 Wants=sway-nm-applet.service sway-polkit-agent.service
+Wants=sway-blueman-applet.service
+{{ if eq .desktopProfile "amice-workstation" -}}
+Wants=sway-signal.service sway-slack.service
+{{ end -}}

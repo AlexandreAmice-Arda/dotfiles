@@ -15,7 +15,8 @@ power policy. Templates render that intent into:
 
 - Sway and Foot on Ubuntu.
 - AeroSpace and Ghostty on macOS.
-- tmux on both platforms for persistent sessions and portable pane controls.
+- tmux on both platforms for portable pane controls and structural restore
+  across terminal restarts and reboots.
 
 Platform-only features remain native: Waybar, SwayNC, Wofi, wlogout, GTKLock,
 brightness, and Linux session integration stay on Ubuntu; macOS retains its
@@ -35,8 +36,9 @@ monitor serial, connector name, GPU PCI address, project path, or optional
 personal application.
 
 `amice-workstation` preserves the original machine's Intel/NVIDIA session,
-known monitor placement, application startup, and project-window arrangement.
-Those details must remain gated behind this profile.
+known monitor placement, automatic cloud and messaging applications, and an
+explicit launcher for the heavier project-window arrangement. Those details
+must remain gated behind this profile.
 
 ## Installation contract
 
@@ -75,8 +77,21 @@ silently claimed as hardware-qualified.
   idle suspend applies only when a system `BAT*` device reports `Discharging`.
 - Linux session services restart after isolated failures and stop as one target
   when the compositor exits.
+- Privileged graphical actions use MATE's standalone polkit agent instead of a
+  GNOME-session agent.
+- The graphical Sway control center launches standalone tools: NetworkManager
+  for connections, Blueman for Bluetooth, pavucontrol for audio, wdisplays for
+  outputs, and a small power-profiles-daemon menu. It does not impersonate a
+  GNOME session or depend on GNOME Settings panels.
 - Ctrl-Backspace is encoded as readline's previous-word erase on Foot and
   Ghostty; tmux deliberately does not capture the ambiguous Ctrl-H byte.
+- Chezmoi installs pinned, checksummed tmux-resurrect and tmux-continuum
+  archives on both platforms. They periodically save and restore tmux
+  structure, but never replay processes or persist pane text. Application
+  state resumes explicitly through the application's own interface.
+- Each native terminal window resumes one detached numbered tmux session or
+  creates a new one, so persistence does not make separate windows mirror one
+  another. The legacy `main` session remains an explicit shared option.
 
 ## Validation gates
 
@@ -100,8 +115,8 @@ Before calling the setup broadly portable, complete these hardware tests:
 The generator, both profiles, package manifests, three wallpaper moods,
 landscape/portrait variants, appearance controls, hardware keys, power-aware
 idle suspend, automatic battery/temperature discovery, terminal adapters,
-supervised session services, clean-room validation, and host doctor are
-implemented. The dense status bar is intentionally retained. Cross-machine
-hardware qualification remains outstanding; it is the remaining evidence
-needed before claiming broad portability rather than generator-level
-portability.
+reboot-safe tmux structure restore, explicit workstation launch, supervised
+session services, clean-room validation, and host doctor are implemented. The
+dense status bar is intentionally retained. Cross-machine hardware
+qualification remains outstanding; it is the remaining evidence needed before
+claiming broad portability rather than generator-level portability.

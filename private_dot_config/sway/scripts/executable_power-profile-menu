@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v powerprofilesctl >/dev/null 2>&1; then
+    notify-send --urgency=critical 'Power profiles unavailable' \
+        'power-profiles-daemon is not installed.'
+    exit 1
+fi
+
+current=$(powerprofilesctl get)
+mapfile -t profiles < <(powerprofilesctl list | awk '
+    /^[[:space:]]*\*?[[:space:]]*[[:alnum:]-]+:/ {
+        line=$0
+        sub(/^[[:space:]]*\*?[[:space:]]*/, "", line)
+        sub(/:.*/, "", line)
+        print line
+    }
+')
+
+options=()
+for profile in "${profiles[@]}"; do
+    label=${profile//-/ }
+    label=${label^}
+    if [[ $profile == "$current" ]]; then
+        options+=("● $label")
+    else
+        options+=("  $label")
+    fi
+done
+
+selection=$(printf '%s\n' "${options[@]}" \
+    | wofi --dmenu --prompt 'Power profile' --width 380 --height 260 \
+        --cache-file /dev/null) || exit 0
+
+selection=${selection#● }
+selection=${selection#  }
+profile=${selection,,}
+profile=${profile// /-}
+
+powerprofilesctl set "$profile"
+notify-send 'Power profile changed' "$selection"

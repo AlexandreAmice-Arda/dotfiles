@@ -1,0 +1,10 @@
+[Unit]
+Description=Slack for the personal Sway session
+PartOf=sway-session.target
+After=sway-session.target gnome-keyring-daemon.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/slack --password-store=gnome-libsecret
+Restart=on-failure
+RestartSec=5

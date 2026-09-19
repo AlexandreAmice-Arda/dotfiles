@@ -8,6 +8,8 @@ for executable in /usr/bin/wlogout /usr/local/bin/wlogout "$shell_root/usr/bin/w
         export LD_LIBRARY_PATH="$shell_root/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
         export XDG_DATA_DIRS="$shell_root/usr/share${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
     fi
+    # Replacing the wrapper is intentional; there is nothing to clean up.
+    # shellcheck disable=SC2093
     exec "$executable" "$@"
 done
 printf 'wlogout is not installed\n' >&2

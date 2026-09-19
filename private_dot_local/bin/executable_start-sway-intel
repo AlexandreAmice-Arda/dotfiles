@@ -9,7 +9,7 @@ fi
 
 # WLR_DRM_DEVICES uses colons as separators, so a PCI by-path cannot be passed
 # directly. Resolve it first; the resulting /dev/dri/cardN path has no colons.
-export WLR_DRM_DEVICES=$intel_card
+export WLR_DRM_DEVICES="$intel_card"
 export XDG_CURRENT_DESKTOP=sway
 export XDG_SESSION_DESKTOP=sway
 export XDG_SESSION_TYPE=wayland

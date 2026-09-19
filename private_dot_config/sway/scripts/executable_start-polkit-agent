@@ -6,10 +6,13 @@ if pgrep -u "$UID" -f '^/usr/(lib|libexec)/.*/polkit.*authentication-agent[^ ]*$
 fi
 
 for agent in \
+    /usr/libexec/polkit-mate-authentication-agent-1 \
     /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 \
     /usr/libexec/polkit-gnome-authentication-agent-1 \
     /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1; do
     if [[ -x "$agent" ]]; then
+        # Replacing the wrapper is intentional; there is nothing to clean up.
+        # shellcheck disable=SC2093
         exec "$agent"
     fi
 done

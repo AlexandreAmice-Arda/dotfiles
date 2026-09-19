@@ -18,8 +18,9 @@ esac
 
 for command_name in \
     sway swaymsg swayidle jq foot tmux wofi gtklock brightnessctl wpctl \
-    playerctl grim slurp wl-copy notify-send nm-applet pavucontrol \
-    gnome-control-center gnome-system-monitor
+    playerctl grim slurp wl-copy notify-send nm-applet nm-connection-editor \
+    blueman-manager blueman-applet powerprofilesctl pavucontrol \
+    gnome-system-monitor
 do
     require_command "$command_name"
 done
@@ -27,7 +28,18 @@ done
 for wrapper in waybar swaync swaync-client wlogout; do
     require_file "$HOME/.local/bin/$wrapper"
 done
+require_file "$HOME/.local/bin/terminal-main"
+"$HOME/.local/bin/terminal-main" --check >/dev/null 2>&1 \
+    && ok 'GUI terminal can resolve tmux' || fail 'GUI terminal cannot resolve tmux'
 require_file "$HOME/.local/bin/suspend-if-on-battery"
+require_file /usr/libexec/polkit-mate-authentication-agent-1
+{{ if eq .desktopProfile "amice-workstation" -}}
+require_file /opt/Signal/signal-desktop
+require_file /usr/bin/slack
+require_file /usr/bin/code
+require_file /usr/bin/google-chrome-stable
+require_file "$HOME/.config/pcloud/pcloud-launcher.sh"
+{{ end -}}
 
 if command -v sway >/dev/null 2>&1 && [ -r "$HOME/.config/sway/config" ]; then
     sway --unsupported-gpu --validate --config "$HOME/.config/sway/config" >/dev/null 2>&1 \
@@ -86,7 +98,11 @@ if [ -x "$HOME/.local/bin/suspend-if-on-battery" ]; then
 fi
 
 if [ -n "${SWAYSOCK:-}" ] && command -v systemctl >/dev/null 2>&1; then
-    for unit in sway-waybar sway-swaync sway-idle sway-nm-applet sway-polkit-agent; do
+    session_units='sway-waybar sway-swaync sway-idle sway-nm-applet sway-polkit-agent sway-blueman-applet'
+{{ if eq .desktopProfile "amice-workstation" -}}
+    session_units="$session_units sway-signal sway-slack"
+{{ end -}}
+    for unit in $session_units; do
         systemctl --user is-active --quiet "$unit.service" \
             && ok "active service: $unit" || fail "inactive service: $unit"
     done

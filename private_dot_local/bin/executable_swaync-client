@@ -10,6 +10,8 @@ for executable in /usr/bin/swaync-client /usr/local/bin/swaync-client "$shell_ro
         export XDG_CONFIG_DIRS="$shell_root/etc/xdg${XDG_CONFIG_DIRS:+:$XDG_CONFIG_DIRS}"
         export GSETTINGS_SCHEMA_DIR="$shell_root/usr/share/glib-2.0/schemas"
     fi
+    # Replacing the wrapper is intentional; there is nothing to clean up.
+    # shellcheck disable=SC2093
     exec "$executable" "$@"
 done
 printf 'swaync-client is not installed\n' >&2

@@ -70,7 +70,7 @@
     "format-connected": " {num_connections}",
     "format-no-controller": "",
     "tooltip-format": "Bluetooth: {status}\nConnected devices: {num_connections}",
-    "on-click": "env XDG_CURRENT_DESKTOP=GNOME gnome-control-center bluetooth"
+    "on-click": "blueman-manager"
   },
   "pulseaudio": {
     "format": "{icon} {volume}%",
@@ -117,7 +117,7 @@
     "format-full": "",
     "format-icons": ["", "", "", "", ""],
     "tooltip-format": "{timeTo} · {power:.1f} W",
-    "on-click": "env XDG_CURRENT_DESKTOP=GNOME gnome-control-center power"
+    "on-click": "~/.config/sway/scripts/power-profile-menu"
   },
   "tray": { "icon-size": 15, "spacing": 8 },
   "custom/appearance": {

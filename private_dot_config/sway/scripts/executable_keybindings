@@ -2,19 +2,28 @@
 set -euo pipefail
 
 config="${SWAY_CONFIG_PATH:-$HOME/.config/sway/config}"
+config_dir=$(dirname -- "$config")
+shopt -s nullglob
+config_files=("$config" "$config_dir"/conf.d/*.conf)
 
 catalog=$(awk '
     /^[[:space:]]*#@[[:space:]]*/ {
         line=$0
         sub(/^[[:space:]]*#@[[:space:]]*/, "", line)
         count=split(line, fields, /[[:space:]]+::[[:space:]]+/)
-        if (count >= 3) {
-            command=fields[3]
+        if (count >= 2) {
+            command=""
+            if (count >= 3) command=fields[3]
             for (i=4; i<=count; i++) command=command " :: " fields[i]
             printf "%s — %s\t%s\n", fields[1], fields[2], command
         }
     }
-' "$config")
+' "${config_files[@]}")
+
+if [[ ${1:-} == --print ]]; then
+    printf '%s\n' "$catalog" | cut -f1
+    exit 0
+fi
 
 selection=$(printf '%s\n' "$catalog" \
     | cut -f1 \
@@ -24,5 +33,5 @@ selection=$(printf '%s\n' "$catalog" \
 command=$(printf '%s\n' "$catalog" \
     | awk -F '\t' -v selection="$selection" '$1 == selection {print substr($0, index($0, "\t") + 1); exit}')
 
-[[ -n "$command" ]] || exit 1
+[[ -n "$command" ]] || exit 0
 exec swaymsg -- "$command"

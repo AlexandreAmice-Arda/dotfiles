@@ -62,7 +62,9 @@ packages/**
 .config/sway/scripts/apply-outputs
 .config/sway/scripts/arrange-code-windows
 .config/sway/scripts/start-pcloud
-.config/sway/scripts/start-session-apps
+.config/sway/scripts/start-work-session
+.config/systemd/user/sway-signal.service
+.config/systemd/user/sway-slack.service
 .local/bin/start-sway-intel
 .local/bin/sway-trial-system
 .local/share/applications/signal-desktop.desktop

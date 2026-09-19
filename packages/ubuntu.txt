@@ -18,9 +18,10 @@ pipewire-audio
 wireplumber
 network-manager-gnome
 bluez
-policykit-1-gnome
+blueman
+power-profiles-daemon
+mate-polkit
 gnome-keyring
-gnome-control-center
 gnome-system-monitor
 libnotify-bin
 xdg-desktop-portal-gtk

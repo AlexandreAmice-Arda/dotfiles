@@ -3,13 +3,6 @@ set -u
 
 code_project=${SWAY_CODE_PROJECT:-$HOME/Documents/coding_projects/AdmmPackageSplit}
 
-secret_service_ready() {
-    [[ "$(busctl --user get-property \
-        org.freedesktop.secrets \
-        /org/freedesktop/secrets/collection/login \
-        org.freedesktop.Secret.Collection Locked 2>/dev/null)" == "b false" ]]
-}
-
 start_if_missing() {
     local label=$1
     local pattern=$2
@@ -46,10 +39,6 @@ window_ids() {
               )
             | .id' \
         | awk '!seen[$0]++'
-}
-
-window_exists() {
-    [[ -n "$(window_ids "$1" "$2")" ]]
 }
 
 launch_new_window() {
@@ -124,65 +113,15 @@ ensure_workspace_windows() {
     done
 }
 
-move_app_windows() {
-    local app_id=$1
-    local xwayland_class=$2
-    local workspace=$3
-    swaymsg -- "[app_id=\"^${app_id}$\"] move container to workspace number $workspace" \
-        >/dev/null 2>&1 || true
-    swaymsg -- "[class=\"(?i)^${xwayland_class}$\"] move container to workspace number $workspace" \
-        >/dev/null 2>&1 || true
-}
-
-start_if_missing Foot \
-    '(^|/)foot( |$)' \
-    /usr/bin/foot
 start_if_missing "VS Code" \
     '^/usr/share/code/code( |$)' \
     /usr/bin/code "$code_project"
 
-credentials_ready=1
-if [[ ${SESSION_APPS_DRY_RUN:-0} != 1 ]]; then
-    for _ in {1..50}; do
-        secret_service_ready && break
-        sleep 0.2
-    done
-
-    if ! secret_service_ready; then
-        credentials_ready=0
-        notify-send \
-            "Credential applications skipped" \
-            "The login keyring is locked. Foot and VS Code were still started."
-    fi
-fi
-
-if (( credentials_ready )); then
-    start_if_missing Signal \
-        '^/opt/Signal/signal-desktop( |$)' \
-        /opt/Signal/signal-desktop --password-store=gnome-libsecret
-    start_if_missing Slack \
-        '(^|/)(slack|slack-desktop)( |$)' \
-        /usr/bin/slack --password-store=gnome-libsecret
-    if [[ -x /usr/bin/google-chrome-stable || ${SESSION_APPS_DRY_RUN:-0} == 1 ]]; then
-        ensure_workspace_windows Chrome google-chrome Google-chrome 5 6 7 8
-    fi
+if [[ -x /usr/bin/google-chrome-stable || ${SESSION_APPS_DRY_RUN:-0} == 1 ]]; then
+    ensure_workspace_windows Chrome google-chrome Google-chrome 5 6 7 8
 fi
 
 if [[ ${SESSION_APPS_DRY_RUN:-0} != 1 ]]; then
-    # Slack can honor its old "start minimized" preference. A second invocation
-    # asks the single running instance to show its main window.
-    sleep 3
-    if (( credentials_ready )) && ! window_exists slack Slack; then
-        /usr/bin/slack --password-store=gnome-libsecret >/dev/null 2>&1 &
-        sleep 2
-    fi
-
-    move_app_windows foot foot 9
-    if (( credentials_ready )); then
-        move_app_windows signal Signal 10
-        move_app_windows slack Slack 10
-    fi
-
     # VS Code owns its detached editor windows as part of one project. Let it
     # restore them, then spread the four related windows across workspaces 1-4.
     ~/.config/sway/scripts/arrange-code-windows --wait 15

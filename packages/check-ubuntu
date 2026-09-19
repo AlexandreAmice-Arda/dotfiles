@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+
+repo_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+manifest="$repo_dir/packages/ubuntu.txt"
+missing=0
+checked=0
+
+while IFS= read -r package; do
+    case "$package" in
+        ''|'#'*) continue ;;
+    esac
+    checked=$((checked + 1))
+    status=$(dpkg-query -W -f='${db:Status-Abbrev}' "$package" 2>/dev/null || true)
+    if [ "$status" != ii\  ]; then
+        printf 'missing %s\n' "$package" >&2
+        missing=$((missing + 1))
+    fi
+done < "$manifest"
+
+if [ "$missing" -ne 0 ]; then
+    printf '%d of %d Ubuntu packages are missing. Run packages/install-ubuntu.\n' \
+        "$missing" "$checked" >&2
+    exit 1
+fi
+
+printf 'All %d Ubuntu manifest packages are installed.\n' "$checked"

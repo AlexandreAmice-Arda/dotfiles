@@ -7,18 +7,18 @@ selection=$(printf '%s\n' \
     'Bluetooth' \
     'Audio' \
     'Displays' \
-    'Power settings' \
+    'Power profile' \
     'Notifications' \
     'Power menu' \
     | wofi --dmenu --prompt 'Control center' --width 440 --height 440 --cache-file /dev/null) || exit 0
 
 case "$selection" in
     *Appearance*) exec "$HOME/.config/sway/scripts/appearance-menu" ;;
-    *Wi-Fi*) exec env XDG_CURRENT_DESKTOP=GNOME gnome-control-center wifi ;;
-    *Bluetooth*) exec env XDG_CURRENT_DESKTOP=GNOME gnome-control-center bluetooth ;;
+    *Wi-Fi*) exec nm-connection-editor ;;
+    *Bluetooth*) exec blueman-manager ;;
     *Audio*) exec pavucontrol ;;
     *Displays*) exec wdisplays ;;
-    *'Power settings'*) exec env XDG_CURRENT_DESKTOP=GNOME gnome-control-center power ;;
+    *'Power profile'*) exec "$HOME/.config/sway/scripts/power-profile-menu" ;;
     *Notifications*) exec "$HOME/.local/bin/swaync-client" --toggle-panel --skip-wait ;;
     *'Power menu'*) exec "$HOME/.config/sway/scripts/power-menu" ;;
 esac
