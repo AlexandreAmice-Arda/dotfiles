@@ -17,7 +17,7 @@ case " {{ range .desktop.support.qualified_ubuntu }}{{ . }} {{ end }}" in
 esac
 
 for command_name in \
-    sway swaymsg swayidle jq foot tmux wofi gtklock brightnessctl wpctl \
+    sway swaymsg swayidle kanshi jq foot tmux wofi gtklock brightnessctl wpctl \
     playerctl grim slurp wl-copy notify-send nm-applet nm-connection-editor \
     blueman-manager blueman-applet powerprofilesctl pavucontrol \
     gnome-system-monitor
@@ -39,6 +39,8 @@ require_file /usr/bin/slack
 require_file /usr/bin/code
 require_file /usr/bin/google-chrome-stable
 require_file "$HOME/.config/pcloud/pcloud-launcher.sh"
+require_file "$HOME/.config/kanshi/config"
+require_file "$HOME/.config/systemd/user/sway-kanshi.service"
 {{ end -}}
 
 if command -v sway >/dev/null 2>&1 && [ -r "$HOME/.config/sway/config" ]; then
@@ -61,6 +63,13 @@ if command -v fc-match >/dev/null 2>&1; then
     case "$font_family" in
         *"$icon_font"*) ok "$icon_font available" ;;
         *) fail "$icon_font is unavailable; Waybar icons will not render" ;;
+    esac
+
+    terminal_font='{{ .desktop.fonts.terminal }}'
+    font_family=$(fc-match -f '%{family}\n' "$terminal_font" | head -n 1)
+    case "$font_family" in
+        *"$terminal_font"*) ok "$terminal_font available" ;;
+        *) fail "$terminal_font is unavailable; terminal prompt icons will not render" ;;
     esac
 fi
 
@@ -100,7 +109,7 @@ fi
 if [ -n "${SWAYSOCK:-}" ] && command -v systemctl >/dev/null 2>&1; then
     session_units='sway-waybar sway-swaync sway-idle sway-nm-applet sway-polkit-agent sway-blueman-applet'
 {{ if eq .desktopProfile "amice-workstation" -}}
-    session_units="$session_units sway-signal sway-slack"
+    session_units="$session_units sway-kanshi sway-signal sway-slack"
 {{ end -}}
     for unit in $session_units; do
         systemctl --user is-active --quiet "$unit.service" \

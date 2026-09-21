@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+# Prefer a package-manager installation. The pinned Linux release is the
+# portable fallback when Ubuntu does not package Starship.
+for candidate in \
+    /opt/homebrew/bin/starship \
+    /usr/local/bin/starship \
+    /usr/bin/starship \
+    "$HOME/.local/opt/starship-1.26.0/starship"
+do
+    if [ -x "$candidate" ]; then
+        exec "$candidate" "$@"
+    fi
+done
+
+printf 'starship: no native or managed binary found\n' >&2
+exit 127

@@ -17,6 +17,11 @@ power policy. Templates render that intent into:
 - AeroSpace and Ghostty on macOS.
 - tmux on both platforms for portable pane controls and structural restore
   across terminal restarts and reboots.
+- fzf and zoxide on both platforms for fuzzy selection and learned directory
+  navigation.
+- Starship on both platforms for one readable prompt with native shell hooks.
+- Atuin on both platforms for encrypted, synchronized history search while
+  leaving credentials, keys, and databases outside chezmoi.
 
 Platform-only features remain native: Waybar, SwayNC, Wofi, wlogout, GTKLock,
 brightness, and Linux session integration stay on Ubuntu; macOS retains its
@@ -40,12 +45,23 @@ known monitor placement, automatic cloud and messaging applications, and an
 explicit launcher for the heavier project-window arrangement. Those details
 must remain gated behind this profile.
 
+Its monitor layouts are declarative Kanshi profiles keyed by complete display
+descriptions. Kanshi is supervised with the other Sway session services and
+reacts to dock changes. The portable profile has no Kanshi config or service;
+unknown displays therefore retain Sway's automatic placement and can be
+adjusted manually with wdisplays.
+
 ## Installation contract
 
 Ubuntu dependencies are declared in `packages/ubuntu.txt` and installed by
 `packages/install-ubuntu`. macOS dependencies are declared in `Brewfile`.
 Downloaded package trees, credentials, histories, caches, and machine-local
 databases are never committed.
+
+Linux release gaps are filled by SHA-256-pinned Starship 1.26.0 and Atuin
+18.18.1 archives for x86-64 and ARM64. JetBrainsMono Nerd Font 3.5.1 is also
+pinned on Linux and installed by Homebrew on macOS. Wrappers prefer native
+package-manager installations so platform maintenance remains conventional.
 
 A new host should follow this sequence:
 
@@ -66,6 +82,8 @@ silently claimed as hardware-qualified.
 ## Degradation rules
 
 - Unknown outputs use Sway's automatic placement.
+- Known workstation docks activate Kanshi profiles while keeping the laptop
+  display enabled; an appearance refresh follows every profile activation.
 - Missing batteries or temperature sensors leave the corresponding bar item
   empty instead of breaking Waybar.
 - Rotated outputs use a portrait wallpaper; all others use landscape.
@@ -95,6 +113,11 @@ silently claimed as hardware-qualified.
 - Terminal launch uses the platform modifier plus `T`, and Sway never combines
   Super with Space or Return because those keys occupy one Kinesis Advantage2
   thumb cluster.
+- fzf owns Ctrl-T, Alt-C, and fuzzy completion. Atuin initializes afterward
+  and owns only Ctrl-R; Up remains native shell history and selected commands
+  are inserted for review rather than executed.
+- Atuin uses hosted end-to-end encrypted sync, but account credentials,
+  encryption keys, session data, and history databases are never managed.
 
 ## Validation gates
 
@@ -113,13 +136,16 @@ Before calling the setup broadly portable, complete these hardware tests:
 - Full-screen GTKLock and one supervised suspend/resume cycle on each Ubuntu
   hardware class.
 
-## Current status — 2026-09-16
+## Current status — 2026-09-21
 
 The generator, both profiles, package manifests, three wallpaper moods,
 landscape/portrait variants, appearance controls, hardware keys, power-aware
 idle suspend, automatic battery/temperature discovery, terminal adapters,
 reboot-safe tmux structure restore, explicit workstation launch, supervised
-session services, clean-room validation, and host doctor are implemented. The
-dense status bar is intentionally retained. Cross-machine hardware
-qualification remains outstanding; it is the remaining evidence needed before
-claiming broad portability rather than generator-level portability.
+session services, hot-plug workstation monitor profiles, fuzzy navigation,
+portable prompt, encrypted history client, clean-room validation, and host
+doctor are implemented. The dense status bar is intentionally retained. Atuin
+account onboarding remains an explicit per-machine step, and cross-machine
+hardware qualification remains outstanding; those are the remaining evidence
+needed before claiming broad portability rather than generator-level
+portability.

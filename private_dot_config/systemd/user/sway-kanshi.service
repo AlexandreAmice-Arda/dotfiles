@@ -1,0 +1,10 @@
+[Unit]
+Description=Automatic output profiles for the personal Sway workstation
+PartOf=sway-session.target
+After=sway-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/kanshi --config=%h/.config/kanshi/config
+Restart=on-failure
+RestartSec=2

@@ -13,6 +13,36 @@ require_file() {
     [ -r "$1" ] && ok "file: $1" || fail "missing file: $1"
 }
 
+check_toml_file() {
+    file=$1
+    if ! command -v python3 >/dev/null 2>&1; then
+        warn "python3 unavailable; cannot parse $file"
+    elif python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' \
+        "$file" >/dev/null 2>&1; then
+        ok "valid TOML: $file"
+    else
+        fail "invalid TOML: $file"
+    fi
+}
+
+check_shell_tooling() {
+    for command_name in fzf zoxide starship atuin; do
+        require_command "$command_name"
+    done
+    require_file "$HOME/.config/starship.toml"
+    require_file "$HOME/.config/atuin/config.toml"
+    check_toml_file "$HOME/.config/starship.toml"
+    check_toml_file "$HOME/.config/atuin/config.toml"
+
+    if [ ! -r "$HOME/.local/share/atuin/key" ]; then
+        warn 'Atuin has no local encryption key; log in before enabling sync'
+    elif atuin status >/dev/null 2>&1; then
+        ok 'Atuin account and local encryption key available'
+    else
+        warn 'Atuin account is not ready; run an interactive `atuin login`'
+    fi
+}
+
 check_tmux_config() {
     command -v tmux >/dev/null 2>&1 || return
     socket="desktop-doctor-$$"

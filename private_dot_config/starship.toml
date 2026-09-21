@@ -1,0 +1,132 @@
+"$schema" = "https://starship.rs/config-schema.json"
+
+# Tokyo Night powerline prompt, adapted from Starship's official preset.
+# The first line carries context; the second stays visually quiet for typing.
+format = """
+$custom.remote\
+[░▒▓](fg:#a3aed2)\
+$os\
+[](fg:#a3aed2 bg:#769ff0)\
+$directory\
+[](fg:#769ff0 bg:#394260)\
+$git_branch\
+$git_status\
+[](fg:#394260 bg:#212736)\
+$c\
+$python\
+$julia\
+$nodejs\
+$rust\
+$golang\
+$package\
+$conda\
+$docker_context\
+[](fg:#212736 bg:#1d2230)\
+$cmd_duration\
+$status\
+$time\
+[ ](fg:#1d2230)\
+\n$character"""
+
+[custom.remote]
+when = 'test -n "${SSH_CONNECTION:-}${SSH_CLIENT:-}"'
+command = 'printf "%s@%s" "$USER" "$(hostname -s)"'
+format = "[ $output ](bold fg:#c0caf5 bg:#414868)"
+shell = ["sh"]
+
+[os]
+disabled = false
+style = "fg:#090c0c bg:#a3aed2"
+format = "[ $symbol ]($style)"
+
+[os.symbols]
+Linux = "󰌽"
+Macos = "󰀵"
+Ubuntu = "󰕈"
+
+[directory]
+style = "fg:#e3e5e5 bg:#769ff0"
+format = "[ $path ]($style)"
+truncation_length = 4
+truncation_symbol = "…/"
+
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = " "
+"Pictures" = " "
+
+[git_branch]
+symbol = ""
+style = "fg:#7aa2f7 bg:#394260"
+format = "[ $symbol $branch ]($style)"
+
+[git_status]
+style = "fg:#7aa2f7 bg:#394260"
+format = "[($all_status$ahead_behind )]($style)"
+
+# Language and project modules share one segment so absent tools add no noise.
+[c]
+symbol = ""
+style = "fg:#7aa2f7 bg:#212736"
+format = "[ $symbol ($version) ]($style)"
+
+[python]
+symbol = ""
+style = "fg:#7aa2f7 bg:#212736"
+format = "[ $symbol ($version) ]($style)"
+
+[julia]
+symbol = ""
+style = "fg:#7aa2f7 bg:#212736"
+format = "[ $symbol ($version) ]($style)"
+
+[nodejs]
+symbol = ""
+style = "fg:#7aa2f7 bg:#212736"
+format = "[ $symbol ($version) ]($style)"
+
+[rust]
+symbol = ""
+style = "fg:#7aa2f7 bg:#212736"
+format = "[ $symbol ($version) ]($style)"
+
+[golang]
+symbol = ""
+style = "fg:#7aa2f7 bg:#212736"
+format = "[ $symbol ($version) ]($style)"
+
+[package]
+symbol = "󰏗"
+style = "fg:#7aa2f7 bg:#212736"
+format = "[ $symbol $version ]($style)"
+
+[conda]
+symbol = ""
+style = "fg:#7aa2f7 bg:#212736"
+format = "[ $symbol $environment ]($style)"
+
+[docker_context]
+symbol = ""
+style = "fg:#7aa2f7 bg:#212736"
+format = "[ $symbol $context ]($style)"
+
+[cmd_duration]
+min_time = 2000
+style = "fg:#a0a9cb bg:#1d2230"
+format = "[ 󱦟 $duration ]($style)"
+
+[status]
+disabled = false
+style = "bold fg:#f7768e bg:#1d2230"
+format = "[ $symbol$status ]($style)"
+
+[time]
+disabled = false
+time_format = "%R"
+style = "fg:#a0a9cb bg:#1d2230"
+format = "[  $time ]($style)"
+
+[character]
+success_symbol = "[❯](bold #9ece6a)"
+error_symbol = "[❯](bold #f7768e)"

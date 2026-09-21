@@ -1,3 +1,7 @@
 .DS_Store
 *.swp
 *.tmp
+
+# Defense in depth if an Atuin data directory is accidentally added to chezmoi.
+private_dot_config/atuin/*receipt*.json
+private_dot_local/share/atuin/

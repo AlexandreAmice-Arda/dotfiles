@@ -1,0 +1,22 @@
+# Dock layouts for the original workstation. Full display descriptions keep
+# identical Dell models distinct; portable machines intentionally get no file.
+{{ $displays := .desktop.profiles.amice_workstation.displays -}}
+profile office {
+    output "{{ $displays.office_left.description }}" mode {{ $displays.office_left.mode }} position {{ $displays.office_left.position }} scale 1 transform {{ $displays.office_left.transform }}
+    output "{{ $displays.office_center.description }}" mode {{ $displays.office_center.mode }} position {{ $displays.office_center.position }} scale 1 transform {{ $displays.office_center.transform }}
+    output "{{ $displays.office_right.description }}" mode {{ $displays.office_right.mode }} position {{ $displays.office_right.position }} scale 1 transform {{ $displays.office_right.transform }}
+    output {{ $displays.laptop.name }} mode {{ $displays.laptop.mode }} position {{ $displays.laptop.office_position }} scale 1 transform normal
+    exec ~/.local/bin/apply-appearance --restore --quiet
+}
+
+profile home {
+    output "{{ $displays.home_left.description }}" mode {{ $displays.home_left.mode }} position {{ $displays.home_left.position }} scale 1 transform {{ $displays.home_left.transform }}
+    output "{{ $displays.home_right.description }}" mode {{ $displays.home_right.mode }} position {{ $displays.home_right.position }} scale 1 transform {{ $displays.home_right.transform }}
+    output {{ $displays.laptop.name }} mode {{ $displays.laptop.mode }} position {{ $displays.laptop.home_position }} scale 1 transform normal
+    exec ~/.local/bin/apply-appearance --restore --quiet
+}
+
+profile mobile {
+    output {{ $displays.laptop.name }} mode {{ $displays.laptop.mode }} position {{ $displays.laptop.fallback_position }} scale 1 transform normal
+    exec ~/.local/bin/apply-appearance --restore --quiet
+}

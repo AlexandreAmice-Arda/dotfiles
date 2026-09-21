@@ -1,7 +1,10 @@
 sway
 swayidle
+kanshi
 foot
 tmux
+fzf
+zoxide
 gtklock
 brightnessctl
 wofi

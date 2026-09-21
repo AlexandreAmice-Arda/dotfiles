@@ -1,0 +1,19 @@
+#!/bin/sh
+set -eu
+
+# Atuin's installer uses ~/.atuin/bin. Prefer it and package-manager binaries,
+# then fall back to the pinned Linux release managed by chezmoi.
+for candidate in \
+    /opt/homebrew/bin/atuin \
+    /usr/local/bin/atuin \
+    /usr/bin/atuin \
+    "$HOME/.atuin/bin/atuin" \
+    "$HOME/.local/opt/atuin-18.18.1/atuin"
+do
+    if [ -x "$candidate" ]; then
+        exec "$candidate" "$@"
+    fi
+done
+
+printf 'atuin: no native or managed binary found\n' >&2
+exit 127

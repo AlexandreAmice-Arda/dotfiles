@@ -15,6 +15,7 @@ case $(uname -s) in
     *) fail "unsupported operating system: $(uname -s)" ;;
 esac
 
+check_shell_tooling
 check_tmux_config
 check_tmux_persistence
 check_chezmoi_state

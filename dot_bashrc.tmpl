@@ -153,3 +153,27 @@ fi
 
 export PATH
 unset -f path_prepend
+
+# fzf keeps Ctrl-T, Alt-C, and fuzzy completion. Atuin is initialized last so
+# it owns Ctrl-R while the ordinary Up arrow keeps readline history behavior.
+if command -v fzf >/dev/null 2>&1; then
+    if fzf_shell_init=$(fzf --bash 2>/dev/null); then
+        eval "$fzf_shell_init"
+    else
+        [ -r /usr/share/doc/fzf/examples/completion.bash ] \
+            && . /usr/share/doc/fzf/examples/completion.bash
+        [ -r /usr/share/doc/fzf/examples/key-bindings.bash ] \
+            && . /usr/share/doc/fzf/examples/key-bindings.bash
+    fi
+    unset fzf_shell_init
+fi
+
+if command -v zoxide >/dev/null 2>&1; then
+    eval "$(zoxide init bash)"
+fi
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init bash)"
+fi
+if command -v atuin >/dev/null 2>&1; then
+    eval "$(atuin init bash --disable-up-arrow --disable-ai)"
+fi

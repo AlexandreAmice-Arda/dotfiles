@@ -36,6 +36,12 @@ The shared shell environment works with Ubuntu's Bash and macOS's default Zsh.
 Homebrew's shell environment is loaded explicitly so GUI-launched Ghostty can
 find tools on both Apple Silicon and Intel Macs.
 
+Chezmoi also installs checksummed Linux releases of Starship and Atuin plus the
+JetBrainsMono Nerd Font. Ubuntu supplies fzf, zoxide, and Kanshi through apt;
+Homebrew supplies the four shell tools and the Nerd Font on macOS. Small
+wrappers prefer native package-manager binaries and use the pinned Linux
+releases as a fallback.
+
 ### Ubuntu desktop dependencies
 
 After cloning the source repository, install the reviewed Ubuntu package set:
@@ -79,6 +85,32 @@ already exists, move it aside so it cannot override the managed XDG config.
 AeroSpace provides its own virtual workspaces; separate Mission Control Spaces
 are unnecessary for this setup.
 
+### Atuin account setup
+
+The repository manages Atuin's safe behavior, not its account, encryption key,
+history database, or session. On the first computer, register interactively so
+the password never appears in the command line:
+
+```sh
+atuin register -u YOUR_USERNAME -e YOUR_EMAIL
+atuin key
+```
+
+Store the displayed encryption key in a password manager. Before importing,
+review the current shell history (`~/.bash_history` or `~/.zsh_history`) for
+credentials, then run:
+
+```sh
+atuin import auto
+atuin sync
+```
+
+On later computers, run `atuin login -u YOUR_USERNAME` and enter the password
+and saved encryption key at the prompts. `desktop-doctor` warns when the local
+key or account state is missing. Atuin sync uses its hosted service; the
+managed config filters common credential forms and commands beginning with a
+space, but reviewing old history before importing remains essential.
+
 Ghostty and Foot each resume the oldest detached `terminal-N` tmux session, or
 create the next numbered session when every existing terminal is in use. This
 keeps native terminal windows independent while preserving each one's shell
@@ -118,8 +150,14 @@ not as absolute home paths inside a portable template.
 
 - `.chezmoidata.yaml`: shared theme, key directions, workspaces, power timings,
   and the explicitly personal workstation display inventory.
+- `.chezmoiexternal.toml.tmpl`: pinned Linux Starship, Atuin, Nerd Font, and
+  tmux plugin releases with SHA-256 checksums.
 - `private_dot_config/sway/config.tmpl`: short entry point; readable fragments
   live under `sway/conf.d/` by topic.
+- `private_dot_config/kanshi/`: hot-plug monitor profiles for the original
+  workstation only.
+- `private_dot_config/{starship.toml,atuin/}`: portable prompt and history
+  behavior, with all Atuin account state deliberately excluded.
 - `private_dot_config/systemd/user/`: supervised Sway-session services.
 - `private_dot_config/{waybar,swaync,wofi,wlogout,gtklock}/`: one focused config
   and/or stylesheet per component.
@@ -161,6 +199,21 @@ tools: NetworkManager connections, Blueman Bluetooth, pavucontrol audio,
 wdisplays outputs, and power profile selection. It deliberately avoids GNOME
 Settings panels, whose behavior depends on services from a full GNOME session.
 
+### Shell navigation and history
+
+- `z DIRECTORY_FRAGMENT`: jump to a frequently used directory with zoxide.
+- `zi`: choose a known directory interactively through fzf.
+- `Ctrl+T`: insert a fuzzy-selected file or directory into the command line.
+- `Alt+C`: change into a fuzzy-selected directory.
+- `Ctrl+R`: search global Atuin history. Enter inserts the selected command for
+  review; press Enter again at the prompt to run it.
+- Up arrow: ordinary shell history, intentionally unchanged by Atuin.
+
+Inside tmux, Atuin opens an 80% by 60% popup when supported and otherwise uses
+the normal terminal interface. Starship shows the current directory, Git
+state, detected language/project context, command duration, failures, and time;
+username and hostname appear only for remote shells.
+
 Preview and apply source changes:
 
 ```sh
@@ -189,15 +242,19 @@ chezmoi update -v
 ## Ubuntu Sway
 
 The `portable` profile uses Ubuntu's standard Sway session and automatic output
-placement. Hardware keys, the bar, notifications, appearance presets, locking,
-and the terminal workflow are all part of that portable base.
+placement. Use wdisplays for an ad-hoc layout. Hardware keys, the bar,
+notifications, appearance presets, locking, and the terminal workflow are all
+part of that portable base.
 
 ### Original Intel/NVIDIA workstation trial
 
 The `amice-workstation` profile additionally keeps the original saved monitor
-roles, automatic cloud and messaging applications, and an explicit launcher
-for project applications. It can install a separate GDM entry that uses the
-Intel GPU for scan-out and leaves NVIDIA available for offloaded applications:
+roles in hot-plug-aware Kanshi profiles, automatic cloud and messaging
+applications, and an explicit launcher for project applications. The office,
+home, and laptop-only profiles keep the laptop panel enabled and reapply the
+correct landscape/portrait wallpaper after layout changes. It can install a
+separate GDM entry that uses the Intel GPU for scan-out and leaves NVIDIA
+available for offloaded applications:
 
 ```sh
 chezmoi diff

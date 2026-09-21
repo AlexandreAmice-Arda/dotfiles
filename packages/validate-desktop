@@ -51,7 +51,11 @@ mac_portable=$(materialize mac-portable darwin portable | tail -n 1)
 # Profile and platform boundaries are part of the contract, not merely syntax.
 require_absent "$linux_portable/.config/sway/scripts/apply-outputs"
 require_absent "$linux_portable/.config/terminator"
-require_file "$linux_workstation/.config/sway/scripts/apply-outputs"
+require_absent "$linux_workstation/.config/sway/scripts/apply-outputs"
+require_absent "$linux_portable/.config/kanshi"
+require_absent "$linux_portable/.config/systemd/user/sway-kanshi.service"
+require_file "$linux_workstation/.config/kanshi/config"
+require_file "$linux_workstation/.config/systemd/user/sway-kanshi.service"
 require_file "$linux_workstation/.config/sway/scripts/start-work-session"
 require_absent "$linux_workstation/.config/sway/scripts/start-session-apps"
 require_file "$linux_workstation/.config/systemd/user/sway-signal.service"
@@ -63,10 +67,74 @@ require_file "$mac_portable/.config/aerospace/aerospace.toml"
 require_file "$mac_portable/.config/ghostty/config.ghostty"
 require_file "$mac_portable/.zshrc"
 require_absent "$mac_portable/.config/sway"
+require_absent "$mac_portable/.config/kanshi"
 require_absent "$mac_portable/.config/terminator"
 require_absent "$mac_portable/.local/share/applications/signal-desktop.desktop"
 require_absent "$mac_portable/.vscode/extensions/amice.send-editor-to-sway-workspace-0.1.0"
 ok 'platform and profile boundaries'
+
+for home in "$linux_portable" "$linux_workstation" "$mac_portable"; do
+    require_file "$home/.config/starship.toml"
+    require_file "$home/.config/atuin/config.toml"
+    require_file "$home/.local/bin/starship"
+    require_file "$home/.local/bin/atuin"
+    require_absent "$home/.local/share/atuin"
+    python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' \
+        "$home/.config/starship.toml"
+    python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' \
+        "$home/.config/atuin/config.toml"
+done
+grep -Fq 'atuin init bash --disable-up-arrow --disable-ai' \
+    "$linux_portable/.bashrc" \
+    || fail 'Bash Atuin integration can replace the Up arrow or enable AI'
+grep -Fq 'atuin init zsh --disable-up-arrow --disable-ai' \
+    "$mac_portable/.zshrc" \
+    || fail 'Zsh Atuin integration can replace the Up arrow or enable AI'
+grep -Fq 'enter_accept = false' "$linux_portable/.config/atuin/config.toml" \
+    || fail 'Atuin selections are not configured for review before execution'
+ok 'portable shell-tool configs contain no account state'
+
+for external_case in linux-amd64 linux-arm64 darwin-arm64; do
+    external_os=${external_case%-*}
+    external_arch=${external_case#*-}
+    external_manifest="$work_dir/chezmoiexternal-$external_case.toml"
+    external_override=$(jq -nc --arg os "$external_os" --arg arch "$external_arch" \
+        '{chezmoi:{os:$os, arch:$arch}}')
+    chezmoi --source "$source_root" --override-data "$external_override" \
+        execute-template < "$source_root/.chezmoiexternal.toml.tmpl" \
+        > "$external_manifest"
+    python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' \
+        "$external_manifest"
+done
+grep -Fq 'starship-x86_64-unknown-linux-musl' \
+    "$work_dir/chezmoiexternal-linux-amd64.toml" \
+    || fail 'x86-64 Starship external is missing'
+grep -Fq 'atuin-aarch64-unknown-linux-gnu' \
+    "$work_dir/chezmoiexternal-linux-arm64.toml" \
+    || fail 'ARM64 Atuin external is missing'
+if grep -Eq 'starship|atuin|JetBrainsMono' \
+    "$work_dir/chezmoiexternal-darwin-arm64.toml"; then
+    fail 'Linux fallback releases leaked into the macOS external manifest'
+fi
+ok 'multi-architecture external release manifests'
+
+for package in kanshi fzf zoxide; do
+    grep -Fxq "$package" "$source_root/packages/ubuntu.txt" \
+        || fail "Ubuntu package is undeclared: $package"
+done
+for formula in atuin fzf starship zoxide; do
+    grep -Fqx "brew \"$formula\"" "$source_root/Brewfile" \
+        || fail "Homebrew formula is undeclared: $formula"
+done
+grep -Fqx 'cask "font-jetbrains-mono-nerd-font"' "$source_root/Brewfile" \
+    || fail 'Homebrew Nerd Font cask is undeclared'
+ok 'platform dependency manifests'
+
+for profile in office home mobile; do
+    grep -Fq "profile $profile {" "$linux_workstation/.config/kanshi/config" \
+        || fail "missing Kanshi profile: $profile"
+done
+ok 'Kanshi workstation profiles'
 
 for home in "$linux_portable" "$linux_workstation"; do
     require_file "$home/.local/state/tokyo-night/foot-opacity.ini"
@@ -151,11 +219,15 @@ if command -v systemd-analyze >/dev/null 2>&1; then
     mkdir -p "$unit_dir"
     for unit in \
         "$linux_portable/.config/systemd/user/"sway-*.service \
-        "$linux_portable/.config/systemd/user/sway-session.target"
+        "$linux_portable/.config/systemd/user/sway-session.target" \
+        "$linux_workstation/.config/systemd/user/sway-kanshi.service"
     do
         # systemd expands %h through the account database, not $HOME. Point
         # verifier-only copies at the clean-room home it is actually checking.
-        sed "s|%h|$linux_portable|g" "$unit" > "$unit_dir/${unit##*/}"
+        sed \
+            -e "s|%h|$linux_portable|g" \
+            -e 's|^ExecStart=/usr/bin/kanshi .*|ExecStart=/bin/true|' \
+            "$unit" > "$unit_dir/${unit##*/}"
     done
     SYSTEMD_UNIT_PATH="$unit_dir:/usr/lib/systemd/user" \
         systemd-analyze --user verify "$unit_dir/"*

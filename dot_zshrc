@@ -10,3 +10,30 @@ alias la='ls -A'
 alias l='ls -CF'
 
 autoload -Uz compinit && compinit
+
+# fzf keeps file/directory widgets and completion. Atuin is initialized last
+# so it owns Ctrl-R without replacing the normal Up-arrow history behavior.
+if command -v fzf >/dev/null 2>&1; then
+    if fzf_shell_init=$(fzf --zsh 2>/dev/null); then
+        eval "$fzf_shell_init"
+    else
+        for fzf_script in \
+            /usr/share/doc/fzf/examples/completion.zsh \
+            /usr/share/doc/fzf/examples/key-bindings.zsh
+        do
+            [ -r "$fzf_script" ] && source "$fzf_script"
+        done
+        unset fzf_script
+    fi
+    unset fzf_shell_init
+fi
+
+if command -v zoxide >/dev/null 2>&1; then
+    eval "$(zoxide init zsh)"
+fi
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init zsh)"
+fi
+if command -v atuin >/dev/null 2>&1; then
+    eval "$(atuin init zsh --disable-up-arrow --disable-ai)"
+fi

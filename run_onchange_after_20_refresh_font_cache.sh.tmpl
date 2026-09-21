@@ -1,0 +1,12 @@
+{{ if eq .chezmoi.os "linux" -}}
+#!/bin/sh
+set -eu
+
+# Re-run only when the managed Nerd Font version changes.
+font_release=3.5.1
+font_dir={{ joinPath .chezmoi.homeDir ".local/share/fonts/JetBrainsMonoNerd-3.5.1" | quote }}
+
+if [ -d "$font_dir" ] && command -v fc-cache >/dev/null 2>&1; then
+    fc-cache -f "$font_dir"
+fi
+{{ end -}}

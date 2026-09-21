@@ -1,0 +1,42 @@
+[".tmux/plugins/tmux-resurrect"]
+    type = "archive"
+    url = "https://github.com/tmux-plugins/tmux-resurrect/archive/cff343cf9e81983d3da0c8562b01616f12e8d548.tar.gz"
+    stripComponents = 1
+    checksum.sha256 = "9f1dda18554291ee7f8a0f499e2af90bbadc2ebceb7a995bb13b76529fe0c5c9"
+
+[".tmux/plugins/tmux-continuum"]
+    type = "archive"
+    url = "https://github.com/tmux-plugins/tmux-continuum/archive/0698e8f4b17d6454c71bf5212895ec055c578da0.tar.gz"
+    stripComponents = 1
+    checksum.sha256 = "a1b9a2f0715163472ca713679204a1ca55d3f845cf1c659ae04222db3553424f"
+
+{{ if eq .chezmoi.os "linux" -}}
+[".local/share/fonts/JetBrainsMonoNerd-3.5.1"]
+    type = "archive"
+    url = "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/JetBrainsMono.tar.xz"
+    checksum.sha256 = "04d5e8f903693f9dd13e16f867e994834e681eb3c72c0d337a770dcda09010cf"
+
+{{ if eq .chezmoi.arch "amd64" -}}
+[".local/opt/starship-1.26.0"]
+    type = "archive"
+    url = "https://github.com/starship/starship/releases/download/v1.26.0/starship-x86_64-unknown-linux-musl.tar.gz"
+    checksum.sha256 = "b7c232b0e8249d8e55a40beb79c5c43a7d370f3f9408bd215deb0170daeaadf3"
+
+[".local/opt/atuin-18.18.1"]
+    type = "archive"
+    url = "https://github.com/atuinsh/atuin/releases/download/v18.18.1/atuin-x86_64-unknown-linux-gnu.tar.gz"
+    stripComponents = 1
+    checksum.sha256 = "1b142300a474936c4a5c10b45e682230c40c060a025b7ea53dfa6289b28d8441"
+{{ else if eq .chezmoi.arch "arm64" -}}
+[".local/opt/starship-1.26.0"]
+    type = "archive"
+    url = "https://github.com/starship/starship/releases/download/v1.26.0/starship-aarch64-unknown-linux-musl.tar.gz"
+    checksum.sha256 = "dc30189378d2f2e287384e8a692d3f95ad1df64cf0e8c36aa9201516028aed6b"
+
+[".local/opt/atuin-18.18.1"]
+    type = "archive"
+    url = "https://github.com/atuinsh/atuin/releases/download/v18.18.1/atuin-aarch64-unknown-linux-gnu.tar.gz"
+    stripComponents = 1
+    checksum.sha256 = "44ecf39067090c31041ffb02d8bdfe161ecd2e5e83b1e1e0698a78a6b14d2cd4"
+{{ end -}}
+{{ end -}}

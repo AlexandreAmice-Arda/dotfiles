@@ -1,13 +1,17 @@
 tap "nikitabobko/tap"
 
 brew "chezmoi"
+brew "atuin"
+brew "fzf"
 brew "gh"
 brew "jq"
 brew "python"
 brew "ripgrep"
 brew "shellcheck"
+brew "starship"
 brew "tmux"
+brew "zoxide"
 
 cask "nikitabobko/tap/aerospace"
 cask "ghostty"
-cask "font-jetbrains-mono"
+cask "font-jetbrains-mono-nerd-font"

@@ -5,6 +5,11 @@ Brewfile
 packages
 packages/**
 
+# Atuin account material is always machine-local. Only config.toml is managed.
+.config/atuin/atuin-receipt.json
+.local/share/atuin
+.local/share/atuin/**
+
 # Login-shell adapters are platform-specific.
 {{- if ne .chezmoi.os "darwin" }}
 .bash_profile
@@ -19,6 +24,8 @@ packages/**
 .config/foot/**
 .config/gtklock
 .config/gtklock/**
+.config/kanshi
+.config/kanshi/**
 .config/sway
 .config/sway/**
 .config/swaync
@@ -59,12 +66,14 @@ packages/**
 {{- if or (ne .chezmoi.os "linux") (ne .desktopProfile "amice-workstation") }}
 .config/terminator
 .config/terminator/**
-.config/sway/scripts/apply-outputs
+.config/kanshi
+.config/kanshi/**
 .config/sway/scripts/arrange-code-windows
 .config/sway/scripts/start-pcloud
 .config/sway/scripts/start-work-session
 .config/systemd/user/sway-signal.service
 .config/systemd/user/sway-slack.service
+.config/systemd/user/sway-kanshi.service
 .local/bin/start-sway-intel
 .local/bin/sway-trial-system
 .local/share/applications/signal-desktop.desktop
