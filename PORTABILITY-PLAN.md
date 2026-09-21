@@ -92,6 +92,9 @@ silently claimed as hardware-qualified.
 - Each native terminal window resumes one detached numbered tmux session or
   creates a new one, so persistence does not make separate windows mirror one
   another. The legacy `main` session remains an explicit shared option.
+- Terminal launch uses the platform modifier plus `T`, and Sway never combines
+  Super with Space or Return because those keys occupy one Kinesis Advantage2
+  thumb cluster.
 
 ## Validation gates
 

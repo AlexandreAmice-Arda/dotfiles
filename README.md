@@ -131,9 +131,10 @@ not as absolute home paths inside a portable template.
 
 ### Core keys
 
-- `Super+Enter`: open or resume an independent persistent terminal session.
-- `Super+Ctrl+Enter` (Sway): open the deliberately shared tmux `main` session.
-- `Super+Shift+Enter` (workstation profile): launch and arrange the personal
+- `Super+T` on Sway or `Option+T` on AeroSpace: open or resume an independent
+  persistent terminal session.
+- `Super+Shift+T` (Sway): open the deliberately shared tmux `main` session.
+- `Super+Shift+D` (workstation profile): launch and arrange the personal
   project applications; they do not open merely because Sway started.
 - `Ctrl+Alt+B`: split the terminal side-by-side.
 - `Ctrl+Alt+V`: split the terminal top/bottom.
@@ -143,7 +144,7 @@ not as absolute home paths inside a portable template.
 - Hardware brightness/volume keys: adjust the current display or audio sink.
 - `Super+Alt+-` / `Super+Alt+=`: brightness fallback when a keyboard does not
   emit dedicated brightness keys.
-- `Super+Alt+Space`: open the Ubuntu system menu.
+- `Super+C`: open the Ubuntu graphical system controls.
 - `Super+Shift+X`: lock the Ubuntu session.
 
 On Ubuntu the session locks after 10 minutes idle, powers displays down after
@@ -205,18 +206,19 @@ chezmoi apply -v
 ```
 
 At GDM, select **Sway (Intel hybrid trial)**. Super is the window-manager
-modifier, Super+/ opens the executable command palette, and all Super+Space
-bindings are intentionally absent.
+modifier and Super+/ opens the executable command palette. Because Super,
+Space, and Enter share a Kinesis Advantage2 thumb cluster, no Super chord uses
+Space or Enter.
 
 Sway starts desktop infrastructure, pCloud, Signal, and Slack at login; the two
 messaging applications are supervised user services with journal logs, and
-their windows are collected on workspace 10. Press Super+Shift+Enter when
+their windows are collected on workspace 10. Press Super+Shift+D when
 you want VS Code and the arranged Chrome project workspaces; the same action is
 available in the Super+/ command palette.
-Super+Enter opens Foot with its own persistent tmux session, resuming a
-detached terminal before creating another one. Super+Ctrl+Enter opens the
-shared `main` session when mirrored clients are intentional. Super+Alt+Space
-opens the control center.
+Super+T opens Foot with its own persistent tmux session, resuming a detached
+terminal before creating another one. Super+Shift+T opens the shared `main`
+session when mirrored clients are intentional. Super+C opens the control
+center.
 Choose **Appearance** there—or click the palette icon near the right side of
 Waybar—to switch Midnight, Dusk, and Dawn wallpaper moods or select terminal
 opacity. Rotated Sway outputs receive the portrait wallpaper automatically.

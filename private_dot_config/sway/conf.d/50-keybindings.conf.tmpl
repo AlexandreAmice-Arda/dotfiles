@@ -1,6 +1,7 @@
 # Executable search entries use: #@ shortcut :: description :: sway command
 # Reference-only entries omit the final command.
-# Super is the window-manager modifier; Super+Space remains unassigned.
+# Super is the window-manager modifier. On the Kinesis Advantage2 it shares a
+# thumb cluster with Space and Return, so neither key is used in a Super chord.
 
 # Launching and session controls
 #@ Super+/ :: Search and execute Sway commands :: exec ~/.config/sway/scripts/keybindings
@@ -8,13 +9,13 @@ bindsym $mod+slash exec ~/.config/sway/scripts/keybindings
 #@ Palette only :: Configure displays graphically :: exec wdisplays
 {{ if eq .desktopProfile "amice-workstation" -}}
 #@ Palette only :: Arrange restored VS Code windows :: exec ~/.config/sway/scripts/arrange-code-windows
-#@ Super+Shift+Return :: Start personal work applications :: exec ~/.config/sway/scripts/start-work-session
-bindsym $mod+Shift+Return exec ~/.config/sway/scripts/start-work-session
+#@ Super+Shift+d :: Start personal development applications :: exec ~/.config/sway/scripts/start-work-session
+bindsym $mod+Shift+d exec ~/.config/sway/scripts/start-work-session
 {{ end -}}
-#@ Super+Return :: Open or resume an independent persistent terminal :: exec foot
-bindsym $mod+Return exec $term
-#@ Super+Left Ctrl+Return :: Open a deliberately shared tmux main session :: exec foot ~/.local/bin/terminal-main --shared
-bindsym $mod+Ctrl+Return exec foot ~/.local/bin/terminal-main --shared
+#@ Super+t :: Open or resume an independent persistent terminal :: exec foot
+bindsym $mod+t exec $term
+#@ Super+Shift+t :: Open a deliberately shared tmux main session :: exec foot ~/.local/bin/terminal-main --shared
+bindsym $mod+Shift+t exec foot ~/.local/bin/terminal-main --shared
 #@ Super+d :: Open application launcher :: exec wofi --show drun
 bindsym $mod+d exec $menu
 #@ Super+Alt+q :: Close focused window :: kill
@@ -25,8 +26,8 @@ bindsym $mod+Shift+c exec ~/.config/sway/scripts/reload-desktop
 bindsym $mod+Shift+e exec ~/.local/bin/session-action logout
 #@ Super+Shift+x :: Lock screen :: exec ~/.local/bin/lock-desktop
 bindsym $mod+Shift+x exec ~/.local/bin/lock-desktop
-#@ Super+Alt+Space :: Open graphical system controls :: exec ~/.config/sway/scripts/system-menu
-bindsym $mod+Mod1+space exec ~/.config/sway/scripts/system-menu
+#@ Super+c :: Open graphical system controls :: exec ~/.config/sway/scripts/system-menu
+bindsym $mod+c exec ~/.config/sway/scripts/system-menu
 #@ Super+p :: Open lock, suspend, logout, restart, and shutdown menu :: exec ~/.config/sway/scripts/power-menu
 bindsym $mod+p exec ~/.config/sway/scripts/power-menu
 

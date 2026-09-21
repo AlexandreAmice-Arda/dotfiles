@@ -112,6 +112,16 @@ do
 done
 ok 'Sway command palette includes generated fragments and terminal references'
 
+if rg -n 'bindsym[[:space:]]+\$mod\+[^[:space:]]*(Return|space)' \
+    "$linux_workstation/.config/sway/conf.d/50-keybindings.conf"
+then
+    fail 'Kinesis-incompatible Super chord uses Return or Space'
+fi
+grep -Fq "alt-t = 'exec-and-forget open -na Ghostty'" \
+    "$mac_portable/.config/aerospace/aerospace.toml" \
+    || fail 'macOS terminal shortcut is not the portable modifier+T chord'
+ok 'Kinesis thumb-cluster ergonomics'
+
 power_fixture="$work_dir/power-supply/BAT0"
 mkdir -p "$power_fixture"
 printf 'Discharging\n' > "$power_fixture/status"
