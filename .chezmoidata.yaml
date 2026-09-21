@@ -90,7 +90,8 @@ desktop:
           description: "Ancor Communications Inc ASUS PB278 C9LMTF003960"
           serial: "C9LMTF003960"
           mode: "2560x1440"
-          transform: "270"
+          # Kanshi's Wayland transform direction renders this as Sway 270.
+          transform: "90"
           position: "5120,0"
         home_left:
           description: "Dell Inc. DELL SE2719HR 19K8JB3"
