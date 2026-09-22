@@ -136,6 +136,12 @@ Before calling the setup broadly portable, complete these hardware tests:
 - Full-screen GTKLock and one supervised suspend/resume cycle on each Ubuntu
   hardware class.
 
+## Deliberate follow-ups
+
+- Revisit the rich Starship prompt after normal daily use. In particular,
+  reassess its information density, segment ordering, and whether the
+  two-line Powerline presentation is calmer than a smaller prompt.
+
 ## Current status — 2026-09-21
 
 The generator, both profiles, package manifests, three wallpaper moods,

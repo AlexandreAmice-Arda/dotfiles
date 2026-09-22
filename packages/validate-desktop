@@ -54,7 +54,9 @@ require_absent "$linux_portable/.config/terminator"
 require_absent "$linux_workstation/.config/sway/scripts/apply-outputs"
 require_absent "$linux_portable/.config/kanshi"
 require_absent "$linux_portable/.config/systemd/user/sway-kanshi.service"
+require_absent "$linux_portable/.config/sway/scripts/output-profile-applied"
 require_file "$linux_workstation/.config/kanshi/config"
+require_file "$linux_workstation/.config/sway/scripts/output-profile-applied"
 require_file "$linux_workstation/.config/systemd/user/sway-kanshi.service"
 require_file "$linux_workstation/.config/sway/scripts/start-work-session"
 require_absent "$linux_workstation/.config/sway/scripts/start-session-apps"
@@ -134,6 +136,9 @@ for profile in office home mobile; do
     grep -Fq "profile $profile {" "$linux_workstation/.config/kanshi/config" \
         || fail "missing Kanshi profile: $profile"
 done
+grep -Fq 'exec ~/.config/sway/scripts/output-profile-applied' \
+    "$linux_workstation/.config/kanshi/config" \
+    || fail 'Kanshi profiles do not move the single Waybar after output changes'
 ok 'Kanshi workstation profiles'
 
 for home in "$linux_portable" "$linux_workstation"; do

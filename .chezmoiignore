@@ -69,6 +69,7 @@ packages/**
 .config/kanshi
 .config/kanshi/**
 .config/sway/scripts/arrange-code-windows
+.config/sway/scripts/output-profile-applied
 .config/sway/scripts/start-pcloud
 .config/sway/scripts/start-work-session
 .config/systemd/user/sway-signal.service
