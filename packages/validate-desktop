@@ -139,6 +139,10 @@ done
 grep -Fq 'exec ~/.config/sway/scripts/output-profile-applied' \
     "$linux_workstation/.config/kanshi/config" \
     || fail 'Kanshi profiles do not move the single Waybar after output changes'
+if grep -E '^\s*output ' "$linux_workstation/.config/kanshi/config" \
+    | grep -Ev '^\s*output ("[^"]+"|[^ ]+) enable '; then
+    fail 'Kanshi profile contains an output that is not explicitly enabled'
+fi
 ok 'Kanshi workstation profiles'
 
 for home in "$linux_portable" "$linux_workstation"; do
