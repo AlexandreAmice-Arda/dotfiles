@@ -36,10 +36,11 @@ if [ "$#" -ne 0 ]; then
     exit 2
 fi
 
-# A terminal window should have its own tmux session, not mirror another
-# window. Reattach the oldest numbered session without a client so closed
-# terminals resume naturally; create the next numbered session otherwise.
-# tmux-resurrect saves every session, so the same rule also works after reboot.
+# Each explicitly persistent terminal should have its own tmux session, not
+# mirror another window. Reattach the oldest numbered session without a client
+# so closed terminals resume naturally; create the next numbered session
+# otherwise. tmux-resurrect saves every session, so the same rule also works
+# when this adapter is first launched after a reboot.
 detached_session=$(
     "$tmux_bin" list-sessions \
         -F '#{session_name}:#{session_attached}' 2>/dev/null \

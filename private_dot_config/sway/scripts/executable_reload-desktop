@@ -7,4 +7,11 @@ systemctl --user restart \
     sway-waybar.service \
     sway-swaync.service \
     sway-idle.service
-notify-send 'Sway reloaded' 'Window manager, bar, notifications, and idle policy are using the latest configuration.'
+
+# A raw Sway reload resets output placement without producing a hot-plug event.
+# Re-run the optional workstation profile manager when its unit is installed.
+if systemctl --user cat sway-kanshi.service >/dev/null 2>&1; then
+    systemctl --user restart sway-kanshi.service
+fi
+
+notify-send 'Sway reloaded' 'Window manager, outputs, bar, notifications, and idle policy are using the latest configuration.'

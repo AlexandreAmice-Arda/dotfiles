@@ -107,12 +107,15 @@ silently claimed as hardware-qualified.
   archives on both platforms. They periodically save and restore tmux
   structure, but never replay processes or persist pane text. Application
   state resumes explicitly through the application's own interface.
-- Each native terminal window resumes one detached numbered tmux session or
-  creates a new one, so persistence does not make separate windows mirror one
-  another. The legacy `main` session remains an explicit shared option.
-- Terminal launch uses the platform modifier plus `T`, and Sway never combines
-  Super with Space or Return because those keys occupy one Kinesis Advantage2
-  thumb cluster.
+- Native terminal windows start a plain shell so local tmux never invisibly
+  captures splits made while SSH is in the foreground. The platform modifier
+  plus `T` launches that transparent path.
+- The shifted terminal shortcut explicitly resumes one detached numbered tmux
+  session or creates a new one. The first such launch after reboot triggers
+  structural restoration; the legacy `main` session remains an explicit
+  shared option.
+- Sway never combines Super with Space or Return because those keys occupy one
+  Kinesis Advantage2 thumb cluster.
 - fzf owns Ctrl-T, Alt-C, and fuzzy completion. Atuin initializes afterward
   and owns only Ctrl-R; Up remains native shell history and selected commands
   are inserted for review rather than executed.

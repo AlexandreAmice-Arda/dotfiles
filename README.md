@@ -111,14 +111,18 @@ key or account state is missing. Atuin sync uses its hosted service; the
 managed config filters common credential forms and commands beginning with a
 space, but reviewing old history before importing remains essential.
 
-Ghostty and Foot each resume the oldest detached `terminal-N` tmux session, or
-create the next numbered session when every existing terminal is in use. This
-keeps native terminal windows independent while preserving each one's shell
-structure. Pinned tmux-resurrect and tmux-continuum plugins save that structure
-every five minutes and rebuild sessions, windows, panes, layouts, and working
-directories when the first terminal opens after a reboot. The terminal
-application itself remains platform-native. Run `terminal-main --shared` when
-two terminal windows should intentionally share the legacy `main` session.
+Ghostty and Foot open a plain native shell by default, which keeps SSH ownership
+unambiguous: a terminal split is never silently presented as part of a remote
+session. The shifted terminal shortcut explicitly runs `terminal-main`, which
+resumes the oldest detached `terminal-N` tmux session or creates the next
+numbered session when every existing one is in use.
+
+Pinned tmux-resurrect and tmux-continuum plugins save persistent terminal
+structure every five minutes and rebuild sessions, windows, panes, layouts,
+and working directories when the first explicit tmux terminal opens after a
+reboot. The terminal application itself remains platform-native. Run
+`terminal-main --shared` when two terminal windows should intentionally share
+the legacy `main` session.
 
 Process memory cannot survive a reboot, so commands are never replayed
 automatically and pane text is not persisted. This avoids rerunning stale or
@@ -169,13 +173,16 @@ not as absolute home paths inside a portable template.
 
 ### Core keys
 
-- `Super+T` on Sway or `Option+T` on AeroSpace: open or resume an independent
-  persistent terminal session.
-- `Super+Shift+T` (Sway): open the deliberately shared tmux `main` session.
+- `Super+T` on Sway or `Option+T` on AeroSpace: open a plain terminal without
+  tmux. This is the predictable choice for SSH connections.
+- `Super+Shift+T` on Sway or `Option+Shift+T` on AeroSpace: open or resume an
+  independent persistent local tmux session.
+- `terminal-main --shared`: explicitly attach the legacy shared `main` tmux
+  session when mirrored clients are intentional.
 - `Super+Shift+D` (workstation profile): launch and arrange the personal
   project applications; they do not open merely because Sway started.
-- `Ctrl+Alt+B`: split the terminal side-by-side.
-- `Ctrl+Alt+V`: split the terminal top/bottom.
+- `Ctrl+Alt+B`: split an explicit tmux terminal side-by-side.
+- `Ctrl+Alt+V`: split an explicit tmux terminal top/bottom.
 - `Ctrl+Backspace`: erase the previous shell word; it is not consumed by tmux.
 - `Super+H/J/K/L`: focus a desktop window.
 - `Super+1` through `Super+0`: select workspaces 1 through 10.
@@ -272,10 +279,10 @@ messaging applications are supervised user services with journal logs, and
 their windows are collected on workspace 10. Press Super+Shift+D when
 you want VS Code and the arranged Chrome project workspaces; the same action is
 available in the Super+/ command palette.
-Super+T opens Foot with its own persistent tmux session, resuming a detached
-terminal before creating another one. Super+Shift+T opens the shared `main`
-session when mirrored clients are intentional. Super+C opens the control
-center.
+Super+T opens a plain Foot shell. Super+Shift+T opens Foot with its own
+persistent tmux session, resuming a detached terminal before creating another
+one. The shared `main` session remains in the Super+/ command palette when
+mirrored clients are intentional. Super+C opens the control center.
 Choose **Appearance** there—or click the palette icon near the right side of
 Waybar—to switch Midnight, Dusk, and Dawn wallpaper moods or select terminal
 opacity. Rotated Sway outputs receive the portrait wallpaper automatically.

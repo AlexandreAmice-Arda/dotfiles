@@ -12,10 +12,11 @@ bindsym $mod+slash exec ~/.config/sway/scripts/keybindings
 #@ Super+Shift+d :: Start personal development applications :: exec ~/.config/sway/scripts/start-work-session
 bindsym $mod+Shift+d exec ~/.config/sway/scripts/start-work-session
 {{ end -}}
-#@ Super+t :: Open or resume an independent persistent terminal :: exec foot
+#@ Super+t :: Open a plain terminal without tmux :: exec foot
 bindsym $mod+t exec $term
-#@ Super+Shift+t :: Open a deliberately shared tmux main session :: exec foot ~/.local/bin/terminal-main --shared
-bindsym $mod+Shift+t exec foot ~/.local/bin/terminal-main --shared
+#@ Super+Shift+t :: Open or resume an independent persistent tmux terminal :: exec foot ~/.local/bin/terminal-main
+bindsym $mod+Shift+t exec foot ~/.local/bin/terminal-main
+#@ Palette only :: Open the deliberately shared tmux main session :: exec foot ~/.local/bin/terminal-main --shared
 #@ Super+d :: Open application launcher :: exec wofi --show drun
 bindsym $mod+d exec $menu
 #@ Super+Alt+q :: Close focused window :: kill
@@ -108,8 +109,9 @@ mode "resize" {
     bindsym Escape mode "default"
 }
 
-# Terminal references are intentionally non-executable palette entries.
-#@ Ctrl+Alt+b / Ctrl+Alt+v :: Split the current tmux pane side-by-side / top-to-bottom
+# Tmux references are intentionally non-executable palette entries and apply
+# only inside a persistent terminal opened with Super+Shift+T.
+#@ Ctrl+Alt+b / Ctrl+Alt+v :: Split the current local tmux pane side-by-side / top-to-bottom
 #@ Ctrl+j/k/l :: Focus the tmux pane down / up / right
 #@ Ctrl+Alt+h/j/k/l :: Move the current tmux pane
 #@ Ctrl+Alt+Shift+Arrow :: Resize the current tmux pane

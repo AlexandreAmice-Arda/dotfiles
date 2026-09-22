@@ -143,6 +143,9 @@ if grep -E '^\s*output ' "$linux_workstation/.config/kanshi/config" \
     | grep -Ev '^\s*output ("[^"]+"|[^ ]+) enable '; then
     fail 'Kanshi profile contains an output that is not explicitly enabled'
 fi
+grep -Fq 'systemctl --user cat sway-kanshi.service' \
+    "$linux_workstation/.config/sway/scripts/reload-desktop" \
+    || fail 'Sway reload does not restore optional Kanshi output profiles'
 ok 'Kanshi workstation profiles'
 
 for home in "$linux_portable" "$linux_workstation"; do
@@ -180,7 +183,9 @@ keybinding_catalog=$(
         "$linux_workstation/.config/sway/scripts/keybindings" --print
 )
 for expected_entry in \
-    'Open or resume an independent persistent terminal' \
+    'Open a plain terminal without tmux' \
+    'Open or resume an independent persistent tmux terminal' \
+    'Open the deliberately shared tmux main session' \
     'Show workspace windows as tabs' \
     'Create another tmux window in this terminal session'
 do
@@ -197,7 +202,66 @@ fi
 grep -Fq "alt-t = 'exec-and-forget open -na Ghostty'" \
     "$mac_portable/.config/aerospace/aerospace.toml" \
     || fail 'macOS terminal shortcut is not the portable modifier+T chord'
+grep -Fq "alt-shift-t = 'exec-and-forget open -na Ghostty --args -e $mac_portable/.local/bin/terminal-main'" \
+    "$mac_portable/.config/aerospace/aerospace.toml" \
+    || fail 'macOS persistent terminal is not explicit on modifier+Shift+T'
+if grep -Fq 'terminal-main' "$linux_portable/.config/foot/foot.ini"; then
+    fail 'Foot still starts tmux implicitly'
+fi
+if grep -Fq 'terminal-main' "$mac_portable/.config/ghostty/config.ghostty"; then
+    fail 'Ghostty still starts tmux implicitly'
+fi
+grep -Fq "bindsym \$mod+t exec \$term" \
+    "$linux_portable/.config/sway/conf.d/50-keybindings.conf" \
+    || fail 'Sway plain terminal is not on Super+T'
+grep -Fq "bindsym \$mod+Shift+t exec foot ~/.local/bin/terminal-main" \
+    "$linux_portable/.config/sway/conf.d/50-keybindings.conf" \
+    || fail 'Sway persistent terminal is not explicit on Super+Shift+T'
 ok 'Kinesis thumb-cluster ergonomics'
+
+# Exercise the terminal adapter without touching the user's real tmux server.
+fake_bin="$work_dir/fake-bin"
+mkdir -p "$fake_bin"
+cat > "$fake_bin/tmux" <<'EOF'
+#!/bin/sh
+case $1 in
+    list-sessions)
+        case $* in
+            *session_attached*)
+                case ${FAKE_TMUX_STATE:-empty} in
+                    detached) printf 'terminal-2:1\nterminal-1:0\n' ;;
+                    attached) printf 'terminal-1:1\nterminal-2:1\n' ;;
+                    empty) exit 1 ;;
+                esac
+                ;;
+            *)
+                case ${FAKE_TMUX_STATE:-empty} in
+                    detached) printf 'terminal-2\nterminal-1\n' ;;
+                    attached) printf 'terminal-1\nterminal-2\n' ;;
+                    empty) exit 1 ;;
+                esac
+                ;;
+        esac
+        ;;
+    attach-session|new-session) printf '%s\n' "$*" ;;
+esac
+EOF
+chmod +x "$fake_bin/tmux"
+
+terminal_adapter="$linux_portable/.local/bin/terminal-main"
+adapter_result=$(PATH="$fake_bin:$PATH" FAKE_TMUX_STATE=detached "$terminal_adapter")
+[[ $adapter_result == 'attach-session -t terminal-1' ]] \
+    || fail 'persistent terminal did not resume the oldest detached session'
+adapter_result=$(PATH="$fake_bin:$PATH" FAKE_TMUX_STATE=attached "$terminal_adapter")
+[[ $adapter_result == 'new-session -s terminal-3' ]] \
+    || fail 'persistent terminal did not allocate the next numbered session'
+adapter_result=$(PATH="$fake_bin:$PATH" FAKE_TMUX_STATE=empty "$terminal_adapter")
+[[ $adapter_result == 'new-session -s terminal-1' ]] \
+    || fail 'persistent terminal did not bootstrap terminal-1'
+adapter_result=$(PATH="$fake_bin:$PATH" "$terminal_adapter" --shared)
+[[ $adapter_result == 'new-session -A -s main' ]] \
+    || fail 'shared terminal escape hatch did not target main'
+ok 'explicit persistent terminal allocation policy'
 
 power_fixture="$work_dir/power-supply/BAT0"
 mkdir -p "$power_fixture"
