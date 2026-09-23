@@ -1,9 +1,5 @@
 # ~/.profile: shared login-shell setup.
 
-if [ -n "${BASH_VERSION:-}" ] && [ -f "$HOME/.bashrc" ]; then
-    . "$HOME/.bashrc"
-fi
-
 path_prepend() {
     [ -d "$1" ] || return
     case ":$PATH:" in
@@ -36,3 +32,9 @@ path_append "$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
 
 export PATH
 unset -f path_prepend path_append 2>/dev/null || true
+
+# Interactive login Bash reaches this file through ~/.bash_profile. Initialize
+# it only after the complete login PATH above is available to shell tools.
+if [ -n "${BASH_VERSION:-}" ] && [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+fi

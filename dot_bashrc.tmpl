@@ -5,6 +5,18 @@ case $- in
     *) return ;;
 esac
 
+# Foot and other terminal emulators normally start non-login Bash, so they do
+# not read ~/.profile first. Make the portable command wrappers visible before
+# initializing Starship, Atuin, fzf, or zoxide below.
+path_prepend() {
+    [ -d "$1" ] || return
+    case ":$PATH:" in
+        *:"$1":*) ;;
+        *) PATH="$1${PATH:+:$PATH}" ;;
+    esac
+}
+path_prepend "$HOME/.local/bin"
+
 HISTCONTROL=ignoreboth
 HISTSIZE=1000
 HISTFILESIZE=2000
@@ -86,14 +98,6 @@ if ! shopt -oq posix; then
     fi
 {{- end }}
 fi
-
-path_prepend() {
-    [ -d "$1" ] || return
-    case ":$PATH:" in
-        *:"$1":*) ;;
-        *) PATH="$1${PATH:+:$PATH}" ;;
-    esac
-}
 
 {{- if and (eq .chezmoi.os "linux") (eq .desktopProfile "amice-workstation") }}
 export SNOPT_PATH=git

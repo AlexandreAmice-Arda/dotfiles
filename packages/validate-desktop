@@ -94,6 +94,27 @@ grep -Fq 'atuin init zsh --disable-up-arrow --disable-ai' \
     || fail 'Zsh Atuin integration can replace the Up arrow or enable AI'
 grep -Fq 'enter_accept = false' "$linux_portable/.config/atuin/config.toml" \
     || fail 'Atuin selections are not configured for review before execution'
+
+# Super+T starts a non-login Bash beneath Foot. Reproduce its minimal inherited
+# PATH and ensure the managed wrapper is visible before Starship initializes.
+mkdir -p "$linux_portable/.local/opt/starship-1.26.0"
+cat > "$linux_portable/.local/opt/starship-1.26.0/starship" <<'EOF'
+#!/bin/sh
+if [ "${1:-} ${2:-}" = 'init bash' ]; then
+    printf 'export STARSHIP_SHELL=bash\n'
+fi
+EOF
+chmod +x "$linux_portable/.local/opt/starship-1.26.0/starship"
+# The probe command expands inside the clean child Bash, not this validator.
+# shellcheck disable=SC2016
+shell_probe=$(env -i \
+    HOME="$linux_portable" USER=validation SHELL=/bin/bash \
+    TERM=xterm-256color PATH=/usr/bin:/bin \
+    bash --noprofile --rcfile "$linux_portable/.bashrc" -ic \
+    'printf "%s|%s\n" "$(command -v starship)" "${STARSHIP_SHELL:-}"' \
+    2>/dev/null | tail -n 1)
+[[ $shell_probe == "$linux_portable/.local/bin/starship|bash" ]] \
+    || fail 'non-login Bash cannot initialize Starship from ~/.local/bin'
 ok 'portable shell-tool configs contain no account state'
 
 for external_case in linux-amd64 linux-arm64 darwin-arm64; do
