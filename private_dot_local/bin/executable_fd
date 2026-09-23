@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+# Ubuntu packages fd as `fdfind`; macOS and other systems normally use `fd`.
+for candidate in /opt/homebrew/bin/fd /usr/local/bin/fd /usr/bin/fd /usr/bin/fdfind
+do
+    if [ -x "$candidate" ]; then
+        exec "$candidate" "$@"
+    fi
+done
+
+printf 'fd: neither fd nor fdfind is installed\n' >&2
+exit 127

@@ -1,0 +1,2 @@
+-- Keymaps here load on LazyVim's VeryLazy event.
+-- https://www.lazyvim.org/configuration/keymaps

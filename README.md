@@ -36,11 +36,11 @@ The shared shell environment works with Ubuntu's Bash and macOS's default Zsh.
 Homebrew's shell environment is loaded explicitly so GUI-launched Ghostty can
 find tools on both Apple Silicon and Intel Macs.
 
-Chezmoi also installs checksummed Linux releases of Starship and Atuin plus the
-JetBrainsMono Nerd Font. Ubuntu supplies fzf, zoxide, and Kanshi through apt;
-Homebrew supplies the four shell tools and the Nerd Font on macOS. Small
-wrappers prefer native package-manager binaries and use the pinned Linux
-releases as a fallback.
+Chezmoi also installs checksummed Linux releases of Starship, Atuin, Neovim,
+and the tree-sitter CLI plus the JetBrainsMono Nerd Font. Ubuntu supplies fzf,
+zoxide, fd, and Kanshi through apt; Homebrew supplies the corresponding shell
+and editor tools on macOS. Small wrappers prefer native package-manager
+binaries and use the pinned Linux releases as a fallback.
 
 ### Ubuntu desktop dependencies
 
@@ -111,6 +111,17 @@ key or account state is missing. Atuin sync uses its hosted service; the
 managed config filters common credential forms and commands beginning with a
 space, but reviewing old history before importing remains essential.
 
+### Neovim and LazyVim
+
+Run `nvim` to open the managed LazyVim setup. The small, editable configuration
+under `~/.config/nvim` is portable; downloaded plugins, Mason tools, caches,
+logs, and session state stay local to each computer. Plugin versions are
+reproducible through the managed `lazy-lock.json`.
+
+Inside Neovim, `:Lazy` opens the plugin manager and `:checkhealth lazyvim`
+checks the required editor toolchain. LazyVim may warn that `lazygit` is absent;
+that integration is optional and is not currently part of this baseline.
+
 Ghostty and Foot open a plain native shell by default, which keeps SSH ownership
 unambiguous: a terminal split is never silently presented as part of a remote
 session. The shifted terminal shortcut explicitly runs `terminal-main`, which
@@ -154,14 +165,15 @@ not as absolute home paths inside a portable template.
 
 - `.chezmoidata.yaml`: shared theme, key directions, workspaces, power timings,
   and the explicitly personal workstation display inventory.
-- `.chezmoiexternal.toml.tmpl`: pinned Linux Starship, Atuin, Nerd Font, and
-  tmux plugin releases with SHA-256 checksums.
+- `.chezmoiexternal.toml.tmpl`: pinned Linux Starship, Atuin, Neovim,
+  tree-sitter CLI, Nerd Font, and tmux plugin releases with SHA-256 checksums.
 - `private_dot_config/sway/config.tmpl`: short entry point; readable fragments
   live under `sway/conf.d/` by topic.
 - `private_dot_config/kanshi/`: hot-plug monitor profiles for the original
   workstation only.
-- `private_dot_config/{starship.toml,atuin/}`: portable prompt and history
-  behavior, with all Atuin account state deliberately excluded.
+- `private_dot_config/{starship.toml,atuin/,nvim/}`: portable prompt, history,
+  and LazyVim configuration; generated account, plugin, cache, and editor state
+  remain deliberately excluded.
 - `private_dot_config/systemd/user/`: supervised Sway-session services.
 - `private_dot_config/{waybar,swaync,wofi,wlogout,gtklock}/`: one focused config
   and/or stylesheet per component.

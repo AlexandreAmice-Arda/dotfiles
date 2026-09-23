@@ -1,0 +1,2 @@
+-- Options here override LazyVim's documented defaults.
+-- https://www.lazyvim.org/configuration/general#options

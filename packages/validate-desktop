@@ -78,13 +78,25 @@ ok 'platform and profile boundaries'
 for home in "$linux_portable" "$linux_workstation" "$mac_portable"; do
     require_file "$home/.config/starship.toml"
     require_file "$home/.config/atuin/config.toml"
+    require_file "$home/.config/nvim/init.lua"
+    require_file "$home/.config/nvim/lua/config/lazy.lua"
+    require_file "$home/.config/nvim/lazy-lock.json"
     require_file "$home/.local/bin/starship"
     require_file "$home/.local/bin/atuin"
+    require_file "$home/.local/bin/nvim"
+    require_file "$home/.local/bin/fd"
+    require_file "$home/.local/bin/tree-sitter"
     require_absent "$home/.local/share/atuin"
+    require_absent "$home/.local/share/nvim"
     python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' \
         "$home/.config/starship.toml"
     python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' \
         "$home/.config/atuin/config.toml"
+    jq empty "$home/.config/nvim/lazy-lock.json"
+    jq empty "$home/.config/nvim/lazyvim.json"
+    jq -e 'all(.[]; (.commit | type == "string" and length == 40))' \
+        "$home/.config/nvim/lazy-lock.json" >/dev/null \
+        || fail 'LazyVim lockfile contains an invalid plugin commit'
 done
 grep -Fq 'atuin init bash --disable-up-arrow --disable-ai' \
     "$linux_portable/.bashrc" \
@@ -115,7 +127,7 @@ shell_probe=$(env -i \
     2>/dev/null | tail -n 1)
 [[ $shell_probe == "$linux_portable/.local/bin/starship|bash" ]] \
     || fail 'non-login Bash cannot initialize Starship from ~/.local/bin'
-ok 'portable shell-tool configs contain no account state'
+ok 'portable CLI configs contain no account or runtime state'
 
 for external_case in linux-amd64 linux-arm64 darwin-arm64; do
     external_os=${external_case%-*}
@@ -135,17 +147,29 @@ grep -Fq 'starship-x86_64-unknown-linux-musl' \
 grep -Fq 'atuin-aarch64-unknown-linux-gnu' \
     "$work_dir/chezmoiexternal-linux-arm64.toml" \
     || fail 'ARM64 Atuin external is missing'
-if grep -Eq 'starship|atuin|JetBrainsMono' \
+grep -Fq 'nvim-linux-x86_64.tar.gz' \
+    "$work_dir/chezmoiexternal-linux-amd64.toml" \
+    || fail 'x86-64 Neovim external is missing'
+grep -Fq 'nvim-linux-arm64.tar.gz' \
+    "$work_dir/chezmoiexternal-linux-arm64.toml" \
+    || fail 'ARM64 Neovim external is missing'
+grep -Fq 'tree-sitter-cli-linux-x64.zip' \
+    "$work_dir/chezmoiexternal-linux-amd64.toml" \
+    || fail 'x86-64 tree-sitter CLI external is missing'
+grep -Fq 'tree-sitter-cli-linux-arm64.zip' \
+    "$work_dir/chezmoiexternal-linux-arm64.toml" \
+    || fail 'ARM64 tree-sitter CLI external is missing'
+if grep -Eq 'starship|atuin|neovim|tree-sitter-cli|JetBrainsMono' \
     "$work_dir/chezmoiexternal-darwin-arm64.toml"; then
     fail 'Linux fallback releases leaked into the macOS external manifest'
 fi
 ok 'multi-architecture external release manifests'
 
-for package in kanshi fzf zoxide; do
+for package in kanshi fzf zoxide fd-find; do
     grep -Fxq "$package" "$source_root/packages/ubuntu.txt" \
         || fail "Ubuntu package is undeclared: $package"
 done
-for formula in atuin fzf starship zoxide; do
+for formula in atuin fd fzf neovim starship tree-sitter-cli zoxide; do
     grep -Fqx "brew \"$formula\"" "$source_root/Brewfile" \
         || fail "Homebrew formula is undeclared: $formula"
 done

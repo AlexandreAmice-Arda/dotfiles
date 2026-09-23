@@ -26,7 +26,7 @@ check_toml_file() {
 }
 
 check_shell_tooling() {
-    for command_name in fzf zoxide starship atuin; do
+    for command_name in fzf zoxide starship atuin fd nvim tree-sitter; do
         require_command "$command_name"
     done
     require_file "$HOME/.config/starship.toml"
@@ -40,6 +40,17 @@ check_shell_tooling() {
         ok 'Atuin account and local encryption key available'
     else
         warn 'Atuin account is not ready; run an interactive `atuin login`'
+    fi
+
+    if nvim_version=$(nvim --version 2>/dev/null | head -n 1); then
+        ok "$nvim_version"
+    else
+        fail 'Neovim launcher cannot resolve an installed Neovim release'
+    fi
+    if tree_sitter_version=$(tree-sitter --version 2>/dev/null | head -n 1); then
+        ok "$tree_sitter_version"
+    else
+        fail 'tree-sitter launcher cannot resolve a compatible CLI release'
     fi
 }
 

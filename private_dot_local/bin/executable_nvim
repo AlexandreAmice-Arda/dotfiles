@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+# Prefer a package-manager installation. The pinned Linux release is the
+# portable fallback when Ubuntu's Neovim package is too old for LazyVim.
+for candidate in \
+    /opt/homebrew/bin/nvim \
+    /usr/local/bin/nvim \
+    /usr/bin/nvim \
+    "$HOME/.local/opt/neovim-0.12.5/bin/nvim"
+do
+    if [ -x "$candidate" ]; then
+        exec "$candidate" "$@"
+    fi
+done
+
+printf 'nvim: no native or managed Neovim installation found\n' >&2
+exit 127

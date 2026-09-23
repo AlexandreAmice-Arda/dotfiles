@@ -3,6 +3,11 @@ swayidle
 kanshi
 foot
 tmux
+git
+curl
+build-essential
+fd-find
+unzip
 fzf
 zoxide
 gtklock

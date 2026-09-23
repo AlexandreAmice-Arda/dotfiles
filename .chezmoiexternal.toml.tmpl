@@ -27,6 +27,17 @@
     url = "https://github.com/atuinsh/atuin/releases/download/v18.18.1/atuin-x86_64-unknown-linux-gnu.tar.gz"
     stripComponents = 1
     checksum.sha256 = "1b142300a474936c4a5c10b45e682230c40c060a025b7ea53dfa6289b28d8441"
+
+[".local/opt/neovim-0.12.5"]
+    type = "archive"
+    url = "https://github.com/neovim/neovim/releases/download/v0.12.5/nvim-linux-x86_64.tar.gz"
+    stripComponents = 1
+    checksum.sha256 = "bce0f56eda1f1b1db6eee8f4133d7a38813ea07933837dd1777411ca384c6875"
+
+[".local/opt/tree-sitter-cli-0.27.0"]
+    type = "archive"
+    url = "https://github.com/tree-sitter/tree-sitter/releases/download/v0.27.0/tree-sitter-cli-linux-x64.zip"
+    checksum.sha256 = "e4a3826bcd0fe099ee3a5617767374939cbc23c4a35b5b53f5fc04142525a2c1"
 {{ else if eq .chezmoi.arch "arm64" -}}
 [".local/opt/starship-1.26.0"]
     type = "archive"
@@ -38,5 +49,16 @@
     url = "https://github.com/atuinsh/atuin/releases/download/v18.18.1/atuin-aarch64-unknown-linux-gnu.tar.gz"
     stripComponents = 1
     checksum.sha256 = "44ecf39067090c31041ffb02d8bdfe161ecd2e5e83b1e1e0698a78a6b14d2cd4"
+
+[".local/opt/neovim-0.12.5"]
+    type = "archive"
+    url = "https://github.com/neovim/neovim/releases/download/v0.12.5/nvim-linux-arm64.tar.gz"
+    stripComponents = 1
+    checksum.sha256 = "1aa5ca085249580ae0f91eb14f27ec0919773ff2d99a163d03f3d6c21ac29725"
+
+[".local/opt/tree-sitter-cli-0.27.0"]
+    type = "archive"
+    url = "https://github.com/tree-sitter/tree-sitter/releases/download/v0.27.0/tree-sitter-cli-linux-arm64.zip"
+    checksum.sha256 = "6260b621bf5ab87027dfb463bf955504ef32cdcda62b81f28447753e48c83a62"
 {{ end -}}
 {{ end -}}

@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+# nvim-treesitter requires a newer CLI than Ubuntu 24.04 packages. Prefer a
+# current package-manager install, then use the pinned Linux fallback.
+for candidate in \
+    /opt/homebrew/bin/tree-sitter \
+    /usr/local/bin/tree-sitter \
+    /usr/bin/tree-sitter \
+    "$HOME/.local/opt/tree-sitter-cli-0.27.0/tree-sitter"
+do
+    if [ -x "$candidate" ]; then
+        exec "$candidate" "$@"
+    fi
+done
+
+printf 'tree-sitter: no compatible CLI installation found\n' >&2
+exit 127
