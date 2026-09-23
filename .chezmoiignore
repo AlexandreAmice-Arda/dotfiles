@@ -1,9 +1,13 @@
 README.md
-PORTABILITY-PLAN.md
-WALLPAPER-PROVENANCE.md
 Brewfile
 packages
 packages/**
+docs
+docs/**
+scripts
+scripts/**
+tests
+tests/**
 
 # Atuin account material is always machine-local. Only config.toml is managed.
 .config/atuin/atuin-receipt.json
@@ -42,7 +46,7 @@ packages/**
 .local/bin/apply-appearance
 .local/bin/lock-desktop
 .local/bin/session-action
-.local/bin/desktop-temperature
+.local/libexec/waybar/desktop-temperature
 .local/bin/swaync
 .local/bin/swaync-client
 .local/bin/waybar
@@ -63,7 +67,7 @@ packages/**
 {{- end }}
 
 # Hardware and personal applications for the original Ubuntu workstation.
-{{- if or (ne .chezmoi.os "linux") (ne .desktopProfile "amice-workstation") }}
+{{- if not .isAmiceWorkstation }}
 .config/terminator
 .config/terminator/**
 .config/kanshi
@@ -79,6 +83,4 @@ packages/**
 .local/bin/sway-trial-system
 .local/share/applications/signal-desktop.desktop
 .local/share/wayland-sessions/sway-intel.desktop
-.vscode/extensions/amice.send-editor-to-sway-workspace-0.1.0
-.vscode/extensions/amice.send-editor-to-sway-workspace-0.1.0/**
 {{- end }}

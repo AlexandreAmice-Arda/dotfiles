@@ -17,6 +17,7 @@ materialize() {
         --arg os "$os" --arg home "$home" --arg profile "$profile" \
         '{desktopProfile:$profile, gitName:"Validation User",
           gitEmail:"validation@example.invalid",
+          isAmiceWorkstation:($os == "linux" and $profile == "amice-workstation"),
           chezmoi:{os:$os, homeDir:$home}}')
 
     chezmoi --source "$source_root" --destination "$home" \
@@ -72,10 +73,13 @@ require_absent "$mac_portable/.config/sway"
 require_absent "$mac_portable/.config/kanshi"
 require_absent "$mac_portable/.config/terminator"
 require_absent "$mac_portable/.local/share/applications/signal-desktop.desktop"
-require_absent "$mac_portable/.vscode/extensions/amice.send-editor-to-sway-workspace-0.1.0"
 ok 'platform and profile boundaries'
 
 for home in "$linux_portable" "$linux_workstation" "$mac_portable"; do
+    require_absent "$home/docs"
+    require_absent "$home/scripts"
+    require_absent "$home/tests"
+    require_absent "$home/packages"
     require_file "$home/.config/starship.toml"
     require_file "$home/.config/atuin/config.toml"
     require_file "$home/.config/nvim/init.lua"
@@ -98,6 +102,30 @@ for home in "$linux_portable" "$linux_workstation" "$mac_portable"; do
         "$home/.config/nvim/lazy-lock.json" >/dev/null \
         || fail 'LazyVim lockfile contains an invalid plugin commit'
 done
+python3 - "$linux_portable/.config/starship.toml" <<'PY'
+import sys
+import tomllib
+
+with open(sys.argv[1], "rb") as config_file:
+    config = tomllib.load(config_file)
+expected = "${custom.remote}$directory$line_break$git_branch$git_status$cmd_duration$line_break$character"
+if config.get("format") != expected:
+    raise SystemExit("Starship prompt does not keep path, context, and input on separate lines")
+if config["directory"].get("truncation_length") != 0:
+    raise SystemExit("Starship directory path is still truncated")
+if config["directory"].get("truncate_to_repo") is not False:
+    raise SystemExit("Starship directory path still collapses to the repository root")
+if "time" in config:
+    raise SystemExit("Starship time module must remain omitted")
+PY
+require_file "$linux_portable/.local/libexec/waybar/desktop-temperature"
+require_file "$linux_workstation/.local/libexec/waybar/desktop-temperature"
+require_absent "$linux_portable/.local/bin/desktop-temperature"
+require_absent "$linux_workstation/.local/bin/desktop-temperature"
+require_absent "$mac_portable/.local/libexec/waybar/desktop-temperature"
+expected_wallpaper="$linux_portable/.local/share/tokyo-night/wallpapers/midnight.png"
+[[ $(readlink "$linux_portable/.local/state/tokyo-night/wallpaper.png") == "$expected_wallpaper" ]] \
+    || fail 'wallpaper state symlink does not target the external asset directory'
 grep -Fq 'atuin init bash --disable-up-arrow --disable-ai' \
     "$linux_portable/.bashrc" \
     || fail 'Bash Atuin integration can replace the Up arrow or enable AI'
@@ -163,6 +191,23 @@ if grep -Eq 'starship|atuin|neovim|tree-sitter-cli|JetBrainsMono' \
     "$work_dir/chezmoiexternal-darwin-arm64.toml"; then
     fail 'Linux fallback releases leaked into the macOS external manifest'
 fi
+wallpaper_url='https://github.com/AlexandreAmice/dotfiles-assets/releases/download/wallpapers-v1/tokyo-night-wallpapers-v1.tar.gz'
+for linux_manifest in \
+    "$work_dir/chezmoiexternal-linux-amd64.toml" \
+    "$work_dir/chezmoiexternal-linux-arm64.toml"
+do
+    grep -Fq "$wallpaper_url" "$linux_manifest" \
+        || fail 'Linux wallpaper external is missing its versioned release URL'
+    grep -Fq '266d37158697358a171c66e68e484440348a45800e9b531848da8b11c485b020' \
+        "$linux_manifest" || fail 'Linux wallpaper external checksum is missing'
+    grep -Fq 'stripComponents = 1' "$linux_manifest" \
+        || fail 'Linux wallpaper external does not strip its top-level directory'
+    grep -Fq 'exact = true' "$linux_manifest" \
+        || fail 'Linux wallpaper external is not exact'
+done
+if grep -Fq 'tokyo-night-wallpapers' "$work_dir/chezmoiexternal-darwin-arm64.toml"; then
+    fail 'Linux wallpaper external leaked into the macOS manifest'
+fi
 ok 'multi-architecture external release manifests'
 
 for package in kanshi fzf zoxide fd-find; do
@@ -195,7 +240,8 @@ ok 'Kanshi workstation profiles'
 
 for home in "$linux_portable" "$linux_workstation"; do
     require_file "$home/.local/state/tokyo-night/foot-opacity.ini"
-    require_file "$home/.local/state/tokyo-night/wallpaper.png"
+    [ -L "$home/.local/state/tokyo-night/wallpaper.png" ] \
+        || fail "missing rendered wallpaper symlink: $home/.local/state/tokyo-night/wallpaper.png"
 
     if command -v sway >/dev/null 2>&1; then
         if ! HOME="$home" sway --unsupported-gpu --validate \
@@ -360,9 +406,9 @@ if command -v shellcheck >/dev/null 2>&1; then
             '#!'*sh*) shellcheck "$script" ;;
         esac
     done < <(find "$linux_workstation" "$mac_portable" -type f -perm -u+x -print0)
-    shellcheck "$source_root/packages/check-ubuntu" \
-        "$source_root/packages/install-ubuntu" \
-        "$source_root/packages/validate-desktop"
+    shellcheck "$source_root/scripts/check-ubuntu" \
+        "$source_root/scripts/install-ubuntu" \
+        "$source_root/tests/validate-desktop"
     ok 'ShellCheck'
 else
     warn 'shellcheck unavailable; syntax checks still ran (install the package for linting)'
@@ -375,6 +421,19 @@ if rg -n "$personal_pattern" "$linux_portable" "$mac_portable"; then
     fail 'personal or workstation-specific data leaked into a portable target'
 fi
 ok 'portable targets contain no known workstation paths or display identities'
+
+if rg -n --hidden \
+    --glob '!**/.git/**' \
+    --glob '!docs/**' \
+    --glob '!README.md' \
+    --glob '!.chezmoi.toml.tmpl' \
+    --glob '!tests/**' \
+    '\.desktopProfile[^\n]*amice-workstation|amice-workstation[^\n]*\.desktopProfile' \
+    "$source_root"
+then
+    fail 'literal workstation profile comparison exists outside the config initializer or documentation'
+fi
+ok 'workstation gates use the derived isAmiceWorkstation predicate'
 
 git -C "$source_root" diff --check
 git -C "$source_root" diff --cached --check

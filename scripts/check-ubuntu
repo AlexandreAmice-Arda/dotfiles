@@ -19,7 +19,7 @@ while IFS= read -r package; do
 done < "$manifest"
 
 if [ "$missing" -ne 0 ]; then
-    printf '%d of %d Ubuntu packages are missing. Run packages/install-ubuntu.\n' \
+    printf '%d of %d Ubuntu packages are missing. Run scripts/install-ubuntu.\n' \
         "$missing" "$checked" >&2
     exit 1
 fi

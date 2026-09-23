@@ -3,7 +3,7 @@
 set $ws{{ .name }} "{{ .name }}"
 {{ end }}
 
-{{ if eq .desktopProfile "amice-workstation" -}}
+{{ if .isAmiceWorkstation -}}
 # Only this profile contains known output identities. Portable hosts rely on
 # Sway's automatic output placement.
 {{ range .desktop.profiles.amice_workstation.workspace_outputs -}}

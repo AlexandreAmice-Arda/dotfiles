@@ -5,6 +5,7 @@
 {{-   $profiles = list "portable" "amice-workstation" -}}
 {{- end -}}
 {{- $desktopProfile := promptChoiceOnce . "desktopProfile" "Desktop profile" $profiles "portable" -}}
+{{- $isAmiceWorkstation := and (eq .chezmoi.os "linux") (eq $desktopProfile "amice-workstation") -}}
 sourceDir = {{ .chezmoi.sourceDir | quote }}
 umask = 0o022
 
@@ -12,3 +13,4 @@ umask = 0o022
     gitName = {{ $gitName | quote }}
     gitEmail = {{ $gitEmail | quote }}
     desktopProfile = {{ $desktopProfile | quote }}
+    isAmiceWorkstation = {{ $isAmiceWorkstation }}

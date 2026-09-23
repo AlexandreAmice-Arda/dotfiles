@@ -3,6 +3,6 @@ Description=Services belonging to the active Sway session
 Wants=sway-waybar.service sway-swaync.service sway-idle.service
 Wants=sway-nm-applet.service sway-polkit-agent.service
 Wants=sway-blueman-applet.service
-{{ if eq .desktopProfile "amice-workstation" -}}
+{{ if .isAmiceWorkstation -}}
 Wants=sway-kanshi.service sway-signal.service sway-slack.service
 {{ end -}}

@@ -2,6 +2,6 @@
 exec ~/.config/sway/scripts/start-session-services
 exec_always ~/.local/bin/apply-appearance --restore --quiet
 
-{{ if eq .desktopProfile "amice-workstation" -}}
+{{ if .isAmiceWorkstation -}}
 exec ~/.config/sway/scripts/start-pcloud
 {{ end }}

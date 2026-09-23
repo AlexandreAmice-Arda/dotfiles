@@ -7,7 +7,7 @@
 #@ Super+/ :: Search and execute Sway commands :: exec ~/.config/sway/scripts/keybindings
 bindsym $mod+slash exec ~/.config/sway/scripts/keybindings
 #@ Palette only :: Configure displays graphically :: exec wdisplays
-{{ if eq .desktopProfile "amice-workstation" -}}
+{{ if .isAmiceWorkstation -}}
 #@ Palette only :: Arrange restored VS Code windows :: exec ~/.config/sway/scripts/arrange-code-windows
 #@ Super+Shift+d :: Start personal development applications :: exec ~/.config/sway/scripts/start-work-session
 bindsym $mod+Shift+d exec ~/.config/sway/scripts/start-work-session

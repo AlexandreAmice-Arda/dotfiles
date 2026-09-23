@@ -99,7 +99,7 @@ if ! shopt -oq posix; then
 {{- end }}
 fi
 
-{{- if and (eq .chezmoi.os "linux") (eq .desktopProfile "amice-workstation") }}
+{{- if .isAmiceWorkstation }}
 export SNOPT_PATH=git
 
 if [ -f "$HOME/mosek/mosek.lic" ]; then
@@ -145,7 +145,7 @@ if [ -s "$NVM_DIR/bash_completion" ]; then
     . "$NVM_DIR/bash_completion"
 fi
 
-{{- if and (eq .chezmoi.os "linux") (eq .desktopProfile "amice-workstation") }}
+{{- if .isAmiceWorkstation }}
 export OMP_CANCELLATION=true
 export OMP_PROC_BIND=true
 {{- end }}

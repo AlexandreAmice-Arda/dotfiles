@@ -33,7 +33,7 @@ require_file "$HOME/.local/bin/terminal-main"
     && ok 'GUI terminal can resolve tmux' || fail 'GUI terminal cannot resolve tmux'
 require_file "$HOME/.local/bin/suspend-if-on-battery"
 require_file /usr/libexec/polkit-mate-authentication-agent-1
-{{ if eq .desktopProfile "amice-workstation" -}}
+{{ if .isAmiceWorkstation -}}
 require_file /opt/Signal/signal-desktop
 require_file /usr/bin/slack
 require_file /usr/bin/code
@@ -99,6 +99,7 @@ for wallpaper in midnight dusk dawn; do
     require_file "$HOME/.local/share/tokyo-night/wallpapers/$wallpaper.png"
     require_file "$HOME/.local/share/tokyo-night/wallpapers/$wallpaper-portrait.png"
 done
+require_file "$HOME/.local/libexec/waybar/desktop-temperature"
 require_file "$HOME/.local/state/tokyo-night/foot-opacity.ini"
 require_file "$HOME/.local/state/tokyo-night/wallpaper.png"
 
@@ -109,7 +110,7 @@ fi
 
 if [ -n "${SWAYSOCK:-}" ] && command -v systemctl >/dev/null 2>&1; then
     session_units='sway-waybar sway-swaync sway-idle sway-nm-applet sway-polkit-agent sway-blueman-applet'
-{{ if eq .desktopProfile "amice-workstation" -}}
+{{ if .isAmiceWorkstation -}}
     session_units="$session_units sway-kanshi sway-signal sway-slack"
 {{ end -}}
     for unit in $session_units; do

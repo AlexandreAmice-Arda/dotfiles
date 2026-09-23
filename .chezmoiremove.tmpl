@@ -1,8 +1,10 @@
 {{- if eq .chezmoi.os "linux" }}
 .config/systemd/user/sway-rfkill.service
 .config/sway/scripts/apply-outputs
-{{-   if eq .desktopProfile "amice-workstation" }}
+{{-   if .isAmiceWorkstation }}
 .config/sway/scripts/start-session-apps
 .config/sway/scripts/start-messaging
 {{-   end }}
 {{- end }}
+.local/bin/desktop-temperature
+.vscode/extensions/amice.send-editor-to-sway-workspace-0.1.0

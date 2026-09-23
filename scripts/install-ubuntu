@@ -40,7 +40,7 @@ sudo add-apt-repository -y universe
 sudo apt-get update
 # shellcheck disable=SC2086
 sudo apt-get install -y $packages
-"$repo_dir/packages/check-ubuntu"
+"$repo_dir/scripts/check-ubuntu"
 
 has_backlight=0
 find /sys/class/backlight -mindepth 1 -maxdepth 1 -print -quit | grep -q . \
