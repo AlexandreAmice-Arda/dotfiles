@@ -12,10 +12,12 @@ bindsym $mod+slash exec ~/.config/sway/scripts/keybindings
 #@ Super+Shift+d :: Start personal development applications :: exec ~/.config/sway/scripts/start-work-session
 bindsym $mod+Shift+d exec ~/.config/sway/scripts/start-work-session
 {{ end -}}
-#@ Super+t :: Open a plain terminal without tmux :: exec foot
-bindsym $mod+t exec $term
+#@ Super+t :: Open a plain terminal without tmux in the focused workspace :: exec foot --app-id=foot-current
+bindsym $mod+t exec foot --app-id=foot-current
 #@ Super+Shift+t :: Open or resume an independent persistent tmux terminal :: exec foot ~/.local/bin/terminal-main
 bindsym $mod+Shift+t exec foot ~/.local/bin/terminal-main
+#@ Super+Left Ctrl+t :: Open the agent-aware Herdr workspace :: exec foot ~/.local/bin/terminal-agents
+bindsym $mod+Ctrl+t exec foot ~/.local/bin/terminal-agents
 #@ Palette only :: Open the deliberately shared tmux main session :: exec foot ~/.local/bin/terminal-main --shared
 #@ Super+d :: Open application launcher :: exec wofi --show drun
 bindsym $mod+d exec $menu

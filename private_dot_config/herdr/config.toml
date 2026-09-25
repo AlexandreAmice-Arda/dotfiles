@@ -1,0 +1,29 @@
+# Herdr is the agent-aware terminal workspace. General persistent shells stay
+# in tmux; session data, logs, sockets, and pane contents remain machine-local.
+onboarding = false
+
+[theme]
+name = "tokyo-night"
+
+[keys]
+prefix = "ctrl+b"
+
+[session]
+resume_agents_on_restore = true
+
+[ui]
+agent_panel_sort = "spaces"
+status_indicators = "symbols"
+show_agent_labels_on_pane_borders = true
+
+[ui.toast]
+delivery = "system"
+delay_seconds = 2
+
+[ui.sound]
+enabled = false
+
+[experimental]
+# Pane output can contain prompts, tokens, and command output. Agent session
+# identity is enough for native Codex restore, so do not persist screen text.
+pane_history = false

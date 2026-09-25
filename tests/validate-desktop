@@ -82,11 +82,14 @@ for home in "$linux_portable" "$linux_workstation" "$mac_portable"; do
     require_absent "$home/packages"
     require_file "$home/.config/starship.toml"
     require_file "$home/.config/atuin/config.toml"
+    require_file "$home/.config/herdr/config.toml"
     require_file "$home/.config/nvim/init.lua"
     require_file "$home/.config/nvim/lua/config/lazy.lua"
     require_file "$home/.config/nvim/lazy-lock.json"
     require_file "$home/.local/bin/starship"
     require_file "$home/.local/bin/atuin"
+    require_file "$home/.local/bin/herdr"
+    require_file "$home/.local/bin/terminal-agents"
     require_file "$home/.local/bin/nvim"
     require_file "$home/.local/bin/fd"
     require_file "$home/.local/bin/tree-sitter"
@@ -96,12 +99,24 @@ for home in "$linux_portable" "$linux_workstation" "$mac_portable"; do
         "$home/.config/starship.toml"
     python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' \
         "$home/.config/atuin/config.toml"
+    python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' \
+        "$home/.config/herdr/config.toml"
     jq empty "$home/.config/nvim/lazy-lock.json"
     jq empty "$home/.config/nvim/lazyvim.json"
     jq -e 'all(.[]; (.commit | type == "string" and length == 40))' \
         "$home/.config/nvim/lazy-lock.json" >/dev/null \
         || fail 'LazyVim lockfile contains an invalid plugin commit'
 done
+if command -v herdr >/dev/null 2>&1; then
+    HERDR_CONFIG_PATH="$linux_portable/.config/herdr/config.toml" \
+        herdr config check >/dev/null
+else
+    warn 'herdr unavailable; skipped native Herdr config validation'
+fi
+grep -Fq 'name = "tokyo-night"' "$linux_portable/.config/herdr/config.toml" \
+    || fail 'Herdr does not use the shared desktop theme family'
+grep -Fq 'pane_history = false' "$linux_portable/.config/herdr/config.toml" \
+    || fail 'Herdr pane-history persistence is not explicitly disabled'
 python3 - "$linux_portable/.config/starship.toml" <<'PY'
 import sys
 import tomllib
@@ -164,7 +179,7 @@ for external_case in linux-amd64 linux-arm64 darwin-arm64; do
     external_override=$(jq -nc --arg os "$external_os" --arg arch "$external_arch" \
         '{chezmoi:{os:$os, arch:$arch}}')
     chezmoi --source "$source_root" --override-data "$external_override" \
-        execute-template < "$source_root/.chezmoiexternal.toml.tmpl" \
+        execute-template --file "$source_root/.chezmoiexternal.toml.tmpl" \
         > "$external_manifest"
     python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' \
         "$external_manifest"
@@ -187,7 +202,19 @@ grep -Fq 'tree-sitter-cli-linux-x64.zip' \
 grep -Fq 'tree-sitter-cli-linux-arm64.zip' \
     "$work_dir/chezmoiexternal-linux-arm64.toml" \
     || fail 'ARM64 tree-sitter CLI external is missing'
-if grep -Eq 'starship|atuin|neovim|tree-sitter-cli|JetBrainsMono' \
+grep -Fq 'herdr-linux-x86_64' \
+    "$work_dir/chezmoiexternal-linux-amd64.toml" \
+    || fail 'x86-64 Herdr external is missing'
+grep -Fq '2a02fed16beb651ef006e1d43f048f652ca4dc58ad053cd2d44450563d5c54b7' \
+    "$work_dir/chezmoiexternal-linux-amd64.toml" \
+    || fail 'x86-64 Herdr checksum is missing'
+grep -Fq 'herdr-linux-aarch64' \
+    "$work_dir/chezmoiexternal-linux-arm64.toml" \
+    || fail 'ARM64 Herdr external is missing'
+grep -Fq 'f4ccf4de745f2cb9a39a983e9ba3703dad50ec2a58dea83026ceab721bbd8d9e' \
+    "$work_dir/chezmoiexternal-linux-arm64.toml" \
+    || fail 'ARM64 Herdr checksum is missing'
+if grep -Eq 'starship|atuin|herdr|neovim|tree-sitter-cli|JetBrainsMono' \
     "$work_dir/chezmoiexternal-darwin-arm64.toml"; then
     fail 'Linux fallback releases leaked into the macOS external manifest'
 fi
@@ -214,7 +241,7 @@ for package in kanshi fzf zoxide fd-find; do
     grep -Fxq "$package" "$source_root/packages/ubuntu.txt" \
         || fail "Ubuntu package is undeclared: $package"
 done
-for formula in atuin fd fzf neovim starship tree-sitter-cli zoxide; do
+for formula in atuin fd fzf herdr neovim starship tree-sitter-cli zoxide; do
     grep -Fqx "brew \"$formula\"" "$source_root/Brewfile" \
         || fail "Homebrew formula is undeclared: $formula"
 done
@@ -276,6 +303,7 @@ keybinding_catalog=$(
 for expected_entry in \
     'Open a plain terminal without tmux' \
     'Open or resume an independent persistent tmux terminal' \
+    'Open the agent-aware Herdr workspace' \
     'Open the deliberately shared tmux main session' \
     'Show workspace windows as tabs' \
     'Create another tmux window in this terminal session'
@@ -296,18 +324,30 @@ grep -Fq "alt-t = 'exec-and-forget open -na Ghostty'" \
 grep -Fq "alt-shift-t = 'exec-and-forget open -na Ghostty --args -e $mac_portable/.local/bin/terminal-main'" \
     "$mac_portable/.config/aerospace/aerospace.toml" \
     || fail 'macOS persistent terminal is not explicit on modifier+Shift+T'
+grep -Fq "alt-ctrl-t = 'exec-and-forget open -na Ghostty --args -e $mac_portable/.local/bin/terminal-agents'" \
+    "$mac_portable/.config/aerospace/aerospace.toml" \
+    || fail 'macOS agent terminal is not explicit on modifier+Ctrl+T'
 if grep -Fq 'terminal-main' "$linux_portable/.config/foot/foot.ini"; then
     fail 'Foot still starts tmux implicitly'
 fi
 if grep -Fq 'terminal-main' "$mac_portable/.config/ghostty/config.ghostty"; then
     fail 'Ghostty still starts tmux implicitly'
 fi
-grep -Fq "bindsym \$mod+t exec \$term" \
+if grep -Fq 'terminal-agents' "$linux_portable/.config/foot/foot.ini"; then
+    fail 'Foot still starts Herdr implicitly'
+fi
+if grep -Fq 'terminal-agents' "$mac_portable/.config/ghostty/config.ghostty"; then
+    fail 'Ghostty still starts Herdr implicitly'
+fi
+grep -Fq "bindsym \$mod+t exec foot --app-id=foot-current" \
     "$linux_portable/.config/sway/conf.d/50-keybindings.conf" \
     || fail 'Sway plain terminal is not on Super+T'
 grep -Fq "bindsym \$mod+Shift+t exec foot ~/.local/bin/terminal-main" \
     "$linux_portable/.config/sway/conf.d/50-keybindings.conf" \
     || fail 'Sway persistent terminal is not explicit on Super+Shift+T'
+grep -Fq "bindsym \$mod+Ctrl+t exec foot ~/.local/bin/terminal-agents" \
+    "$linux_portable/.config/sway/conf.d/50-keybindings.conf" \
+    || fail 'Sway agent terminal is not explicit on Super+Ctrl+T'
 ok 'Kinesis thumb-cluster ergonomics'
 
 # Exercise the terminal adapter without touching the user's real tmux server.
@@ -339,6 +379,12 @@ esac
 EOF
 chmod +x "$fake_bin/tmux"
 
+cat > "$fake_bin/herdr" <<'EOF'
+#!/bin/sh
+printf 'herdr%s\n' "${*:+ $*}"
+EOF
+chmod +x "$fake_bin/herdr"
+
 terminal_adapter="$linux_portable/.local/bin/terminal-main"
 adapter_result=$(PATH="$fake_bin:$PATH" FAKE_TMUX_STATE=detached "$terminal_adapter")
 [[ $adapter_result == 'attach-session -t terminal-1' ]] \
@@ -353,6 +399,22 @@ adapter_result=$(PATH="$fake_bin:$PATH" "$terminal_adapter" --shared)
 [[ $adapter_result == 'new-session -A -s main' ]] \
     || fail 'shared terminal escape hatch did not target main'
 ok 'explicit persistent terminal allocation policy'
+
+agent_adapter="$linux_portable/.local/bin/terminal-agents"
+agent_path=$(env -u TMUX -u HERDR_ENV PATH="$fake_bin:$PATH" \
+    "$agent_adapter" --check)
+[[ $agent_path == "$fake_bin/herdr" ]] \
+    || fail 'agent terminal did not resolve Herdr from PATH'
+agent_result=$(env -u TMUX -u HERDR_ENV PATH="$fake_bin:$PATH" "$agent_adapter")
+[[ $agent_result == herdr ]] \
+    || fail 'agent terminal did not launch Herdr'
+if PATH="$fake_bin:$PATH" TMUX=nested "$agent_adapter" >/dev/null 2>&1; then
+    fail 'agent terminal allowed nesting inside tmux'
+fi
+if PATH="$fake_bin:$PATH" HERDR_ENV=1 "$agent_adapter" >/dev/null 2>&1; then
+    fail 'agent terminal allowed nesting inside Herdr'
+fi
+ok 'agent terminal isolation policy'
 
 power_fixture="$work_dir/power-supply/BAT0"
 mkdir -p "$power_fixture"
@@ -407,6 +469,7 @@ if command -v shellcheck >/dev/null 2>&1; then
         esac
     done < <(find "$linux_workstation" "$mac_portable" -type f -perm -u+x -print0)
     shellcheck "$source_root/scripts/check-ubuntu" \
+        "$source_root/scripts/install-agent-integrations" \
         "$source_root/scripts/install-ubuntu" \
         "$source_root/tests/validate-desktop"
     ok 'ShellCheck'

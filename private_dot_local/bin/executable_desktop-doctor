@@ -18,5 +18,6 @@ esac
 check_shell_tooling
 check_tmux_config
 check_tmux_persistence
+check_herdr
 check_chezmoi_state
 finish

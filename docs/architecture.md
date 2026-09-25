@@ -10,8 +10,8 @@ make both platforms run the same desktop stack:
 - Ubuntu uses Sway, Foot, Waybar, SwayNC, Wofi, wlogout, and GTKLock.
 - macOS uses AeroSpace, Ghostty, and native macOS facilities.
 - Shell configuration, Tokyo Night colors, H/J/K/L directions, workspaces,
-  tmux, Starship, Atuin, fzf, and zoxide are shared where their behavior truly
-  aligns.
+  tmux, Herdr, Starship, Atuin, fzf, and zoxide are shared where their behavior
+  truly aligns.
 
 Sway's entry point stays short. Ordered fragments under
 `~/.config/sway/conf.d` separate theme, session, inputs, workspaces, bindings,
@@ -63,6 +63,14 @@ Native terminal windows begin with a plain shell so an SSH session is never
 silently nested inside local tmux. The shifted terminal shortcut explicitly
 resumes a detached numbered session or creates the next one; `terminal-main
 --shared` is the deliberate shared-session escape hatch.
+
+Herdr is a separate, explicit agent-workspace layer rather than a replacement
+for general tmux sessions. The Ctrl-modified terminal shortcut starts its
+background server/client, while tmux remains on Shift. `terminal-agents`
+rejects launches from inside either multiplexer so their shared Ctrl+B prefix
+and overlapping pane ownership never become ambiguous. Only Herdr's
+`config.toml` is source state; agent sessions, logs, sockets, and pane contents
+remain local runtime state.
 
 Starship stays on both platforms with a compact multiline prompt. The full,
 untruncated directory has its own line, Git branch/status and command duration

@@ -8,60 +8,76 @@ workspace data. Supported generation baselines are Ubuntu 24.04+ and macOS
 
 ## Quick start
 
-Install Git and chezmoi, configure access to GitHub, then run:
+Install Git and chezmoi, then initialize the repository without applying it:
 
 ```sh
-chezmoi init --apply --branch setup/sway-stable-trial-20260908 \
-  git@github.com:AlexandreAmice/dotfiles.git
+chezmoi init AlexandreAmice/dotfiles
 ```
 
 Choose `portable` for an ordinary machine. Choose `amice-workstation` only on
-the original Ubuntu workstation. The branch flag remains necessary until this
-desktop work is promoted to the repository's default branch.
+the original Ubuntu workstation.
 
 Existing checkouts upgrading to this layout must run `chezmoi init` once to
 regenerate the derived `isAmiceWorkstation` config value before applying.
 
-Review changes before every real apply:
+### Ubuntu
+
+Install the declared packages first. Use `--grant-backlight` on a laptop with
+a real backlight; omit it in a VM or on a desktop:
+
+```sh
+cd "$(chezmoi source-path)"
+./scripts/install-ubuntu
+```
+
+Review and deploy the configuration, then log out completely and choose Sway
+at the login screen:
 
 ```sh
 chezmoi diff
-chezmoi apply --dry-run --verbose
+chezmoi apply --verbose
+```
+
+Inside the new Sway session, verify the deployed host:
+
+```sh
+desktop-doctor
+```
+
+An Atuin warning about a missing local encryption key is expected on a new
+machine. Atuin credentials, encryption keys, and history are deliberately not
+deployed; run `atuin login` only when history sync is wanted.
+
+### macOS
+
+Install the Homebrew dependencies, apply, and verify:
+
+```sh
+cd "$(chezmoi source-path)"
+brew bundle --file Brewfile
+chezmoi diff
 chezmoi apply --verbose
 desktop-doctor
 ```
 
-## Dependencies
+Grant AeroSpace Accessibility permission when macOS requests it. GitHub
+credentials, application histories, and caches are deliberately machine-local.
 
-Ubuntu packages are declared in `packages/ubuntu.txt`:
-
-```sh
-chezmoi cd
-./scripts/install-ubuntu --grant-backlight
-./scripts/check-ubuntu
-```
-
-Omit `--grant-backlight` on systems without a laptop panel. If group
-membership changes, log out completely before testing brightness.
-
-macOS packages are declared in `Brewfile`:
+Herdr is installed as a pinned external on Linux and through Homebrew on
+macOS. After Codex has created `~/.codex`, install Herdr's session hook while
+preserving other Codex hooks:
 
 ```sh
-chezmoi cd
-brew bundle --file Brewfile
-brew bundle check --file Brewfile
+cd "$(chezmoi source-path)"
+./scripts/install-agent-integrations
 ```
-
-Grant AeroSpace Accessibility permission when macOS requests it. GitHub and
-Atuin credentials, encryption keys, histories, and caches are deliberately
-machine-local.
 
 ## Validation
 
 Run the clean-room integration validator before committing:
 
 ```sh
-chezmoi cd
+cd "$(chezmoi source-path)"
 ./tests/validate-desktop
 ```
 
@@ -73,6 +89,8 @@ runs native validators and ShellCheck when available.
 
 - `Super+T` on Sway or `Option+T` on AeroSpace opens a plain terminal.
 - Add `Shift` to open or resume an independent persistent tmux terminal.
+- Add left Ctrl instead to open the agent-aware Herdr workspace. Herdr and
+  tmux are separate terminal modes and must not be nested.
 - `Super+H/J/K/L` focuses Sway windows; `Super+1` through `Super+0` selects a
   workspace.
 - `Super+/` is the exhaustive searchable Sway command and key reference.
@@ -88,5 +106,6 @@ sessions add a separate `user@hostname` line above the directory.
 - [Architecture](docs/architecture.md)
 - [Profiles and portability](docs/profiles.md)
 - [Keybinding conventions](docs/keybindings.md)
+- [Herdr agent workspaces](docs/herdr.md)
 - [Wallpaper assets and provenance](docs/wallpapers.md)
 - [Roadmap and hardware qualification](docs/roadmap.md)

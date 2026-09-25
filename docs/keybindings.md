@@ -15,6 +15,7 @@ Important chords:
 
 - `Super+T` / `Option+T`: plain terminal, suitable for transparent SSH use.
 - Add `Shift`: independent persistent local tmux terminal.
+- Add left Ctrl instead: agent-aware Herdr workspace.
 - `Super+/`: exhaustive Sway command palette and shortcut reference.
 - `Super+D`: application launcher.
 - `Super+C`: graphical Sway system controls.
@@ -25,5 +26,6 @@ Important chords:
 The Kinesis Advantage2 places Super, Space, and Enter in one thumb cluster, so
 Sway deliberately defines no Super+Space or Super+Return chord. Tmux uses its
 existing prefix-free pane controls plus the ordinary `Ctrl+B` prefix for
-window and persistence operations; its configuration is authoritative for
-those bindings.
+window and persistence operations. Herdr also uses `Ctrl+B`, but only in its
+own terminal windows; do not nest either multiplexer inside the other. Each
+tool's own configuration is authoritative for its internal bindings.

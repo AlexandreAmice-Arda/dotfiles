@@ -1,0 +1,49 @@
+#!/bin/sh
+set -eu
+
+find_herdr() {
+    for candidate in \
+        "$(command -v herdr 2>/dev/null || true)" \
+        /opt/homebrew/bin/herdr \
+        /usr/local/bin/herdr \
+        /usr/bin/herdr \
+        "$HOME/.local/bin/herdr" \
+        "$HOME/.local/opt/herdr-0.9.1/herdr"
+    do
+        [ -n "$candidate" ] && [ -x "$candidate" ] && {
+            printf '%s\n' "$candidate"
+            return
+        }
+    done
+    return 1
+}
+
+herdr_bin=$(find_herdr) || {
+    printf 'Herdr is not installed or is not reachable from this GUI session\n' >&2
+    exit 127
+}
+
+if [ "${1:-}" = --check ]; then
+    [ "$#" -eq 1 ] || {
+        printf 'usage: terminal-agents [--check]\n' >&2
+        exit 2
+    }
+    printf '%s\n' "$herdr_bin"
+    exit 0
+fi
+
+if [ "$#" -ne 0 ]; then
+    printf 'usage: terminal-agents [--check]\n' >&2
+    exit 2
+fi
+
+if [ "${HERDR_ENV:-}" = 1 ]; then
+    printf 'Herdr is already managing this terminal; use its workspace controls instead.\n' >&2
+    exit 2
+fi
+if [ -n "${TMUX:-}" ]; then
+    printf 'Do not nest Herdr inside tmux; open the desktop Herdr shortcut instead.\n' >&2
+    exit 2
+fi
+
+exec "$herdr_bin"

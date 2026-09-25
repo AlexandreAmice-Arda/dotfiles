@@ -45,6 +45,12 @@
     type = "archive"
     url = "https://github.com/tree-sitter/tree-sitter/releases/download/v0.27.0/tree-sitter-cli-linux-x64.zip"
     checksum.sha256 = "e4a3826bcd0fe099ee3a5617767374939cbc23c4a35b5b53f5fc04142525a2c1"
+
+[".local/opt/herdr-0.9.1/herdr"]
+    type = "file"
+    url = "https://github.com/herdrdev/herdr/releases/download/v0.9.1/herdr-linux-x86_64"
+    executable = true
+    checksum.sha256 = "2a02fed16beb651ef006e1d43f048f652ca4dc58ad053cd2d44450563d5c54b7"
 {{ else if eq .chezmoi.arch "arm64" -}}
 [".local/opt/starship-1.26.0"]
     type = "archive"
@@ -67,5 +73,11 @@
     type = "archive"
     url = "https://github.com/tree-sitter/tree-sitter/releases/download/v0.27.0/tree-sitter-cli-linux-arm64.zip"
     checksum.sha256 = "6260b621bf5ab87027dfb463bf955504ef32cdcda62b81f28447753e48c83a62"
+
+[".local/opt/herdr-0.9.1/herdr"]
+    type = "file"
+    url = "https://github.com/herdrdev/herdr/releases/download/v0.9.1/herdr-linux-aarch64"
+    executable = true
+    checksum.sha256 = "f4ccf4de745f2cb9a39a983e9ba3703dad50ec2a58dea83026ceab721bbd8d9e"
 {{ end -}}
 {{ end -}}
