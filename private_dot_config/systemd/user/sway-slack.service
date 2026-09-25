@@ -5,6 +5,6 @@ After=sway-session.target gnome-keyring-daemon.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/slack --password-store=gnome-libsecret
+ExecStart=%h/.local/bin/slack --password-store=gnome-libsecret
 Restart=on-failure
 RestartSec=5

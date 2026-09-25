@@ -5,17 +5,16 @@ for_window [window_role="task_dialog"] floating enable
 for_window [window_type="dialog"] floating enable
 for_window [window_type="menu"] floating enable
 
-{{ if .isAmiceWorkstation -}}
-# Personal routing exists only in the explicit workstation profile.
-assign [app_id="^foot$"] workspace number $ws9
-assign [class="(?i)^foot$"] workspace number $ws9
-assign [app_id="^terminator$"] workspace number $ws9
-assign [class="(?i)^terminator$"] workspace number $ws9
+# Communication apps share workspace 10 on every Sway host.
 assign [app_id="^signal$"] workspace number $ws10
 assign [class="(?i)^signal$"] workspace number $ws10
 assign [app_id="^slack$"] workspace number $ws10
 assign [class="(?i)^slack$"] workspace number $ws10
 
+# Persistent terminals use workspace 9; ordinary foot-current windows stay in
+# the focused workspace.
+assign [app_id="^foot$"] workspace number $ws9
+assign [class="(?i)^foot$"] workspace number $ws9
+
 for_window [app_id="^pcloud$"] move scratchpad
 for_window [class="(?i)^pcloud$"] move scratchpad
-{{ end }}

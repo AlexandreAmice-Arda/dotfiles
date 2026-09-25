@@ -33,12 +33,17 @@ require_file "$HOME/.local/bin/terminal-main"
     && ok 'GUI terminal can resolve tmux' || fail 'GUI terminal cannot resolve tmux'
 require_file "$HOME/.local/bin/suspend-if-on-battery"
 require_file /usr/libexec/polkit-mate-authentication-agent-1
-{{ if .isAmiceWorkstation -}}
-require_file /opt/Signal/signal-desktop
-require_file /usr/bin/slack
 require_file /usr/bin/code
-require_file /usr/bin/google-chrome-stable
-require_file "$HOME/.config/pcloud/pcloud-launcher.sh"
+{{ if eq .chezmoi.arch "amd64" -}}
+require_file /opt/Signal/signal-desktop
+require_file "$HOME/.local/opt/pcloud/pCloud.AppImage"
+{{ end -}}
+if [ -x /usr/bin/slack ] || [ -x /snap/bin/slack ]; then
+    ok 'Slack executable installed'
+else
+    fail 'Slack executable is missing'
+fi
+{{ if .isAmiceWorkstation -}}
 require_file "$HOME/.config/kanshi/config"
 require_file "$HOME/.config/sway/scripts/output-profile-applied"
 require_file "$HOME/.config/systemd/user/sway-kanshi.service"
@@ -109,9 +114,12 @@ if [ -x "$HOME/.local/bin/suspend-if-on-battery" ]; then
 fi
 
 if [ -n "${SWAYSOCK:-}" ] && command -v systemctl >/dev/null 2>&1; then
-    session_units='sway-waybar sway-swaync sway-idle sway-nm-applet sway-polkit-agent sway-blueman-applet'
+    session_units='sway-waybar sway-swaync sway-idle sway-nm-applet sway-polkit-agent sway-blueman-applet sway-slack'
+{{ if eq .chezmoi.arch "amd64" -}}
+    session_units="$session_units sway-signal"
+{{ end -}}
 {{ if .isAmiceWorkstation -}}
-    session_units="$session_units sway-kanshi sway-signal sway-slack"
+    session_units="$session_units sway-kanshi"
 {{ end -}}
     for unit in $session_units; do
         systemctl --user is-active --quiet "$unit.service" \

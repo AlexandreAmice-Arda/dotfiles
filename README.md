@@ -6,47 +6,61 @@ renders an AeroSpace desktop from shared Tokyo Night theme, direction, and
 workspace data. Supported generation baselines are Ubuntu 24.04+ and macOS
 13+.
 
-## Quick start
+## Quick Start
 
-Install Git and chezmoi, then initialize the repository without applying it:
+1. Install Git, gh, and chezmoi.
 
-```sh
-chezmoi init AlexandreAmice/dotfiles
-```
+   ```sh
+   sudo apt install git gh
+   sudo snap install chezmoi --classic
+   ```
+
+2. Log into GitHub.
+
+   ```sh
+   gh auth login
+   ```
+
+3. Get the dotfiles and follow the system prompts.
+
+   ```sh
+   chezmoi init AlexandreAmice/dotfiles
+   ```
+
+4. Navigate to the chezmoi source, install software, and apply chezmoi.
+
+   ```sh
+   cd "$(chezmoi source-path)"
+   ./scripts/install-ubuntu
+   chezmoi diff
+   chezmoi apply --verbose
+   ```
+
+   Use `./scripts/install-ubuntu --grant-backlight` instead on a laptop with
+   a real backlight; omit the flag in a VM or on a desktop.
+
+5. Optionally log into Atuin. This requires the Atuin encryption key.
+
+   ```sh
+   atuin login
+   ```
+
+6. Check the installation.
+
+   ```sh
+   desktop-doctor
+   ./tests/validate-desktop
+   ```
+
+7. Log out completely and log back into Sway.
+
+Atuin credentials, encryption keys, and history are deliberately not deployed.
 
 Choose `portable` for an ordinary machine. Choose `amice-workstation` only on
 the original Ubuntu workstation.
 
 Existing checkouts upgrading to this layout must run `chezmoi init` once to
 regenerate the derived `isAmiceWorkstation` config value before applying.
-
-### Ubuntu
-
-Install the declared packages first. Use `--grant-backlight` on a laptop with
-a real backlight; omit it in a VM or on a desktop:
-
-```sh
-cd "$(chezmoi source-path)"
-./scripts/install-ubuntu
-```
-
-Review and deploy the configuration, then log out completely and choose Sway
-at the login screen:
-
-```sh
-chezmoi diff
-chezmoi apply --verbose
-```
-
-Inside the new Sway session, verify the deployed host:
-
-```sh
-desktop-doctor
-```
-
-An Atuin warning about a missing local encryption key is expected on a new
-machine. Atuin credentials, encryption keys, and history are deliberately not
-deployed; run `atuin login` only when history sync is wanted.
 
 ### macOS
 

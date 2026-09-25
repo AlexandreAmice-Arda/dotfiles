@@ -14,11 +14,11 @@ materialize() {
     home="$work_dir/$label/home"
     mkdir -p "$home"
     override=$(jq -nc \
-        --arg os "$os" --arg home "$home" --arg profile "$profile" \
+        --arg os "$os" --arg arch "amd64" --arg home "$home" --arg profile "$profile" \
         '{desktopProfile:$profile, gitName:"Validation User",
           gitEmail:"validation@example.invalid",
           isAmiceWorkstation:($os == "linux" and $profile == "amice-workstation"),
-          chezmoi:{os:$os, homeDir:$home}}')
+          chezmoi:{os:$os, arch:$arch, homeDir:$home}}')
 
     chezmoi --source "$source_root" --destination "$home" \
         --persistent-state "$work_dir/$label/state.boltdb" \
@@ -51,21 +51,25 @@ mac_portable=$(materialize mac-portable darwin portable | tail -n 1)
 
 # Profile and platform boundaries are part of the contract, not merely syntax.
 require_absent "$linux_portable/.config/sway/scripts/apply-outputs"
-require_absent "$linux_portable/.config/terminator"
 require_absent "$linux_workstation/.config/sway/scripts/apply-outputs"
+require_absent "$linux_workstation/.config/terminator"
 require_absent "$linux_portable/.config/kanshi"
 require_absent "$linux_portable/.config/systemd/user/sway-kanshi.service"
 require_absent "$linux_portable/.config/sway/scripts/output-profile-applied"
 require_file "$linux_workstation/.config/kanshi/config"
 require_file "$linux_workstation/.config/sway/scripts/output-profile-applied"
 require_file "$linux_workstation/.config/systemd/user/sway-kanshi.service"
-require_file "$linux_workstation/.config/sway/scripts/start-work-session"
-require_absent "$linux_workstation/.config/sway/scripts/start-session-apps"
+require_file "$linux_portable/.config/sway/scripts/start-pcloud"
+require_file "$linux_workstation/.config/sway/scripts/start-pcloud"
+require_absent "$linux_workstation/.config/sway/scripts/arrange-code-windows"
+require_absent "$linux_workstation/.config/sway/scripts/start-work-session"
 require_file "$linux_workstation/.config/systemd/user/sway-signal.service"
 require_file "$linux_workstation/.config/systemd/user/sway-slack.service"
-require_absent "$linux_portable/.config/systemd/user/sway-signal.service"
-require_absent "$linux_portable/.config/systemd/user/sway-slack.service"
-require_file "$linux_workstation/.config/terminator/config"
+require_file "$linux_workstation/.local/bin/slack"
+require_file "$linux_portable/.config/systemd/user/sway-signal.service"
+require_file "$linux_portable/.config/systemd/user/sway-slack.service"
+require_file "$linux_portable/.local/bin/slack"
+require_file "$linux_portable/.local/share/applications/signal-desktop.desktop"
 require_file "$mac_portable/.config/aerospace/aerospace.toml"
 require_file "$mac_portable/.config/ghostty/config.ghostty"
 require_file "$mac_portable/.zshrc"
@@ -237,7 +241,7 @@ if grep -Fq 'tokyo-night-wallpapers' "$work_dir/chezmoiexternal-darwin-arm64.tom
 fi
 ok 'multi-architecture external release manifests'
 
-for package in kanshi fzf zoxide fd-find; do
+for package in kanshi fzf zoxide fd-find libfuse2t64 code; do
     grep -Fxq "$package" "$source_root/packages/ubuntu.txt" \
         || fail "Ubuntu package is undeclared: $package"
 done
@@ -247,6 +251,43 @@ for formula in atuin fd fzf herdr neovim starship tree-sitter-cli zoxide; do
 done
 grep -Fqx 'cask "font-jetbrains-mono-nerd-font"' "$source_root/Brewfile" \
     || fail 'Homebrew Nerd Font cask is undeclared'
+grep -Fqx 'cask "visual-studio-code"' "$source_root/Brewfile" \
+    || fail 'Homebrew Visual Studio Code cask is undeclared'
+grep -Fqx 'cask "signal"' "$source_root/Brewfile" \
+    || fail 'Homebrew Signal cask is undeclared'
+grep -Fqx 'cask "slack"' "$source_root/Brewfile" \
+    || fail 'Homebrew Slack cask is undeclared'
+grep -Fqx 'URIs: https://packages.microsoft.com/repos/code' \
+    "$source_root/packages/vscode.sources" \
+    || fail 'Microsoft Visual Studio Code apt repository is undeclared'
+grep -Fqx 'URIs: https://updates.signal.org/desktop/apt' \
+    "$source_root/packages/signal-desktop.sources" \
+    || fail 'Signal Desktop apt repository is undeclared'
+grep -Fq "pcloud_public_code='XZrYdRJZLS6RF4kf6Jy6GFr4jqkc4S34Rlgy'" \
+    "$source_root/scripts/install-ubuntu" \
+    || fail 'Official pCloud AppImage link is undeclared'
+grep -Fq "pcloud_sha256='07e404be9e37ef2dffb6541fea74f10601f2a33fe490bcaa895fb5b238f81af6'" \
+    "$source_root/scripts/install-ubuntu" \
+    || fail 'Official pCloud AppImage checksum is undeclared'
+for home in "$linux_portable" "$linux_workstation"; do
+    grep -Fq "workspace number \$ws10" \
+        "$home/.config/sway/conf.d/60-rules.conf" \
+        || fail 'Communication apps are not assigned to workspace 10'
+    grep -Fq 'app_id="^signal$"' "$home/.config/sway/conf.d/60-rules.conf" \
+        || fail 'Signal workspace assignment is missing'
+    grep -Fq 'app_id="^slack$"' "$home/.config/sway/conf.d/60-rules.conf" \
+        || fail 'Slack workspace assignment is missing'
+done
+grep -Fq "open -a Slack" "$mac_portable/.config/aerospace/aerospace.toml" \
+    || fail 'AeroSpace does not start Slack'
+grep -Fq "open -a Signal" "$mac_portable/.config/aerospace/aerospace.toml" \
+    || fail 'AeroSpace does not start Signal'
+grep -Fq "if.app-id = 'com.tinyspeck.slackmacgap'" \
+    "$mac_portable/.config/aerospace/aerospace.toml" \
+    || fail 'AeroSpace Slack workspace assignment is missing'
+grep -Fq "if.app-id = 'org.whispersystems.signal-desktop'" \
+    "$mac_portable/.config/aerospace/aerospace.toml" \
+    || fail 'AeroSpace Signal workspace assignment is missing'
 ok 'platform dependency manifests'
 
 for profile in office home mobile; do
@@ -448,10 +489,14 @@ if command -v systemd-analyze >/dev/null 2>&1; then
         "$linux_portable/.config/systemd/user/sway-session.target" \
         "$linux_workstation/.config/systemd/user/sway-kanshi.service"
     do
+        unit_home=$linux_portable
+        case "$unit" in
+            "$linux_workstation"/*) unit_home=$linux_workstation ;;
+        esac
         # systemd expands %h through the account database, not $HOME. Point
         # verifier-only copies at the clean-room home it is actually checking.
         sed \
-            -e "s|%h|$linux_portable|g" \
+            -e "s|%h|$unit_home|g" \
             -e 's|^ExecStart=/usr/bin/kanshi .*|ExecStart=/bin/true|' \
             "$unit" > "$unit_dir/${unit##*/}"
     done
@@ -479,7 +524,7 @@ fi
 
 personal_pattern='/home/(amice|demo)|PH5NY1BH326L|H7YCC6B70Y1S|6N45XC3'
 personal_pattern+='|C9LMTF003960|SNOPT_PATH|MOSEKLM|GUROBI_HOME|CUDA_PATH'
-personal_pattern+='|AdmmPackageSplit|start-pcloud|sway-trial-system'
+personal_pattern+='|AdmmPackageSplit|sway-trial-system'
 if rg -n "$personal_pattern" "$linux_portable" "$mac_portable"; then
     fail 'personal or workstation-specific data leaked into a portable target'
 fi

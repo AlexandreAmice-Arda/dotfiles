@@ -51,7 +51,14 @@ tests/**
 .local/bin/swaync-client
 .local/bin/waybar
 .local/bin/wlogout
+.local/bin/slack
+.local/share/applications/signal-desktop.desktop
 .local/libexec/desktop-doctor/linux
+{{- end }}
+
+{{- if ne .chezmoi.arch "amd64" }}
+.config/systemd/user/sway-signal.service
+.local/share/applications/signal-desktop.desktop
 {{- end }}
 
 {{- if ne .chezmoi.os "darwin" }}
@@ -66,21 +73,13 @@ tests/**
 .config/ghostty/**
 {{- end }}
 
-# Hardware and personal applications for the original Ubuntu workstation.
+# Hardware-specific configuration for the original Ubuntu workstation.
 {{- if not .isAmiceWorkstation }}
-.config/terminator
-.config/terminator/**
 .config/kanshi
 .config/kanshi/**
-.config/sway/scripts/arrange-code-windows
 .config/sway/scripts/output-profile-applied
-.config/sway/scripts/start-pcloud
-.config/sway/scripts/start-work-session
-.config/systemd/user/sway-signal.service
-.config/systemd/user/sway-slack.service
 .config/systemd/user/sway-kanshi.service
 .local/bin/start-sway-intel
 .local/bin/sway-trial-system
-.local/share/applications/signal-desktop.desktop
 .local/share/wayland-sessions/sway-intel.desktop
 {{- end }}

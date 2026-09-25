@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+
+for slack_binary in /usr/bin/slack /snap/bin/slack; do
+    if [ -x "$slack_binary" ]; then
+        exec "$slack_binary" "$@"
+    fi
+done
+
+printf 'Slack is not installed. Run scripts/install-ubuntu.\n' >&2
+exit 127

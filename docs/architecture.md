@@ -19,9 +19,12 @@ and rules. The numeric order is intentional and must remain stable.
 
 Package declarations are separate from repository tooling. The root
 `Brewfile` is the macOS manifest and `packages/ubuntu.txt` is the Ubuntu
-manifest. Installers live in `scripts/`, integration checks in `tests/`, and
-durable explanations in `docs/`; chezmoi ignores all three tooling/document
-trees so they never appear in a rendered home.
+manifest. The Ubuntu installer also configures vendor repositories for VS Code
+and Signal, installs Slack through its supported Snap, and installs pCloud
+Drive from its checksum-pinned official AppImage. Installers live in `scripts/`,
+integration checks in `tests/`, and durable explanations in `docs/`; chezmoi
+ignores all three tooling/document trees so they never appear in a rendered
+home.
 
 ## Executable ownership
 
@@ -48,10 +51,10 @@ SHA-256 checksum. Wallpaper PNGs are installed from the public assets release,
 not Git history; see [wallpapers.md](wallpapers.md).
 
 Runtime state is not source state. Atuin accounts and history, editor caches,
-terminal session data, selected wallpaper mood, and terminal opacity remain
-local. VS Code settings and ordinary extensions belong to VS Code and Settings
-Sync. The retired unpublished Sway extension is removed only by its exact
-installed directory through `.chezmoiremove.tmpl`.
+terminal session data, pCloud credentials, selected wallpaper mood, and
+terminal opacity remain local. VS Code settings and ordinary extensions belong
+to VS Code and Settings Sync. The retired unpublished Sway extension is removed
+only by its exact installed directory through `.chezmoiremove.tmpl`.
 
 Long-running Sway components are supervised by systemd user units and tied to
 the Sway session target. Small scripts connect components without embedding

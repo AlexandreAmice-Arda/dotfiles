@@ -3,14 +3,15 @@
 ## Profile contract
 
 `portable` is the default. It must not depend on a username, absolute home
-path, monitor serial, connector name, GPU address, project path, or optional
-personal application. Unknown displays keep Sway's automatic placement and
-can be adjusted with wdisplays.
+path, monitor serial, connector name, GPU address, or project path. Shared
+applications and workspace conventions remain consistent across machines.
+Unknown displays keep Sway's automatic placement and can be adjusted with
+wdisplays.
 
 `amice-workstation` preserves the original Ubuntu workstation's Intel/NVIDIA
-session, known Kanshi monitor layouts, personal startup services, application
-routing, and explicit work-session launcher. The existing profile name and
-the `.desktop.profiles.amice_workstation` schema are stable interfaces.
+session, known Kanshi monitor layouts, and conditional environment discovery
+for its locally installed solver and CUDA toolchains. The existing profile name
+and the `.desktop.profiles.amice_workstation` schema are stable interfaces.
 
 The config initializer derives `isAmiceWorkstation`. It is true only when the
 operating system is Linux and the selected profile is `amice-workstation`.
@@ -27,9 +28,8 @@ schema so the generated config gains the derived value before the next apply.
 - Missing battery or temperature sensors leave the corresponding bar item
   empty rather than breaking Waybar.
 - Portrait transforms receive portrait artwork; other outputs use landscape.
-- Missing optional personal applications cannot break the portable session.
-- The Intel/NVIDIA launcher, personal services, and saved output identities
-  are absent from portable homes and all macOS homes.
+- The Intel/NVIDIA launcher and saved output identities are absent from
+  portable homes and all macOS homes.
 - Idle locking and display power-off apply on Ubuntu. Automatic idle suspend
   occurs only while a system battery reports `Discharging`.
 - Native package-manager binaries take priority over pinned fallback binaries.

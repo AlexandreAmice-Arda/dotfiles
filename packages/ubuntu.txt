@@ -8,6 +8,7 @@ curl
 build-essential
 fd-find
 unzip
+libfuse2t64
 fzf
 zoxide
 gtklock
@@ -42,3 +43,4 @@ sway-notification-center
 wlogout
 gh
 shellcheck
+code
