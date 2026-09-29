@@ -10,9 +10,8 @@
   "modules-left": ["custom/hub", "sway/workspaces", "sway/mode"],
   "modules-center": ["clock"],
   "modules-right": [
-    "custom/notification", "bluetooth", "network", "pulseaudio", "cpu", "memory",
-    "custom/temperature", "backlight", "battery",
-    "custom/slack", "custom/pcloud",
+    "custom/notification", "bluetooth", "pulseaudio", "cpu", "memory",
+    "custom/temperature", "backlight", "battery", "tray",
     "custom/appearance", "custom/power"
   ],
 
@@ -73,15 +72,6 @@
     "tooltip-format": "Bluetooth: {status}\nConnected devices: {num_connections}",
     "on-click": "blueman-manager"
   },
-  "network": {
-    "format-wifi": " {signalStrength}%",
-    "format-ethernet": "󰈀",
-    "format-disconnected": "󰖪",
-    "tooltip-format-wifi": "{essid}\nSignal: {signalStrength}% · {ipaddr}",
-    "tooltip-format-ethernet": "{ifname}\n{ipaddr}",
-    "tooltip-format-disconnected": "Network disconnected",
-    "on-click": "nm-connection-editor"
-  },
   "pulseaudio": {
     "format": "{icon} {volume}%",
     "format-muted": " {volume}% muted",
@@ -129,16 +119,7 @@
     "tooltip-format": "{timeTo} · {power:.1f} W",
     "on-click": "~/.config/sway/scripts/power-profile-menu"
   },
-  "custom/slack": {
-    "format": "",
-    "tooltip-format": "Slack\nClick: focus or launch",
-    "on-click": "~/.local/bin/focus-or-launch '^slack$' /usr/bin/slack"
-  },
-  "custom/pcloud": {
-    "format": "",
-    "tooltip-format": "pCloud\nClick: focus or launch",
-    "on-click": "~/.local/bin/focus-pcloud"
-  },
+  "tray": { "icon-size": 15, "spacing": 8 },
   "custom/appearance": {
     "format": "◐",
     "tooltip-format": "Appearance: wallpaper and terminal opacity",

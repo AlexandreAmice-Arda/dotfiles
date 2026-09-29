@@ -16,5 +16,7 @@ assign [class="(?i)^slack$"] workspace number $ws10
 assign [app_id="^foot$"] workspace number $ws9
 assign [class="(?i)^foot$"] workspace number $ws9
 
-for_window [app_id="^pcloud$"] move scratchpad
-for_window [class="(?i)^pcloud$"] move scratchpad
+# Treat the pCloud dashboard like an ordinary application window. Its smaller
+# menu/dialog windows still match the common dialog rules above.
+for_window [app_id="^pcloud$"] floating disable
+for_window [class="(?i)^pcloud$"] floating disable

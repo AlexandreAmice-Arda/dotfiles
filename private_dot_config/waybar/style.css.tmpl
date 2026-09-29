@@ -57,16 +57,15 @@ button:hover { background: @tn_surface_alt; color: white; }
 }
 #clock { color: @tn_foreground; padding: 0 14px; }
 
-#custom-notification, #bluetooth, #network, #pulseaudio, #cpu, #memory,
-#custom-temperature, #backlight, #battery, #custom-slack, #custom-pcloud,
-#custom-appearance, #custom-power {
+#custom-notification, #bluetooth, #pulseaudio, #cpu, #memory,
+#custom-temperature, #backlight, #battery, #tray, #custom-appearance, #custom-power {
   margin: 3px 1px;
   padding: 0 8px;
   border-radius: 8px;
 }
 
 #custom-notification { color: @tn_purple; }
-#bluetooth, #network, #cpu { color: @tn_blue; }
+#bluetooth, #cpu { color: @tn_blue; }
 #pulseaudio { color: @tn_cyan; }
 #pulseaudio.muted { color: @tn_pink; }
 #memory { color: @tn_purple; }
@@ -75,8 +74,6 @@ button:hover { background: @tn_surface_alt; color: white; }
 #backlight { color: @tn_yellow; }
 #battery.warning { color: @tn_yellow; }
 #battery.charging, #battery.plugged { color: @tn_cyan; }
-#custom-slack { color: @tn_purple; }
-#custom-pcloud { color: @tn_cyan; }
 #custom-appearance { color: @tn_purple; }
 #custom-power {
   color: @tn_pink;
@@ -85,13 +82,15 @@ button:hover { background: @tn_surface_alt; color: white; }
   font-size: 14px;
 }
 
-#custom-notification:hover, #bluetooth:hover, #network:hover, #pulseaudio:hover, #cpu:hover,
+#custom-notification:hover, #bluetooth:hover, #pulseaudio:hover, #cpu:hover,
 #memory:hover, #custom-temperature:hover, #backlight:hover, #battery:hover,
-#custom-slack:hover, #custom-pcloud:hover,
 #custom-appearance:hover, #custom-power:hover {
   color: @tn_background;
   background: @tn_foreground;
 }
+
+#tray > .passive { -gtk-icon-effect: dim; }
+#tray > .needs-attention { -gtk-icon-effect: highlight; }
 
 tooltip {
   color: @tn_foreground;
