@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+app_name=${SWAYNC_APP_NAME:-}
+desktop_entry=${SWAYNC_DESKTOP_ENTRY:-}
+desktop_entry=${desktop_entry%.desktop}
+
+[[ -n "$app_name$desktop_entry" ]] || exit 0
+
+find_window() {
+    swaymsg --raw --type get_tree | jq -r \
+        --arg app "$app_name" --arg desktop "$desktop_entry" '
+        def norm: ascii_downcase | gsub("[^a-z0-9]"; "");
+        def related($left; $right):
+          ($left != "" and $right != "" and
+            (($left == $right) or
+             ($left | contains($right)) or
+             ($right | contains($left))));
+        ($app | norm) as $wanted_app
+        | ($desktop | norm) as $wanted_desktop
+        | [
+            .. | objects
+            | select(.type? == "con" or .type? == "floating_con")
+            | . as $window
+            | ((.app_id // .window_properties.class // "") | norm) as $identity
+            | ((.name // "") | norm) as $title
+            | select(
+                related($identity; $wanted_desktop) or
+                related($identity; $wanted_app) or
+                ($wanted_app != "" and ($title | contains($wanted_app)))
+              )
+            | $window
+          ]
+        | (map(select(.focused)) + map(select(.urgent)) + .)
+        | .[0].id // empty
+    '
+}
+
+if [[ ${FOCUS_HELPER_DRY_RUN:-0} == 1 ]]; then
+    find_window
+    exit 0
+fi
+
+if [[ "${app_name,,}${desktop_entry,,}" == *pcloud* ]]; then
+    exec "$HOME/.local/bin/focus-pcloud"
+fi
+
+# SwayNC runs action scripts alongside the notification's native action. Give
+# the app a short opportunity to show or create its window before focusing it.
+for _ in $(seq 1 50); do
+    window_id=$(find_window)
+    if [[ -n "$window_id" ]]; then
+        swaymsg --quiet -- "[con_id=$window_id] focus"
+        exit 0
+    fi
+    sleep 0.1
+done
+
+exit 0

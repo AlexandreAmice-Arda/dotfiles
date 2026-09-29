@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if (( $# < 2 )); then
+    printf 'usage: %s APP_ID_PATTERN COMMAND [ARG ...]\n' "${0##*/}" >&2
+    exit 2
+fi
+
+pattern=$1
+shift
+
+find_window() {
+    swaymsg --raw --type get_tree | jq -r --arg pattern "$pattern" '
+        [
+          .. | objects
+          | select(.type? == "con" or .type? == "floating_con")
+          | select(
+              ((.app_id // "") | test($pattern; "i")) or
+              ((.window_properties.class // "") | test($pattern; "i"))
+            )
+        ]
+        | (map(select(.focused)) + map(select(.urgent)) + .)
+        | .[0].id // empty
+    '
+}
+
+focus_window() {
+    local window_id=$1
+    swaymsg --quiet -- "[con_id=$window_id] focus"
+}
+
+window_id=$(find_window)
+if [[ ${FOCUS_HELPER_DRY_RUN:-0} == 1 ]]; then
+    printf '%s\n' "$window_id"
+    exit 0
+fi
+if [[ -n "$window_id" ]]; then
+    focus_window "$window_id"
+    exit 0
+fi
+
+# Starting an already-running single-instance app asks it to recreate/show its
+# window; starting a stopped app launches it normally.
+setsid --fork "$@" >/dev/null 2>&1
+
+# Focus the window once the application has mapped it.
+for _ in $(seq 1 100); do
+    sleep 0.1
+    window_id=$(find_window)
+    if [[ -n "$window_id" ]]; then
+        focus_window "$window_id"
+        exit 0
+    fi
+done
+
+notify-send --urgency=normal 'Application started' \
+    'It did not create a focusable window within 10 seconds.'
