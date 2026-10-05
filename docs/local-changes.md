@@ -70,6 +70,20 @@ passed. A temporary tmux session verified that a Control+H input byte selects
 the left pane. The running Herdr server accepted the config reload with no
 diagnostics. The graphical launcher and palette still need hands-on validation.
 
+## Minimal macOS terminal appearance
+
+Ghostty follows Foot's shared font, Tokyo Night palette, selection colors,
+padding, 95% opacity, and blinking beam cursor. Blur is disabled and unfocused
+Ghostty splits retain full opacity. The macOS title bar is hidden to reduce
+terminal chrome; this setting applies to new windows. Scrollback remains at
+Ghostty's default byte budget, since Foot's 10,000-line limit has no exact
+Ghostty equivalent. Foot's machine-local opacity picker remains Linux-specific.
+
+A macOS-only, idempotent Chezmoi script enables Dock auto-hiding and restarts
+Dock only when the preference changes. The Dock still appears when the pointer
+reaches its screen edge. Tmux's status bar, AeroSpace configuration, and the
+macOS menu bar are unchanged by this appearance update.
+
 ## Keeping the fork current
 
 Keep the original repository as `upstream` and the personal fork as `origin`.

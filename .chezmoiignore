@@ -74,6 +74,7 @@ tests/**
 
 # macOS AeroSpace target.
 {{- if ne .chezmoi.os "darwin" }}
+20_macos_dock.sh
 .local/bin/desktop-commands
 .config/aerospace
 .config/aerospace/**

@@ -6,8 +6,11 @@ window-padding-x = {{ .desktop.layout.terminal_padding_x }}
 window-padding-y = {{ .desktop.layout.terminal_padding_y }}
 window-padding-balance = true
 background-opacity = 0.95
-background-blur = 20
-unfocused-split-opacity = 0.88
+background-blur = false
+unfocused-split-opacity = 1
+
+# Foot delegates decorations to Sway; hide the macOS terminal title bar.
+macos-titlebar-style = hidden
 macos-option-as-alt = true
 
 # Keep Ctrl-Backspace consistent with Foot and readline shells.
@@ -17,7 +20,11 @@ background = {{ .desktop.theme.background }}
 foreground = {{ .desktop.theme.foreground }}
 selection-foreground = {{ .desktop.theme.background }}
 selection-background = {{ .desktop.theme.blue }}
-cursor-color = {{ .desktop.theme.cyan }}
+
+# Match Foot's blinking beam and default foreground cursor color.
+cursor-style = bar
+cursor-style-blink = true
+cursor-color = {{ .desktop.theme.foreground }}
 
 palette = 0={{ .desktop.theme.surface }}
 palette = 1={{ .desktop.theme.pink }}
