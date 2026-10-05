@@ -23,8 +23,9 @@ manifest. `scripts/install` selects the platform, installs its manifest and
 Codex, and continues independent steps after failures. On Ubuntu it also
 configures vendor repositories for VS Code, Signal, and Cloudflare One Client
 (WARP), and installs Slack through its supported Snap. It registers the
-system-wide Sway (dotfiles) session with a launcher that detects GPU drivers
-at login, including proprietary NVIDIA and hybrid Intel/AMD configurations.
+existing system-wide Sway session with a launcher that detects GPU drivers
+and connected displays at login, retaining both GPUs on hybrid machines.
+Older custom Sway entries are removed during installation.
 Both platform setup paths use
 OpenAI's official standalone installer for Codex; authentication and session
 state remain local. Installers live in `scripts/`, integration checks in

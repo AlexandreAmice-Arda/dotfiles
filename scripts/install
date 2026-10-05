@@ -7,14 +7,16 @@ PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$HOME/.cargo/bin:$HOME/.local/bin:$HOME/bi
 export PATH
 grant_backlight=0
 integrations_only=0
+session_only=0
 case "${1:-}" in
     "") ;;
     --grant-backlight) grant_backlight=1 ;;
     --agent-integrations) integrations_only=1 ;;
-    *) printf 'usage: %s [--grant-backlight | --agent-integrations]\n' "$0" >&2; exit 2 ;;
+    --sway-session) session_only=1 ;;
+    *) printf 'usage: %s [--grant-backlight | --agent-integrations | --sway-session]\n' "$0" >&2; exit 2 ;;
 esac
 [ "$#" -le 1 ] || {
-    printf 'usage: %s [--grant-backlight | --agent-integrations]\n' "$0" >&2
+    printf 'usage: %s [--grant-backlight | --agent-integrations | --sway-session]\n' "$0" >&2
     exit 2
 }
 
@@ -330,6 +332,10 @@ fi
 
 case "$(uname -s)" in
     Darwin)
+        if [ "$session_only" -eq 1 ]; then
+            printf '%s\n' '--sway-session is supported on Ubuntu only.' >&2
+            exit 2
+        fi
         if [ "$grant_backlight" -eq 1 ]; then
             printf '%s\n' '--grant-backlight is supported on Ubuntu only.' >&2
             exit 2
@@ -440,9 +446,16 @@ install_sway_session() {
         "$repo_dir/private_dot_local/bin/executable_start-sway" \
         /usr/local/bin/start-sway &&
     sudo install -D -o root -g root -m 0644 \
-        "$repo_dir/packages/sway-dotfiles.desktop" \
-        /usr/share/wayland-sessions/sway-dotfiles.desktop
+        "$repo_dir/packages/sway.desktop" \
+        /usr/share/wayland-sessions/sway.desktop &&
+    sudo rm -f -- /usr/share/wayland-sessions/sway-dotfiles.desktop \
+        /usr/share/wayland-sessions/sway-intel.desktop
 }
+
+if [ "$session_only" -eq 1 ]; then
+    install_sway_session
+    exit "$?"
+fi
 
 packages=$(sed '/^[[:space:]]*#/d; /^[[:space:]]*$/d' "$repo_dir/packages/ubuntu.txt")
 install_temp_dir=$(mktemp -d)

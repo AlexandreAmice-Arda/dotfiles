@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=Sway (dotfiles)
+Name=Sway
 Comment=Sway with automatic GPU driver selection
 Exec=/usr/local/bin/start-sway
 Type=Application

@@ -57,23 +57,28 @@ workspace data. Supported generation baselines are Ubuntu 24.04+ and macOS
    ./tests/validate-desktop
    ```
 
-7. Log out completely and select **Sway (dotfiles)** at the login screen.
+7. Log out completely and select **Sway** at the login screen.
 
 Atuin credentials, encryption keys, and history are deliberately not deployed.
 
 Choose `portable` for an ordinary machine. Choose `amice-workstation` only on
 the original Ubuntu workstation.
 
-The Ubuntu installer registers **Sway (dotfiles)** on the login screen. Select
-that session after applying the dotfiles. Its launcher detects the installed
-GPU drivers at each login. With the proprietary NVIDIA driver loaded, it passes
-`--unsupported-gpu`; on hybrid machines it uses the available Intel/AMD DRM
-devices for display scan-out. With only NVIDIA available, Sway uses that GPU.
-Other machines use Sway's normal GPU selection. An explicit `WLR_DRM_DEVICES`
-setting takes precedence. No workstation profile or extra setup script is needed.
-The launcher is installed system-wide and reads each user's own Sway config.
-NVIDIA support remains experimental; this avoids the driver refusal at startup
-but cannot guarantee every GPU/display combination works.
+The Ubuntu installer updates the existing **Sway** login entry to use the
+portable launcher and removes the older Intel trial and dotfiles entries.
+Its launcher detects GPU drivers and connected monitors at each login. With
+proprietary NVIDIA loaded, it passes `--unsupported-gpu` and orders DRM devices
+so a GPU with a connected monitor comes first, while retaining the other GPUs
+for additional displays. It prefers Intel/AMD only when a monitor is connected
+to them. An explicit `WLR_DRM_DEVICES` setting takes precedence. Other machines
+use Sway's normal GPU selection. No workstation profile is needed.
+
+For an existing install, `./scripts/install --sway-session` updates only the
+launcher and login entry, without reinstalling software. It needs sudo for the
+system files. Startup diagnostics are saved to
+`~/.local/state/sway/session.log` (or `$XDG_STATE_HOME/sway/session.log`), with
+the previous attempt retained as `session.previous.log`. NVIDIA support remains
+experimental; configuration validation does not verify real display startup.
 
 Existing checkouts upgrading to this layout must run `chezmoi init` once to
 regenerate the derived `isAmiceWorkstation` config value before applying.

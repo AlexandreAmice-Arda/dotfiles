@@ -12,7 +12,7 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 
 
 class InstallerTests(unittest.TestCase):
-    def run_installer(self, failures, component=None, platform="Linux", rust_available=True):
+    def run_installer(self, failures, component=None, platform="Linux", rust_available=True, arguments=()):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             scripts = root / "scripts"
@@ -78,7 +78,7 @@ elif name == "snap":
                        RUSTUP_HOME=str(root / ".rustup"),
                        INSTALL_TEST_RUST_AVAILABLE="1" if rust_available else "0")
             if component is None:
-                result = subprocess.run(["/bin/sh", str(scripts / "install")],
+                result = subprocess.run(["/bin/sh", str(scripts / "install"), *arguments],
                                         env=env, capture_output=True, text=True)
             else:
                 marker = component.upper().replace("-", "_") + "_INSTALL"
@@ -116,13 +116,23 @@ elif name == "snap":
         launcher = next(i for i, command in enumerate(commands)
                         if command.endswith(" /usr/local/bin/start-sway"))
         session = next(i for i, command in enumerate(commands)
-                       if command.endswith(" /usr/share/wayland-sessions/sway-dotfiles.desktop"))
+                       if command.endswith(" /usr/share/wayland-sessions/sway.desktop"))
         self.assertLess(launcher, session)
+
+    def test_session_only_updates_sway_and_removes_duplicates(self):
+        result, commands = self.run_installer([], arguments=('--sway-session',))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(any(command.endswith(' /usr/share/wayland-sessions/sway.desktop')
+                            for command in commands))
+        self.assertIn('sudo rm -f -- /usr/share/wayland-sessions/sway-dotfiles.desktop '
+                      '/usr/share/wayland-sessions/sway-intel.desktop', commands)
+        self.assertFalse(any('apt-get' in command or command.startswith('install-')
+                             for command in commands))
 
     def test_failed_sway_launcher_install_skips_session_entry(self):
         result, commands = self.run_installer(["sudo install */usr/local/bin/start-sway"])
         self.assertEqual(result.returncode, 1)
-        self.assertFalse(any(command.endswith(" /usr/share/wayland-sessions/sway-dotfiles.desktop")
+        self.assertFalse(any(command.endswith(" /usr/share/wayland-sessions/sway.desktop")
                              for command in commands))
         self.assertIn("Register Sway login session (exit 7)", result.stderr)
         self.assertEqual(commands[-1], "check-ubuntu")
