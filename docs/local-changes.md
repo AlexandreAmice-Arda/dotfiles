@@ -90,3 +90,24 @@ Keep the original repository as `upstream` and the personal fork as `origin`.
 Commit local changes before integrating upstream work. Fetch upstream, review
 its changes, merge the desired changes, and run `tests/validate-desktop` before
 pushing. Review `chezmoi diff` before applying changes on each machine.
+
+## Shared theme rollout
+
+Theme colors now have one source in `.chezmoidata.yaml`; tmux and Starship are
+templates with identical existing output, and Neovim explicitly selects Night.
+Bright terminal colors are shared as named tokens. `apply-appearance` now works
+on Ubuntu and macOS, with Midnight artwork and 95% opacity as fresh defaults.
+The same pinned Ubuntu wallpaper archive is installed on macOS. Saved choices
+remain local and survive deployment; solid backgrounds remain optional.
+
+Ghostty reads a local opacity include, and real-home setup restores native
+wallpaper, dark mode, and purple accents. This rollout does not change AeroSpace
+or tmux layout/controls. Herdr uses its existing built-in theme and VS Code
+continues to use Settings Sync. See `wallpapers.md` for controls and platform
+limits.
+
+Verification: all 18 automated tests and clean-room platform checks passed.
+Ghostty's native validator accepted the runtime include, and Neovim compiled
+and evaluated its new theme specification. AppKit confirmed Midnight on both
+connected Mac screens, native appearance was dark, and the purple accent was
+applied. Native Sway/Foot verification still requires an Ubuntu machine.

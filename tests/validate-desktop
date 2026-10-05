@@ -244,7 +244,8 @@ fi
 wallpaper_url='https://github.com/AlexandreAmice/dotfiles-assets/releases/download/wallpapers-v1/tokyo-night-wallpapers-v1.tar.gz'
 for linux_manifest in \
     "$work_dir/chezmoiexternal-linux-amd64.toml" \
-    "$work_dir/chezmoiexternal-linux-arm64.toml"
+    "$work_dir/chezmoiexternal-linux-arm64.toml" \
+    "$work_dir/chezmoiexternal-darwin-arm64.toml"
 do
     grep -Fq "$wallpaper_url" "$linux_manifest" \
         || fail 'Linux wallpaper external is missing its versioned release URL'
@@ -255,9 +256,6 @@ do
     grep -Fq 'exact = true' "$linux_manifest" \
         || fail 'Linux wallpaper external is not exact'
 done
-if grep -Fq 'tokyo-night-wallpapers' "$work_dir/chezmoiexternal-darwin-arm64.toml"; then
-    fail 'Linux wallpaper external leaked into the macOS manifest'
-fi
 ok 'multi-architecture external release manifests'
 
 for package in geoclue-2.0 gnome-control-center gnome-settings-daemon \
@@ -578,6 +576,35 @@ for key, direction in [('h', 'left'), ('j', 'down'), ('k', 'up'), ('l', 'right')
     assert bindings[f'cmd-ctrl-{key}'] == f'move-workspace-to-monitor {direction}'
 PYTHON
 ok 'uniform desktop modifiers and macOS command palette'
+require_file "$mac_portable/.local/bin/apply-appearance"
+require_file "$mac_portable/.local/libexec/appearance/macos.js"
+require_absent "$linux_portable/.local/libexec/appearance/macos.js"
+require_file "$mac_portable/.local/state/tokyo-night/ghostty-opacity.conf"
+python3 - "$linux_portable" "$mac_portable" <<'THEME'
+import configparser, pathlib, sys
+linux, mac = map(pathlib.Path, sys.argv[1:])
+foot = configparser.ConfigParser(interpolation=None)
+foot.read(linux / '.config/foot/foot.ini')
+ghostty = {}
+for line in (mac / '.config/ghostty/config.ghostty').read_text().splitlines():
+    if '=' in line and not line.startswith('#'):
+        key, value = map(str.strip, line.split('=', 1))
+        if key == 'palette':
+            number, color = value.split('=', 1)
+            ghostty['palette.' + number] = color
+        else:
+            ghostty[key] = value
+assert foot['colors-dark']['background'] == ghostty['background']
+assert foot['colors-dark']['foreground'] == ghostty['foreground']
+for i in range(16):
+    field = ('regular' + str(i)) if i < 8 else ('bright' + str(i - 8))
+    assert foot['colors-dark'][field] == ghostty['palette.' + str(i)]
+assert 'ghostty-opacity.conf' in ghostty['config-file']
+assert (linux / '.tmux.conf').read_text() == (mac / '.tmux.conf').read_text()
+assert (linux / '.config/starship.toml').read_text() == (mac / '.config/starship.toml').read_text()
+assert 'tokyonight-night' in (mac / '.config/nvim/lua/plugins/theme.lua').read_text()
+THEME
+ok 'shared terminal, prompt, tmux, and editor theme'
 ok 'macOS configs and shell syntax'
 
 if command -v systemd-analyze >/dev/null 2>&1; then
@@ -626,8 +653,9 @@ else
 fi
 
 python3 -B -m unittest "$source_root/tests/test_display_layouts.py" \
-    "$source_root/tests/test_macos_palette.py"
-ok 'display layout and macOS palette unit tests'
+    "$source_root/tests/test_macos_palette.py" \
+    "$source_root/tests/test_appearance.py"
+ok 'display layout, macOS palette, and appearance unit tests'
 
 personal_pattern='/home/(amice|demo)|PH5NY1BH326L|H7YCC6B70Y1S|6N45XC3'
 personal_pattern+='|C9LMTF003960|SNOPT_PATH|MOSEKLM|GUROBI_HOME|CUDA_PATH'

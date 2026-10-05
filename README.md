@@ -152,6 +152,15 @@ Starship gives the full untruncated directory its own line, Git state and
 command duration the next, and a clean `❯` input marker the final line. SSH
 sessions add a separate `user@hostname` line above the directory.
 
+## Appearance
+
+Ubuntu and macOS use the same Tokyo Night palette and pinned wallpaper artwork.
+Midnight and 95% terminal opacity are the defaults; saved selections remain
+machine-local. Use `apply-appearance --mood midnight` (or `dusk`, `dawn`, `solid`)
+and `apply-appearance --opacity 1.00` (or `0.95`, `0.89`). Use `--restore` after
+attaching another screen. See [wallpapers.md](docs/wallpapers.md) for native
+appearance permissions and reload requirements.
+
 ## Documentation
 
 - [Local changes and upstream workflow](docs/local-changes.md)

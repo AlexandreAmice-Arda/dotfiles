@@ -5,7 +5,8 @@ font-size = {{ .desktop.layout.terminal_font_size }}
 window-padding-x = {{ .desktop.layout.terminal_padding_x }}
 window-padding-y = {{ .desktop.layout.terminal_padding_y }}
 window-padding-balance = true
-background-opacity = 0.95
+# Machine-local opacity is loaded after the managed configuration.
+config-file = ?{{ .chezmoi.homeDir }}/.local/state/tokyo-night/ghostty-opacity.conf
 background-blur = false
 unfocused-split-opacity = 1
 
@@ -35,10 +36,10 @@ palette = 5={{ .desktop.theme.purple }}
 palette = 6={{ .desktop.theme.cyan }}
 palette = 7={{ .desktop.theme.foreground_alt }}
 palette = 8={{ .desktop.theme.muted }}
-palette = 9=ff9eae
-palette = 10=b9f27c
-palette = 11=ffcf72
-palette = 12=9abdf5
-palette = 13=c7a9ff
-palette = 14=a4daff
+palette = 9={{ .desktop.theme.bright.pink }}
+palette = 10={{ .desktop.theme.bright.green }}
+palette = 11={{ .desktop.theme.bright.yellow }}
+palette = 12={{ .desktop.theme.bright.blue }}
+palette = 13={{ .desktop.theme.bright.purple }}
+palette = 14={{ .desktop.theme.bright.cyan }}
 palette = 15={{ .desktop.theme.foreground }}

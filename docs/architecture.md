@@ -90,3 +90,17 @@ untruncated directory has its own line, Git branch/status and command duration
 share the next, and the final line is the clean `❯` character. SSH sessions
 conditionally add a separate `user@hostname` line above the directory. Time
 and project-language modules are intentionally omitted.
+
+## Shared appearance
+
+`.chezmoidata.yaml` owns theme colors, including bright terminal colors and the
+subdued tmux text token. Foot, Ghostty, Starship, tmux, and Neovim render these
+tokens. Neovim explicitly uses `tokyonight-night`; Herdr retains its built-in
+`tokyo-night` approximation. GTK and macOS use native dark/purple styles rather
+than exact recoloring of system chrome. VS Code remains under Settings Sync.
+
+The shared `apply-appearance` command writes machine-local opacity includes and
+wallpaper selections, then applies native appearance through Sway/GTK or a
+macOS AppKit adapter. Ghostty loads its optional runtime opacity include after
+its managed config. Setup initializes only missing values and restores them
+after deployment; temporary destinations never change the host desktop.

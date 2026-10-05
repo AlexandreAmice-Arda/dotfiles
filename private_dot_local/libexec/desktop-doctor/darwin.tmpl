@@ -21,6 +21,10 @@ esac
 require_file "$HOME/.config/aerospace/aerospace.toml"
 check_toml_file "$HOME/.config/aerospace/aerospace.toml"
 require_file "$HOME/.config/ghostty/config.ghostty"
+require_file "$HOME/.local/bin/apply-appearance"
+require_file "$HOME/.local/libexec/appearance/macos.js"
+require_file "$HOME/.local/state/tokyo-night/ghostty-opacity.conf"
+require_file "$HOME/.local/state/tokyo-night/wallpaper.png"
 require_file "$HOME/.local/bin/terminal-main"
 "$HOME/.local/bin/terminal-main" --check >/dev/null 2>&1 \
     && ok 'GUI terminal can resolve tmux' || fail 'GUI terminal cannot resolve tmux'

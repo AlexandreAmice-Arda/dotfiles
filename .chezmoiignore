@@ -27,7 +27,6 @@ tests/**
 
 # Ubuntu Sway target.
 {{- if ne .chezmoi.os "linux" }}
-10_initialize_desktop_state.sh
 .config/foot
 .config/foot/**
 .config/gtklock
@@ -45,7 +44,6 @@ tests/**
 .config/systemd/user/sway-*.service
 .config/systemd/user/sway-session.target
 .config/xdg-desktop-portal/sway-portals.conf
-.local/bin/apply-appearance
 .local/bin/display-layouts
 .local/bin/focus-notification-app
 .local/bin/focus-or-launch
@@ -87,4 +85,9 @@ tests/**
 .local/bin/start-sway-intel
 .local/bin/sway-trial-system
 .local/share/wayland-sessions/sway-intel.desktop
+{{- end }}
+
+# Native appearance adapters are platform-specific.
+{{- if ne .chezmoi.os "darwin" }}
+.local/libexec/appearance/macos.js
 {{- end }}
