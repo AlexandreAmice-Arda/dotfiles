@@ -24,7 +24,7 @@ workspace data. Supported generation baselines are Ubuntu 24.04+ and macOS
 3. Get the dotfiles and follow the system prompts.
 
    ```sh
-   chezmoi init AlexandreAmice/dotfiles
+   chezmoi init AlexandreAmice-Arda/dotfiles
    ```
 
 4. Navigate to the chezmoi source, install software, and apply chezmoi.
@@ -64,19 +64,42 @@ regenerate the derived `isAmiceWorkstation` config value before applying.
 
 ### macOS
 
-Install the Homebrew dependencies, apply, and verify:
+Install [Homebrew](https://brew.sh) first. If this is a new checkout, bootstrap
+chezmoi and GitHub access before initializing the portable profile:
+
+```sh
+brew install git gh chezmoi
+gh auth login
+chezmoi init AlexandreAmice-Arda/dotfiles
+```
+
+Install the dependencies, apply, and verify:
 
 ```sh
 cd "$(chezmoi source-path)"
-brew bundle --file Brewfile
-./scripts/install-codex
+./scripts/install-macos
 chezmoi diff
 chezmoi apply --verbose
+open -a AeroSpace
 desktop-doctor
 ```
 
-Grant AeroSpace Accessibility permission when macOS requests it. GitHub
-credentials, application histories, and caches are deliberately machine-local.
+Grant AeroSpace permission in System Settings → Privacy & Security →
+Accessibility when macOS requests it. Quit and reopen AeroSpace after enabling
+permission if its CLI cannot connect. Open a fresh Ghostty window to load the
+managed shell setup.
+
+The installer adopts identical applications already in `/Applications` and
+installs missing dependencies without routine package upgrades. An existing
+application with different contents needs to be reconciled manually with
+Homebrew before rerunning the installer.
+
+If adopting an existing app requests an administrator password, run the
+installer in an interactive terminal. For Slack specifically, run
+`brew install --cask --adopt slack`, then rerun the installer.
+
+GitHub credentials, application histories, and caches are deliberately
+machine-local.
 
 Codex is installed automatically during the software-install step. Run
 `codex` once to sign in and create `~/.codex`; credentials and session state
@@ -115,13 +138,13 @@ runs native validators and ShellCheck when available.
 
 ## Daily controls
 
-- `Super+T` on Sway or `Option+T` on AeroSpace opens a plain terminal.
+- `Super+T` on Sway or `Command+T` on AeroSpace opens a plain terminal.
 - Add `Shift` to open or resume an independent persistent tmux terminal.
 - Add left Ctrl instead to open the agent-aware Herdr workspace. Herdr and
   tmux are separate terminal modes and must not be nested.
 - `Super+H/J/K/L` focuses Sway windows; `Super+1` through `Super+0` selects a
   workspace.
-- `Super+/` is the exhaustive searchable Sway command and key reference.
+- `Super+/` on Sway or `Command+/` on AeroSpace opens the searchable desktop command reference.
 - `Super+C` opens Sway system controls; `Super+Shift+X` locks the session.
 - `Ctrl+R` searches Atuin history and inserts the result for review.
 
@@ -131,6 +154,7 @@ sessions add a separate `user@hostname` line above the directory.
 
 ## Documentation
 
+- [Local changes and upstream workflow](docs/local-changes.md)
 - [Architecture](docs/architecture.md)
 - [Profiles and portability](docs/profiles.md)
 - [Keybinding conventions](docs/keybindings.md)

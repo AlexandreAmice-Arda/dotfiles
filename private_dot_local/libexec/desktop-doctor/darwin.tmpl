@@ -19,13 +19,23 @@ case "${SHELL:-}" in
 esac
 
 require_file "$HOME/.config/aerospace/aerospace.toml"
+check_toml_file "$HOME/.config/aerospace/aerospace.toml"
 require_file "$HOME/.config/ghostty/config.ghostty"
 require_file "$HOME/.local/bin/terminal-main"
 "$HOME/.local/bin/terminal-main" --check >/dev/null 2>&1 \
     && ok 'GUI terminal can resolve tmux' || fail 'GUI terminal cannot resolve tmux'
 
 ghostty_app=/Applications/Ghostty.app/Contents/MacOS/ghostty
-[ -x "$ghostty_app" ] && ok 'Ghostty application installed' || fail 'Ghostty application missing'
+if [ -x "$ghostty_app" ]; then
+    ok 'Ghostty application installed'
+    if ghostty_validation=$("$ghostty_app" +validate-config 2>&1) && [ -z "$ghostty_validation" ]; then
+        ok 'Ghostty config valid'
+    else
+        fail "Ghostty config validation failed: $ghostty_validation"
+    fi
+else
+    fail 'Ghostty application missing'
+fi
 
 for shadow in \
     "$HOME/.aerospace.toml" \

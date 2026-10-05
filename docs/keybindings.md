@@ -18,22 +18,24 @@ Every bound Sway action must have an executable annotation. Alternate keys for
 the same action can share an entry. `tests/validate-desktop` checks coverage
 and verifies command dispatch against the rendered Linux configurations.
 
-Sway uses Super and AeroSpace uses Option/Alt as the window-manager modifier.
+Both desktops use Super as the window-manager modifier: the Windows/Super key
+on Ubuntu and Command on macOS. Desktop bindings take precedence over native
+macOS app shortcuts, including Command+C, Command+H, and Command+T.
 Directional operations follow H/J/K/L. A plain direction focuses, adding Alt
-on Sway moves a window, and adding left Ctrl moves the whole workspace to an
+moves a window, and adding left Ctrl moves the whole workspace to an
 adjacent monitor. Number keys select workspaces; Shift routes the focused window.
 
 Important chords:
 
-- `Super+T` / `Option+T`: plain terminal, suitable for transparent SSH use.
+- `Super+T` / `Command+T`: plain terminal, suitable for transparent SSH use.
 - Add `Shift`: independent persistent local tmux terminal.
 - Add left Ctrl instead: agent-aware Herdr workspace.
-- `Super+/`: exhaustive Sway command palette and shortcut reference.
-- `Super+D`: application launcher.
-- `Super+C`: graphical Sway system controls.
+- `Super+/`: searchable desktop command palette and shortcut reference.
+- `Super+D`: application launcher (Spotlight on macOS).
+- `Super+C`: system controls (System Settings on macOS).
 - `Super+P`: lock and power menu.
 - `Super+Shift+X`: lock immediately.
-- `Super+R`: enter Sway resize mode; use arrows or H/J/K/L and Escape to exit.
+- `Super+R`: enter resize mode; use H/J/K/L and Escape to exit.
 - `Print Screen`: copy a screenshot of all screens to the clipboard.
 - `Shift+Print Screen`: select a region and copy its screenshot to the clipboard.
 
@@ -55,8 +57,8 @@ tool's own configuration is authoritative for its internal bindings.
 
 Tmux and Herdr share these direct pane controls:
 
-- `Ctrl+J/K/L`: focus down/up/right. Left remains prefix-based because many
-  terminals encode Ctrl-Backspace as Ctrl-H.
+- `Ctrl+H/J/K/L`: focus left/down/up/right. Foot and Ghostty map
+  Ctrl+Backspace separately to erase the previous word.
 - `Ctrl+Alt+H/J/K/L` or `Ctrl+Alt+Arrow`: swap with the neighboring pane.
 - `Ctrl+Alt+B/V`: split side-by-side / top-to-bottom. Herdr calls these
   operations `split_vertical` / `split_horizontal`, respectively.
@@ -67,3 +69,11 @@ Tmux and Herdr share these direct pane controls:
 The close shortcut is not perfectly equivalent: tmux confirms before killing
 the pane, while Herdr 0.9.1 closes it immediately. Herdr's safer prefix form
 (`Ctrl+B`, then `x`) remains available alongside the direct shortcut.
+
+On macOS, `Super+/` opens an fzf command palette in a temporary Ghostty window.
+Its actions and shortcut labels come directly from the annotated AeroSpace
+bindings, and window actions target the window that was focused before the
+palette opened. `Super+E` selects tiles or toggles their orientation; `Super+S`
+and `Super+W` select vertical and horizontal accordion layouts. AeroSpace has
+no direct Sway scratchpad equivalent. Lock/power and screenshot shortcuts above
+remain Sway-specific; macOS uses its native controls for those actions.

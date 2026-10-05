@@ -9,6 +9,10 @@ scripts/**
 tests
 tests/**
 
+# Python checks may import executable helpers from the source tree.
+**/__pycache__
+**/__pycache__/**
+
 # Atuin account material is always machine-local. Only config.toml is managed.
 .config/atuin/atuin-receipt.json
 .local/share/atuin
@@ -42,8 +46,13 @@ tests/**
 .config/systemd/user/sway-session.target
 .config/xdg-desktop-portal/sway-portals.conf
 .local/bin/apply-appearance
+.local/bin/display-layouts
+.local/bin/focus-notification-app
+.local/bin/focus-or-launch
+.local/bin/focus-pcloud
 .local/bin/lock-desktop
 .local/bin/session-action
+.local/bin/suspend-if-on-battery
 .local/libexec/waybar/desktop-temperature
 .local/bin/swaync
 .local/bin/swaync-client
@@ -65,6 +74,7 @@ tests/**
 
 # macOS AeroSpace target.
 {{- if ne .chezmoi.os "darwin" }}
+.local/bin/desktop-commands
 .config/aerospace
 .config/aerospace/**
 .config/ghostty

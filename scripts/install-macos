@@ -1,0 +1,28 @@
+#!/bin/sh
+set -eu
+
+if [ "$(uname -s)" != Darwin ]; then
+    printf 'This installer requires macOS.\n' >&2
+    exit 1
+fi
+
+source_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+
+# Homebrew can be absent from PATH in a freshly opened login shell.
+if ! command -v brew >/dev/null 2>&1; then
+    if [ -x /opt/homebrew/bin/brew ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -x /usr/local/bin/brew ]; then
+        eval "$(/usr/local/bin/brew shellenv)"
+    else
+        printf 'Install Homebrew from https://brew.sh, then rerun this installer.\n' >&2
+        exit 127
+    fi
+fi
+
+brew bundle install --file "$source_root/Brewfile" --no-upgrade
+"$source_root/scripts/install-codex"
+
+printf '\nSoftware installed. Review chezmoi diff, then run chezmoi apply.\n'
+printf 'Launch AeroSpace and grant Accessibility permission, then run desktop-doctor.\n'
+printf 'After the first Codex launch, run ./scripts/install-agent-integrations.\n'

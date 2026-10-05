@@ -19,7 +19,8 @@ and rules. The numeric order is intentional and must remain stable.
 
 Package declarations are separate from repository tooling. The root
 `Brewfile` is the macOS manifest and `packages/ubuntu.txt` is the Ubuntu
-manifest. The Ubuntu installer also configures vendor repositories for VS Code
+manifest; `scripts/install-macos` installs it and Codex. The Ubuntu installer
+also configures vendor repositories for VS Code
 and Signal, installs Slack through its supported Snap, and installs pCloud
 Drive from its checksum-pinned official AppImage. Both platform setup paths use
 OpenAI's official standalone installer for Codex; authentication and session

@@ -90,6 +90,11 @@ require_file "$mac_portable/.zshrc"
 require_absent "$mac_portable/.config/sway"
 require_absent "$mac_portable/.config/kanshi"
 require_absent "$mac_portable/.config/terminator"
+for helper in display-layouts focus-notification-app focus-or-launch focus-pcloud \
+    suspend-if-on-battery; do
+    require_file "$linux_portable/.local/bin/$helper"
+    require_absent "$mac_portable/.local/bin/$helper"
+done
 require_absent "$mac_portable/.local/share/applications/signal-desktop.desktop"
 ok 'platform and profile boundaries'
 
@@ -276,8 +281,6 @@ grep -Fqx 'cask "font-jetbrains-mono-nerd-font"' "$source_root/Brewfile" \
     || fail 'Homebrew Nerd Font cask is undeclared'
 grep -Fqx 'cask "visual-studio-code"' "$source_root/Brewfile" \
     || fail 'Homebrew Visual Studio Code cask is undeclared'
-grep -Fqx 'cask "signal"' "$source_root/Brewfile" \
-    || fail 'Homebrew Signal cask is undeclared'
 grep -Fqx 'cask "slack"' "$source_root/Brewfile" \
     || fail 'Homebrew Slack cask is undeclared'
 grep -Fqx 'URIs: https://packages.microsoft.com/repos/code' \
@@ -298,7 +301,7 @@ grep -Fq 'https://chatgpt.com/codex/install.sh' \
 grep -Fq 'scripts/install-codex' \
     "$source_root/scripts/install-ubuntu" \
     || fail 'Ubuntu setup does not install Codex'
-grep -Fq './scripts/install-codex' "$source_root/README.md" \
+grep -Fq 'scripts/install-codex' "$source_root/scripts/install-macos" \
     || fail 'macOS setup does not install Codex'
 grep -Fq "https://codeberg.org/dnkl/foot/archive/\$foot_version.tar.gz" \
     "$source_root/scripts/install-foot" \
@@ -327,14 +330,9 @@ for home in "$linux_portable" "$linux_workstation"; do
 done
 grep -Fq "open -a Slack" "$mac_portable/.config/aerospace/aerospace.toml" \
     || fail 'AeroSpace does not start Slack'
-grep -Fq "open -a Signal" "$mac_portable/.config/aerospace/aerospace.toml" \
-    || fail 'AeroSpace does not start Signal'
 grep -Fq "if.app-id = 'com.tinyspeck.slackmacgap'" \
     "$mac_portable/.config/aerospace/aerospace.toml" \
     || fail 'AeroSpace Slack workspace assignment is missing'
-grep -Fq "if.app-id = 'org.whispersystems.signal-desktop'" \
-    "$mac_portable/.config/aerospace/aerospace.toml" \
-    || fail 'AeroSpace Signal workspace assignment is missing'
 ok 'platform dependency manifests'
 
 for home in "$linux_portable" "$linux_workstation"; do
@@ -439,13 +437,13 @@ if rg -n 'bindsym[[:space:]]+\$mod\+[^[:space:]]*(Return|space)' \
 then
     fail 'Kinesis-incompatible Super chord uses Return or Space'
 fi
-grep -Fq "alt-t = 'exec-and-forget open -na Ghostty'" \
+grep -Fq "cmd-t = 'exec-and-forget open -na Ghostty'" \
     "$mac_portable/.config/aerospace/aerospace.toml" \
     || fail 'macOS terminal shortcut is not the portable modifier+T chord'
-grep -Fq "alt-shift-t = 'exec-and-forget open -na Ghostty --args -e $mac_portable/.local/bin/terminal-main'" \
+grep -Fq "cmd-shift-t = 'exec-and-forget open -na Ghostty --args -e $mac_portable/.local/bin/terminal-main'" \
     "$mac_portable/.config/aerospace/aerospace.toml" \
     || fail 'macOS persistent terminal is not explicit on modifier+Shift+T'
-grep -Fq "alt-ctrl-t = 'exec-and-forget open -na Ghostty --args -e $mac_portable/.local/bin/terminal-agents'" \
+grep -Fq "cmd-ctrl-t = 'exec-and-forget open -na Ghostty --args -e $mac_portable/.local/bin/terminal-agents'" \
     "$mac_portable/.config/aerospace/aerospace.toml" \
     || fail 'macOS agent terminal is not explicit on modifier+Ctrl+T'
 if grep -Fq 'terminal-main' "$linux_portable/.config/foot/foot.ini"; then
@@ -559,6 +557,27 @@ if command -v zsh >/dev/null 2>&1; then
 else
     warn 'zsh unavailable; skipped native Zsh parser'
 fi
+require_file "$mac_portable/.local/bin/desktop-commands"
+require_absent "$linux_portable/.local/bin/desktop-commands"
+HOME="$mac_portable" python3 "$mac_portable/.local/bin/desktop-commands" --print > "$work_dir/mac-commands"
+grep -Fq 'Apps: Open application launcher — Super+d' "$work_dir/mac-commands" \
+    || fail 'macOS command palette is missing the launcher'
+python3 - "$mac_portable/.config/aerospace/aerospace.toml" <<'PYTHON'
+import sys, tomllib
+with open(sys.argv[1], 'rb') as stream:
+    config = tomllib.load(stream)
+bindings = config['mode']['main']['binding']
+assert all(key.startswith('cmd-') for key in bindings), 'mixed desktop modifiers'
+assert 'desktop-commands' in bindings['cmd-slash']
+assert 'Spotlight.app' in bindings['cmd-d']
+assert bindings['cmd-e'] == 'layout tiles horizontal vertical'
+assert bindings['cmd-alt-q'] == 'close'
+for key, direction in [('h', 'left'), ('j', 'down'), ('k', 'up'), ('l', 'right')]:
+    assert bindings[f'cmd-{key}'] == f'focus {direction}'
+    assert bindings[f'cmd-alt-{key}'] == f'move {direction}'
+    assert bindings[f'cmd-ctrl-{key}'] == f'move-workspace-to-monitor {direction}'
+PYTHON
+ok 'uniform desktop modifiers and macOS command palette'
 ok 'macOS configs and shell syntax'
 
 if command -v systemd-analyze >/dev/null 2>&1; then
@@ -594,6 +613,7 @@ if command -v shellcheck >/dev/null 2>&1; then
         esac
     done < <(find "$linux_workstation" "$mac_portable" -type f -perm -u+x -print0)
     shellcheck "$source_root/scripts/check-ubuntu" \
+        "$source_root/scripts/install-macos" \
         "$source_root/scripts/install-codex" \
         "$source_root/scripts/install-foot" \
         "$source_root/scripts/install-nwg-displays" \
@@ -605,8 +625,9 @@ else
     warn 'shellcheck unavailable; syntax checks still ran (install the package for linting)'
 fi
 
-python3 -m unittest "$source_root/tests/test_display_layouts.py"
-ok 'display layout unit tests'
+python3 -B -m unittest "$source_root/tests/test_display_layouts.py" \
+    "$source_root/tests/test_macos_palette.py"
+ok 'display layout and macOS palette unit tests'
 
 personal_pattern='/home/(amice|demo)|PH5NY1BH326L|H7YCC6B70Y1S|6N45XC3'
 personal_pattern+='|C9LMTF003960|SNOPT_PATH|MOSEKLM|GUROBI_HOME|CUDA_PATH'
