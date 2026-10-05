@@ -4,6 +4,7 @@ foot
 tmux
 git
 curl
+cloudflare-warp
 build-essential
 meson
 ninja-build
@@ -21,7 +22,6 @@ libutempter-dev
 ncurses-bin
 fd-find
 unzip
-libfuse2t64
 fzf
 zoxide
 gtklock

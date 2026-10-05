@@ -31,13 +31,18 @@ workspace data. Supported generation baselines are Ubuntu 24.04+ and macOS
 
    ```sh
    cd "$(chezmoi source-path)"
-   ./scripts/install-ubuntu
+   ./scripts/install
    chezmoi diff
    chezmoi apply --verbose
    ```
 
-   Use `./scripts/install-ubuntu --grant-backlight` instead on a laptop with
+   Use `./scripts/install --grant-backlight` instead on a laptop with
    a real backlight; omit the flag in a VM or on a desktop.
+   Failed installation steps are reported while the remaining steps continue.
+   The installer lists failures at the end and exits with a nonzero status if any
+   step failed; resolve them and rerun it to finish installation.
+   `chezmoi apply` deploys Atuin, `desktop-doctor`, and the managed configuration;
+   open a new shell afterward so the commands and Atuin shell integration load.
 
 5. Optionally log into Atuin. This requires the Atuin encryption key.
 
@@ -52,12 +57,23 @@ workspace data. Supported generation baselines are Ubuntu 24.04+ and macOS
    ./tests/validate-desktop
    ```
 
-7. Log out completely and log back into Sway.
+7. Log out completely and select **Sway (dotfiles)** at the login screen.
 
 Atuin credentials, encryption keys, and history are deliberately not deployed.
 
 Choose `portable` for an ordinary machine. Choose `amice-workstation` only on
 the original Ubuntu workstation.
+
+The Ubuntu installer registers **Sway (dotfiles)** on the login screen. Select
+that session after applying the dotfiles. Its launcher detects the installed
+GPU drivers at each login. With the proprietary NVIDIA driver loaded, it passes
+`--unsupported-gpu`; on hybrid machines it uses the available Intel/AMD DRM
+devices for display scan-out. With only NVIDIA available, Sway uses that GPU.
+Other machines use Sway's normal GPU selection. An explicit `WLR_DRM_DEVICES`
+setting takes precedence. No workstation profile or extra setup script is needed.
+The launcher is installed system-wide and reads each user's own Sway config.
+NVIDIA support remains experimental; this avoids the driver refusal at startup
+but cannot guarantee every GPU/display combination works.
 
 Existing checkouts upgrading to this layout must run `chezmoi init` once to
 regenerate the derived `isAmiceWorkstation` config value before applying.
@@ -77,7 +93,7 @@ Install the dependencies, apply, and verify:
 
 ```sh
 cd "$(chezmoi source-path)"
-./scripts/install-macos
+./scripts/install
 chezmoi diff
 chezmoi apply --verbose
 open -a AeroSpace
@@ -101,6 +117,15 @@ installer in an interactive terminal. For Slack specifically, run
 GitHub credentials, application histories, and caches are deliberately
 machine-local.
 
+Cloudflare One Client (WARP) is installed by `scripts/install` through
+[Cloudflare's official apt repository](https://pkg.cloudflareclient.com/) on
+Ubuntu and the `cloudflare-warp` Homebrew cask on macOS. After installation,
+[enroll the device in your Zero Trust organization](https://developers.cloudflare.com/cloudflare-one/team-and-resources/devices/cloudflare-one-client/deployment/manual-deployment/).
+On Linux, run `warp-cli registration new <team-name>`, complete the browser
+login, then run `warp-cli connect`. On macOS, open Cloudflare WARP and use
+Preferences → Account → Login with Cloudflare Zero Trust. Enrollment and
+credentials remain machine-local.
+
 Codex is installed automatically during the software-install step. Run
 `codex` once to sign in and create `~/.codex`; credentials and session state
 remain machine-local. Herdr is installed as a pinned external on Linux and
@@ -109,8 +134,13 @@ session hook while preserving other Codex hooks:
 
 ```sh
 cd "$(chezmoi source-path)"
-./scripts/install-agent-integrations
+./scripts/install --agent-integrations
 ```
+
+The installer installs Rust and Cargo through rustup if a working toolchain is
+missing. On Ubuntu it also installs pinned `automatic-timezoned` with Cargo for
+the Sway timezone service. Cargo commands are available in a new shell after
+applying the managed shell configuration.
 
 On Ubuntu, the installer builds pinned Foot 1.28 and fcft 3.3.1 source releases
 and installs Foot under `/usr/local`. Ubuntu 24.04's Foot 1.16 duplicates Enter

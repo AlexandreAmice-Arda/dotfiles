@@ -48,7 +48,7 @@ workspace disappear. No machine-specific monitor assignment is committed.
 
 ## macOS setup changes already present in this checkout
 
-- Add `scripts/install-macos` to install the Brewfile without routine upgrades
+- Add `scripts/install` to install the Brewfile without routine upgrades
   and install Codex, including Homebrew PATH discovery.
 - Remove Signal from the macOS package, startup, and workspace declarations;
   Slack remains configured on workspace 10. Ubuntu retains Signal.

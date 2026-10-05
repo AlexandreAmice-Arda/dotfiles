@@ -1,0 +1,5 @@
+Types: deb
+URIs: https://pkg.cloudflareclient.com/
+Suites: @UBUNTU_CODENAME@
+Components: main
+Signed-By: /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg

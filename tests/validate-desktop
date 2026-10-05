@@ -90,7 +90,7 @@ require_file "$mac_portable/.zshrc"
 require_absent "$mac_portable/.config/sway"
 require_absent "$mac_portable/.config/kanshi"
 require_absent "$mac_portable/.config/terminator"
-for helper in display-layouts focus-notification-app focus-or-launch focus-pcloud \
+for helper in display-layouts focus-notification-app focus-or-launch focus-pcloud start-sway \
     suspend-if-on-battery; do
     require_file "$linux_portable/.local/bin/$helper"
     require_absent "$mac_portable/.local/bin/$helper"
@@ -259,7 +259,7 @@ done
 ok 'multi-architecture external release manifests'
 
 for package in geoclue-2.0 gnome-control-center gnome-settings-daemon \
-    python3-i3ipc gir1.2-gtklayershell-0.1 fzf zoxide fd-find libfuse2t64 code
+    python3-i3ipc gir1.2-gtklayershell-0.1 fzf zoxide fd-find code
 do
     grep -Fxq "$package" "$source_root/packages/ubuntu.txt" \
         || fail "Ubuntu package is undeclared: $package"
@@ -267,7 +267,7 @@ done
 grep -Fqx 'url=https://api.beacondb.net/v1/geolocate' \
     "$source_root/packages/geoclue-beacondb.conf" \
     || fail 'BeaconDB GeoClue endpoint is undeclared'
-grep -Fq 'packages/geoclue-beacondb.conf' "$source_root/scripts/install-ubuntu" \
+grep -Fq 'packages/geoclue-beacondb.conf' "$source_root/scripts/install" \
     || fail 'Ubuntu setup does not install the BeaconDB GeoClue provider'
 grep -Fqx 'submit-data=false' "$source_root/packages/geoclue-beacondb.conf" \
     || fail 'BeaconDB observation submission must remain disabled'
@@ -287,35 +287,29 @@ grep -Fqx 'URIs: https://packages.microsoft.com/repos/code' \
 grep -Fqx 'URIs: https://updates.signal.org/desktop/apt' \
     "$source_root/packages/signal-desktop.sources" \
     || fail 'Signal Desktop apt repository is undeclared'
-grep -Fq "pcloud_public_code='XZrYdRJZLS6RF4kf6Jy6GFr4jqkc4S34Rlgy'" \
-    "$source_root/scripts/install-ubuntu" \
-    || fail 'Official pCloud AppImage link is undeclared'
-grep -Fq "pcloud_sha256='07e404be9e37ef2dffb6541fea74f10601f2a33fe490bcaa895fb5b238f81af6'" \
-    "$source_root/scripts/install-ubuntu" \
-    || fail 'Official pCloud AppImage checksum is undeclared'
 grep -Fq 'https://chatgpt.com/codex/install.sh' \
-    "$source_root/scripts/install-codex" \
+    "$source_root/scripts/install" \
     || fail 'Official Codex installer is undeclared'
-grep -Fq 'scripts/install-codex' \
-    "$source_root/scripts/install-ubuntu" \
+grep -Fq 'install_codex' \
+    "$source_root/scripts/install" \
     || fail 'Ubuntu setup does not install Codex'
-grep -Fq 'scripts/install-codex' "$source_root/scripts/install-macos" \
+grep -Fq 'install_codex' "$source_root/scripts/install" \
     || fail 'macOS setup does not install Codex'
 grep -Fq "https://codeberg.org/dnkl/foot/archive/\$foot_version.tar.gz" \
-    "$source_root/scripts/install-foot" \
+    "$source_root/scripts/install" \
     || fail 'Pinned Foot installer does not use the official source archive'
 grep -Fq '4296be402b5684d049534598e69db92b918f92beac9dab76b585207045f0b037' \
-    "$source_root/scripts/install-foot" \
+    "$source_root/scripts/install" \
     || fail 'Foot source checksum is missing'
 grep -Fq '9949fbce0826669369c3b9361ac04b0459fdc51037e2ccf2e2483794909903f4' \
-    "$source_root/scripts/install-foot" \
+    "$source_root/scripts/install" \
     || fail 'fcft source checksum is missing'
-grep -Fq 'scripts/install-foot' "$source_root/scripts/install-ubuntu" \
+grep -Fq "run_step 'Install Foot' install_foot" "$source_root/scripts/install" \
     || fail 'Ubuntu setup does not install a Herdr-compatible Foot version'
 grep -Fq '07bd92f892457d0153d7fea53e838555f9753974a53a4d989d294b6e75c40104' \
-    "$source_root/scripts/install-nwg-displays" \
+    "$source_root/scripts/install" \
     || fail 'nwg-displays source checksum is missing'
-grep -Fq 'scripts/install-nwg-displays' "$source_root/scripts/install-ubuntu" \
+grep -Fq "run_step 'Install nwg-displays' install_nwg_displays" "$source_root/scripts/install" \
     || fail 'Ubuntu setup does not install nwg-displays'
 for home in "$linux_portable" "$linux_workstation"; do
     grep -Fq "workspace number \$ws10" \
@@ -621,9 +615,11 @@ if command -v systemd-analyze >/dev/null 2>&1; then
         esac
         # systemd expands %h through the account database, not $HOME. Point
         # verifier-only copies at the clean-room home it is actually checking.
+        # The parser check does not run externally installed Cargo binaries.
         sed \
             -e "s|%h|$unit_home|g" \
             -e 's|^ExecStart=.*/display-layouts daemon$|ExecStart=/bin/true|' \
+            -e 's|^ExecStart=.*/.cargo/bin/automatic-timezoned$|ExecStart=/bin/true|' \
             "$unit" > "$unit_dir/${unit##*/}"
     done
     SYSTEMD_UNIT_PATH="$unit_dir:/usr/lib/systemd/user" \
@@ -640,12 +636,7 @@ if command -v shellcheck >/dev/null 2>&1; then
         esac
     done < <(find "$linux_workstation" "$mac_portable" -type f -perm -u+x -print0)
     shellcheck "$source_root/scripts/check-ubuntu" \
-        "$source_root/scripts/install-macos" \
-        "$source_root/scripts/install-codex" \
-        "$source_root/scripts/install-foot" \
-        "$source_root/scripts/install-nwg-displays" \
-        "$source_root/scripts/install-agent-integrations" \
-        "$source_root/scripts/install-ubuntu" \
+        "$source_root/scripts/install" \
         "$source_root/tests/validate-desktop"
     ok 'ShellCheck'
 else
@@ -654,7 +645,9 @@ fi
 
 python3 -B -m unittest "$source_root/tests/test_display_layouts.py" \
     "$source_root/tests/test_macos_palette.py" \
-    "$source_root/tests/test_appearance.py"
+    "$source_root/tests/test_appearance.py" \
+    "$source_root/tests/test_install.py" \
+    "$source_root/tests/test_sway_session.py"
 ok 'display layout, macOS palette, and appearance unit tests'
 
 personal_pattern='/home/(amice|demo)|PH5NY1BH326L|H7YCC6B70Y1S|6N45XC3'

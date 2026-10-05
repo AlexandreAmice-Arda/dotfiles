@@ -18,6 +18,7 @@ brew "zoxide"
 
 cask "nikitabobko/tap/aerospace"
 cask "ghostty"
+cask "cloudflare-warp"
 cask "font-jetbrains-mono-nerd-font"
 cask "slack"
 cask "visual-studio-code"

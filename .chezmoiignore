@@ -50,6 +50,7 @@ tests/**
 .local/bin/focus-pcloud
 .local/bin/lock-desktop
 .local/bin/session-action
+.local/bin/start-sway
 .local/bin/suspend-if-on-battery
 .local/libexec/waybar/desktop-temperature
 .local/bin/swaync

@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+
+has_nvidia=0
+other_devices=
+for card in /sys/class/drm/card[0-9]*; do
+    # Connector entries also match the glob, but have no device driver.
+    [ -L "$card/device/driver" ] || continue
+    driver=$(readlink -f "$card/device/driver")
+    case "${driver##*/}" in
+        nvidia) has_nvidia=1 ;;
+        *) other_devices="${other_devices:+$other_devices:}/dev/dri/${card##*/}" ;;
+    esac
+done
+
+if [ "$has_nvidia" -eq 1 ]; then
+    # Sway refuses even an unused proprietary NVIDIA GPU without this flag.
+    set -- --unsupported-gpu "$@"
+    if [ -n "$other_devices" ] && [ "${WLR_DRM_DEVICES+x}" != x ]; then
+        export WLR_DRM_DEVICES="$other_devices"
+    fi
+fi
+
+export XDG_CURRENT_DESKTOP=sway
+export XDG_SESSION_DESKTOP=sway
+export XDG_SESSION_TYPE=wayland
+exec /usr/bin/sway "$@"

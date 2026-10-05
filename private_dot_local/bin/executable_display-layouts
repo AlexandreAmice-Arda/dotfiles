@@ -463,7 +463,7 @@ def prepare_nwg_workspaces() -> None:
 
 def run_gui() -> int:
     if not shutil.which("nwg-displays"):
-        raise LayoutError("nwg-displays is not installed; run scripts/install-nwg-displays")
+        raise LayoutError("nwg-displays is not installed; run scripts/install")
     prepare_nwg_workspaces()
     NWG_OUTPUTS_PATH.parent.mkdir(parents=True, exist_ok=True)
     result = subprocess.run(

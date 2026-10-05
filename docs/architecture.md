@@ -19,10 +19,13 @@ and rules. The numeric order is intentional and must remain stable.
 
 Package declarations are separate from repository tooling. The root
 `Brewfile` is the macOS manifest and `packages/ubuntu.txt` is the Ubuntu
-manifest; `scripts/install-macos` installs it and Codex. The Ubuntu installer
-also configures vendor repositories for VS Code
-and Signal, installs Slack through its supported Snap, and installs pCloud
-Drive from its checksum-pinned official AppImage. Both platform setup paths use
+manifest. `scripts/install` selects the platform, installs its manifest and
+Codex, and continues independent steps after failures. On Ubuntu it also
+configures vendor repositories for VS Code, Signal, and Cloudflare One Client
+(WARP), and installs Slack through its supported Snap. It registers the
+system-wide Sway (dotfiles) session with a launcher that detects GPU drivers
+at login, including proprietary NVIDIA and hybrid Intel/AMD configurations.
+Both platform setup paths use
 OpenAI's official standalone installer for Codex; authentication and session
 state remain local. Installers live in `scripts/`, integration checks in
 `tests/`, and durable explanations in `docs/`; chezmoi ignores all three

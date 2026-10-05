@@ -43,7 +43,6 @@ require_file /usr/libexec/polkit-mate-authentication-agent-1
 require_file /usr/bin/code
 {{ if eq .chezmoi.arch "amd64" -}}
 require_file /opt/Signal/signal-desktop
-require_file "$HOME/.local/opt/pcloud/pCloud.AppImage"
 {{ end -}}
 if [ -x /usr/bin/slack ] || [ -x /snap/bin/slack ]; then
     ok 'Slack executable installed'
@@ -107,7 +106,7 @@ elif getent group video 2>/dev/null | awk -F: -v user="$USER" '
 '; then
     fail 'video-group membership is recorded but inactive; completely log out, then log in'
 else
-    fail 'backlight access is unavailable; rerun install-ubuntu --grant-backlight if needed'
+    fail 'backlight access is unavailable; rerun scripts/install --grant-backlight if needed'
 fi
 
 for wallpaper in midnight dusk dawn; do
