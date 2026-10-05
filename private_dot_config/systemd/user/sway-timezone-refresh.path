@@ -1,0 +1,7 @@
+[Unit]
+Description=Watch for system time-zone changes in Sway
+PartOf=sway-session.target
+
+[Path]
+PathChanged=/etc/localtime
+Unit=sway-timezone-refresh.service

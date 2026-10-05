@@ -17,13 +17,20 @@ case " {{ range .desktop.support.qualified_ubuntu }}{{ . }} {{ end }}" in
 esac
 
 for command_name in \
-    sway swaymsg swayidle kanshi jq foot tmux wofi gtklock brightnessctl wpctl \
+    sway swaymsg swayidle nwg-displays jq foot tmux wofi gtklock brightnessctl wpctl \
     playerctl grim slurp wl-copy notify-send nm-applet nm-connection-editor \
     blueman-manager blueman-applet powerprofilesctl pavucontrol \
     gnome-system-monitor
 do
     require_command "$command_name"
 done
+
+foot_version=$(foot --version 2>/dev/null | awk '{print $3}')
+if [ -n "$foot_version" ] && dpkg --compare-versions "$foot_version" ge 1.20.0; then
+    ok "Foot version avoids duplicate Herdr key events: $foot_version"
+else
+    fail "Foot 1.20.0 or newer is required; found ${foot_version:-unknown}"
+fi
 
 for wrapper in waybar swaync swaync-client wlogout; do
     require_file "$HOME/.local/bin/$wrapper"
@@ -43,11 +50,10 @@ if [ -x /usr/bin/slack ] || [ -x /snap/bin/slack ]; then
 else
     fail 'Slack executable is missing'
 fi
-{{ if .isAmiceWorkstation -}}
-require_file "$HOME/.config/kanshi/config"
+require_file "$HOME/.local/bin/display-layouts"
+require_file "$HOME/.config/sway/display-layouts.json"
 require_file "$HOME/.config/sway/scripts/output-profile-applied"
-require_file "$HOME/.config/systemd/user/sway-kanshi.service"
-{{ end -}}
+require_file "$HOME/.config/systemd/user/sway-display-layouts.service"
 
 if command -v sway >/dev/null 2>&1 && [ -r "$HOME/.config/sway/config" ]; then
     sway --unsupported-gpu --validate --config "$HOME/.config/sway/config" >/dev/null 2>&1 \
@@ -58,7 +64,11 @@ if command -v foot >/dev/null 2>&1 && [ -r "$HOME/.config/foot/foot.ini" ]; then
         && ok 'Foot config valid' || fail 'Foot config invalid'
 fi
 
-for file in "$HOME/.config/waybar/config.json" "$HOME/.config/swaync/config.json"; do
+for file in \
+    "$HOME/.config/waybar/config.json" \
+    "$HOME/.config/swaync/config.json" \
+    "$HOME/.config/sway/display-layouts.json"
+do
     [ -r "$file" ] || { fail "missing config: $file"; continue; }
     jq empty "$file" >/dev/null 2>&1 && ok "valid JSON: $file" || fail "invalid JSON: $file"
 done
@@ -114,12 +124,9 @@ if [ -x "$HOME/.local/bin/suspend-if-on-battery" ]; then
 fi
 
 if [ -n "${SWAYSOCK:-}" ] && command -v systemctl >/dev/null 2>&1; then
-    session_units='sway-waybar sway-swaync sway-idle sway-nm-applet sway-polkit-agent sway-blueman-applet sway-slack'
+    session_units='sway-waybar sway-swaync sway-idle sway-display-layouts sway-nm-applet sway-polkit-agent sway-blueman-applet sway-slack'
 {{ if eq .chezmoi.arch "amd64" -}}
     session_units="$session_units sway-signal"
-{{ end -}}
-{{ if .isAmiceWorkstation -}}
-    session_units="$session_units sway-kanshi"
 {{ end -}}
     for unit in $session_units; do
         systemctl --user is-active --quiet "$unit.service" \

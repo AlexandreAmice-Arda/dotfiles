@@ -21,6 +21,12 @@ terminal output can contain prompts, credentials, and command output.
 Herdr and tmux both use `Ctrl+B`. Run them in separate terminal windows and do
 not nest them. `terminal-agents` enforces that boundary for desktop launches.
 
+Shared pane actions use the same direct chords documented in
+`docs/keybindings.md`. Herdr 0.9.1 does not expose pane swaps as native key
+fields, so the four swap bindings call its supported `herdr pane swap` CLI.
+`Ctrl+Alt+Q` closes the focused pane immediately: Herdr cannot reproduce tmux's
+confirmation prompt. The default `Ctrl+B`, then `x` binding remains available.
+
 ## Codex integration
 
 Once Codex has created `~/.codex`, install or refresh Herdr's hook:

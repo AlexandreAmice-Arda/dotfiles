@@ -28,8 +28,6 @@ tests/**
 .config/foot/**
 .config/gtklock
 .config/gtklock/**
-.config/kanshi
-.config/kanshi/**
 .config/sway
 .config/sway/**
 .config/swaync
@@ -75,10 +73,6 @@ tests/**
 
 # Hardware-specific configuration for the original Ubuntu workstation.
 {{- if not .isAmiceWorkstation }}
-.config/kanshi
-.config/kanshi/**
-.config/sway/scripts/output-profile-applied
-.config/systemd/user/sway-kanshi.service
 .local/bin/start-sway-intel
 .local/bin/sway-trial-system
 .local/share/wayland-sessions/sway-intel.desktop

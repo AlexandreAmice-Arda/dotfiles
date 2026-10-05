@@ -55,10 +55,24 @@ require_absent "$linux_workstation/.config/sway/scripts/apply-outputs"
 require_absent "$linux_workstation/.config/terminator"
 require_absent "$linux_portable/.config/kanshi"
 require_absent "$linux_portable/.config/systemd/user/sway-kanshi.service"
-require_absent "$linux_portable/.config/sway/scripts/output-profile-applied"
-require_file "$linux_workstation/.config/kanshi/config"
+require_absent "$linux_workstation/.config/kanshi"
+require_absent "$linux_workstation/.config/systemd/user/sway-kanshi.service"
+require_file "$linux_portable/.config/sway/display-layouts.json"
+require_file "$linux_workstation/.config/sway/display-layouts.json"
+require_file "$linux_portable/.local/bin/display-layouts"
+require_file "$linux_workstation/.local/bin/display-layouts"
+require_file "$linux_portable/.config/systemd/user/sway-display-layouts.service"
+require_file "$linux_workstation/.config/systemd/user/sway-display-layouts.service"
+require_file "$linux_portable/.config/systemd/user/sway-datetime.service"
+require_file "$linux_workstation/.config/systemd/user/sway-datetime.service"
+require_file "$linux_portable/.config/systemd/user/sway-geoclue-agent.service"
+require_file "$linux_workstation/.config/systemd/user/sway-geoclue-agent.service"
+require_file "$linux_portable/.config/systemd/user/sway-timezone-refresh.path"
+require_file "$linux_workstation/.config/systemd/user/sway-timezone-refresh.path"
+require_file "$linux_portable/.config/systemd/user/sway-timezone-refresh.service"
+require_file "$linux_workstation/.config/systemd/user/sway-timezone-refresh.service"
+require_file "$linux_portable/.config/sway/scripts/output-profile-applied"
 require_file "$linux_workstation/.config/sway/scripts/output-profile-applied"
-require_file "$linux_workstation/.config/systemd/user/sway-kanshi.service"
 require_file "$linux_portable/.config/sway/scripts/start-pcloud"
 require_file "$linux_workstation/.config/sway/scripts/start-pcloud"
 require_absent "$linux_workstation/.config/sway/scripts/arrange-code-windows"
@@ -241,10 +255,19 @@ if grep -Fq 'tokyo-night-wallpapers' "$work_dir/chezmoiexternal-darwin-arm64.tom
 fi
 ok 'multi-architecture external release manifests'
 
-for package in kanshi fzf zoxide fd-find libfuse2t64 code; do
+for package in geoclue-2.0 gnome-control-center gnome-settings-daemon \
+    python3-i3ipc gir1.2-gtklayershell-0.1 fzf zoxide fd-find libfuse2t64 code
+do
     grep -Fxq "$package" "$source_root/packages/ubuntu.txt" \
         || fail "Ubuntu package is undeclared: $package"
 done
+grep -Fqx 'url=https://api.beacondb.net/v1/geolocate' \
+    "$source_root/packages/geoclue-beacondb.conf" \
+    || fail 'BeaconDB GeoClue endpoint is undeclared'
+grep -Fq 'packages/geoclue-beacondb.conf' "$source_root/scripts/install-ubuntu" \
+    || fail 'Ubuntu setup does not install the BeaconDB GeoClue provider'
+grep -Fqx 'submit-data=false' "$source_root/packages/geoclue-beacondb.conf" \
+    || fail 'BeaconDB observation submission must remain disabled'
 for formula in atuin fd fzf herdr neovim starship tree-sitter-cli zoxide; do
     grep -Fqx "brew \"$formula\"" "$source_root/Brewfile" \
         || fail "Homebrew formula is undeclared: $formula"
@@ -269,6 +292,30 @@ grep -Fq "pcloud_public_code='XZrYdRJZLS6RF4kf6Jy6GFr4jqkc4S34Rlgy'" \
 grep -Fq "pcloud_sha256='07e404be9e37ef2dffb6541fea74f10601f2a33fe490bcaa895fb5b238f81af6'" \
     "$source_root/scripts/install-ubuntu" \
     || fail 'Official pCloud AppImage checksum is undeclared'
+grep -Fq 'https://chatgpt.com/codex/install.sh' \
+    "$source_root/scripts/install-codex" \
+    || fail 'Official Codex installer is undeclared'
+grep -Fq 'scripts/install-codex' \
+    "$source_root/scripts/install-ubuntu" \
+    || fail 'Ubuntu setup does not install Codex'
+grep -Fq './scripts/install-codex' "$source_root/README.md" \
+    || fail 'macOS setup does not install Codex'
+grep -Fq "https://codeberg.org/dnkl/foot/archive/\$foot_version.tar.gz" \
+    "$source_root/scripts/install-foot" \
+    || fail 'Pinned Foot installer does not use the official source archive'
+grep -Fq '4296be402b5684d049534598e69db92b918f92beac9dab76b585207045f0b037' \
+    "$source_root/scripts/install-foot" \
+    || fail 'Foot source checksum is missing'
+grep -Fq '9949fbce0826669369c3b9361ac04b0459fdc51037e2ccf2e2483794909903f4' \
+    "$source_root/scripts/install-foot" \
+    || fail 'fcft source checksum is missing'
+grep -Fq 'scripts/install-foot' "$source_root/scripts/install-ubuntu" \
+    || fail 'Ubuntu setup does not install a Herdr-compatible Foot version'
+grep -Fq '07bd92f892457d0153d7fea53e838555f9753974a53a4d989d294b6e75c40104' \
+    "$source_root/scripts/install-nwg-displays" \
+    || fail 'nwg-displays source checksum is missing'
+grep -Fq 'scripts/install-nwg-displays' "$source_root/scripts/install-ubuntu" \
+    || fail 'Ubuntu setup does not install nwg-displays'
 for home in "$linux_portable" "$linux_workstation"; do
     grep -Fq "workspace number \$ws10" \
         "$home/.config/sway/conf.d/60-rules.conf" \
@@ -290,24 +337,47 @@ grep -Fq "if.app-id = 'org.whispersystems.signal-desktop'" \
     || fail 'AeroSpace Signal workspace assignment is missing'
 ok 'platform dependency manifests'
 
-for profile in office home mobile; do
-    grep -Fq "profile $profile {" "$linux_workstation/.config/kanshi/config" \
-        || fail "missing Kanshi profile: $profile"
+for home in "$linux_portable" "$linux_workstation"; do
+    grep -Fq 'sway-datetime.service' \
+        "$home/.config/systemd/user/sway-session.target" \
+        || fail 'automatic time-zone service is not part of the Sway session'
+    grep -Fq 'XDG_CURRENT_DESKTOP=GNOME gnome-control-center system datetime' \
+        "$home/.config/sway/scripts/system-menu" \
+        || fail 'Sway control center does not launch GNOME date and time settings'
+    for profile in Office Home Mobile; do
+        jq -e --arg profile "$profile" \
+            '.profiles | any(.label == $profile)' \
+            "$home/.config/sway/display-layouts.json" >/dev/null \
+            || fail "missing migrated display profile: $profile"
+    done
+    grep -Fq 'display-layouts daemon' \
+        "$home/.config/systemd/user/sway-display-layouts.service" \
+        || fail 'display layout daemon is not supervised by systemd'
+    grep -Fq 'sway-display-layouts.service' \
+        "$home/.config/systemd/user/sway-session.target" \
+        || fail 'display layout daemon is not part of the Sway session'
+    grep -Fq 'display-layouts" gui' \
+        "$home/.config/sway/scripts/system-menu" \
+        || fail 'Sway control center does not launch the display layout GUI'
+    if grep -Eq '^workspace .* output ' "$home/.config/sway/conf.d/40-workspaces.conf"; then
+        fail 'static workspace output rules conflict with display-layouts'
+    fi
 done
-grep -Fq 'exec ~/.config/sway/scripts/output-profile-applied' \
-    "$linux_workstation/.config/kanshi/config" \
-    || fail 'Kanshi profiles do not move the single Waybar after output changes'
-if grep -E '^\s*output ' "$linux_workstation/.config/kanshi/config" \
-    | grep -Ev '^\s*output ("[^"]+"|[^ ]+) enable '; then
-    fail 'Kanshi profile contains an output that is not explicitly enabled'
-fi
-grep -Fq 'systemctl --user cat sway-kanshi.service' \
+grep -Fq 'sway-display-layouts.service' \
     "$linux_workstation/.config/sway/scripts/reload-desktop" \
-    || fail 'Sway reload does not restore optional Kanshi output profiles'
-ok 'Kanshi workstation profiles'
+    || fail 'Sway reload does not restart the display layout manager'
+ok 'GUI-managed display layout profiles'
 
 for home in "$linux_portable" "$linux_workstation"; do
     require_file "$home/.local/state/tokyo-night/foot-opacity.ini"
+    grep -Fq '[colors-dark]' "$home/.config/foot/foot.ini" \
+        || fail "Foot dark palette section is missing in $home"
+    grep -Fq '[colors-dark]' "$home/.local/state/tokyo-night/foot-opacity.ini" \
+        || fail "Foot dark opacity section is missing in $home"
+    if grep -Fxq '[colors]' "$home/.config/foot/foot.ini" \
+        || grep -Fxq '[colors]' "$home/.local/state/tokyo-night/foot-opacity.ini"; then
+        fail "removed Foot colors section remains in $home"
+    fi
     [ -L "$home/.local/state/tokyo-night/wallpaper.png" ] \
         || fail "missing rendered wallpaper symlink: $home/.local/state/tokyo-night/wallpaper.png"
 
@@ -347,12 +417,22 @@ for expected_entry in \
     'Open the agent-aware Herdr workspace' \
     'Open the deliberately shared tmux main session' \
     'Show workspace windows as tabs' \
-    'Create another tmux window in this terminal session'
+    'Create another tmux window in this terminal session' \
+    'Copy a screenshot of all screens to the clipboard' \
+    'Select a region and copy a screenshot to the clipboard' \
+    'Move entire workspace to the monitor left (screen / output)' \
+    'Move focused window to the monitor right (screen / output)' \
+    'Mute or unmute the microphone' \
+    'Play or pause music and media' \
+    'Increase screen brightness by 5%' \
+    'Make the focused window narrower' \
+    '[reference only]'
 do
     grep -Fq "$expected_entry" <<< "$keybinding_catalog" \
         || fail "missing command-palette entry: $expected_entry"
 done
 ok 'Sway command palette includes generated fragments and terminal references'
+python3 "$source_root/tests/check_sway_palette.py" "$linux_portable" "$linux_workstation"
 
 if rg -n 'bindsym[[:space:]]+\$mod\+[^[:space:]]*(Return|space)' \
     "$linux_workstation/.config/sway/conf.d/50-keybindings.conf"
@@ -486,8 +566,8 @@ if command -v systemd-analyze >/dev/null 2>&1; then
     mkdir -p "$unit_dir"
     for unit in \
         "$linux_portable/.config/systemd/user/"sway-*.service \
-        "$linux_portable/.config/systemd/user/sway-session.target" \
-        "$linux_workstation/.config/systemd/user/sway-kanshi.service"
+        "$linux_portable/.config/systemd/user/"sway-*.path \
+        "$linux_portable/.config/systemd/user/sway-session.target"
     do
         unit_home=$linux_portable
         case "$unit" in
@@ -497,7 +577,7 @@ if command -v systemd-analyze >/dev/null 2>&1; then
         # verifier-only copies at the clean-room home it is actually checking.
         sed \
             -e "s|%h|$unit_home|g" \
-            -e 's|^ExecStart=/usr/bin/kanshi .*|ExecStart=/bin/true|' \
+            -e 's|^ExecStart=.*/display-layouts daemon$|ExecStart=/bin/true|' \
             "$unit" > "$unit_dir/${unit##*/}"
     done
     SYSTEMD_UNIT_PATH="$unit_dir:/usr/lib/systemd/user" \
@@ -514,6 +594,9 @@ if command -v shellcheck >/dev/null 2>&1; then
         esac
     done < <(find "$linux_workstation" "$mac_portable" -type f -perm -u+x -print0)
     shellcheck "$source_root/scripts/check-ubuntu" \
+        "$source_root/scripts/install-codex" \
+        "$source_root/scripts/install-foot" \
+        "$source_root/scripts/install-nwg-displays" \
         "$source_root/scripts/install-agent-integrations" \
         "$source_root/scripts/install-ubuntu" \
         "$source_root/tests/validate-desktop"
@@ -522,10 +605,14 @@ else
     warn 'shellcheck unavailable; syntax checks still ran (install the package for linting)'
 fi
 
+python3 -m unittest "$source_root/tests/test_display_layouts.py"
+ok 'display layout unit tests'
+
 personal_pattern='/home/(amice|demo)|PH5NY1BH326L|H7YCC6B70Y1S|6N45XC3'
 personal_pattern+='|C9LMTF003960|SNOPT_PATH|MOSEKLM|GUROBI_HOME|CUDA_PATH'
 personal_pattern+='|AdmmPackageSplit|sway-trial-system'
-if rg -n "$personal_pattern" "$linux_portable" "$mac_portable"; then
+if rg -n "$personal_pattern" "$linux_portable" "$mac_portable" \
+    --glob '!**/.config/sway/display-layouts.json'; then
     fail 'personal or workstation-specific data leaked into a portable target'
 fi
 ok 'portable targets contain no known workstation paths or display identities'

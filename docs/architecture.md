@@ -21,10 +21,11 @@ Package declarations are separate from repository tooling. The root
 `Brewfile` is the macOS manifest and `packages/ubuntu.txt` is the Ubuntu
 manifest. The Ubuntu installer also configures vendor repositories for VS Code
 and Signal, installs Slack through its supported Snap, and installs pCloud
-Drive from its checksum-pinned official AppImage. Installers live in `scripts/`,
-integration checks in `tests/`, and durable explanations in `docs/`; chezmoi
-ignores all three tooling/document trees so they never appear in a rendered
-home.
+Drive from its checksum-pinned official AppImage. Both platform setup paths use
+OpenAI's official standalone installer for Codex; authentication and session
+state remain local. Installers live in `scripts/`, integration checks in
+`tests/`, and durable explanations in `docs/`; chezmoi ignores all three
+tooling/document trees so they never appear in a rendered home.
 
 ## Executable ownership
 
@@ -55,6 +56,14 @@ terminal session data, pCloud credentials, selected wallpaper mood, and
 terminal opacity remain local. VS Code settings and ordinary extensions belong
 to VS Code and Settings Sync. The retired unpublished Sway extension is removed
 only by its exact installed directory through `.chezmoiremove.tmpl`.
+
+Display layout state is the deliberate exception: `display-layouts` stores one
+profile per exact connected-monitor set and immediately imports its managed
+JSON file into the Chezmoi source. The local save remains authoritative if that
+import fails, while Git commit and synchronization stay manual. The companion
+Sway service reapplies matching output geometry after hotplug and records
+workspace-to-output moves without treating automatic moves during unplug as
+user choices.
 
 Long-running Sway components are supervised by systemd user units and tied to
 the Sway session target. Small scripts connect components without embedding

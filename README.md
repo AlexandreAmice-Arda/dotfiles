@@ -69,6 +69,7 @@ Install the Homebrew dependencies, apply, and verify:
 ```sh
 cd "$(chezmoi source-path)"
 brew bundle --file Brewfile
+./scripts/install-codex
 chezmoi diff
 chezmoi apply --verbose
 desktop-doctor
@@ -77,14 +78,27 @@ desktop-doctor
 Grant AeroSpace Accessibility permission when macOS requests it. GitHub
 credentials, application histories, and caches are deliberately machine-local.
 
-Herdr is installed as a pinned external on Linux and through Homebrew on
-macOS. After Codex has created `~/.codex`, install Herdr's session hook while
-preserving other Codex hooks:
+Codex is installed automatically during the software-install step. Run
+`codex` once to sign in and create `~/.codex`; credentials and session state
+remain machine-local. Herdr is installed as a pinned external on Linux and
+through Homebrew on macOS. After that first Codex launch, install Herdr's
+session hook while preserving other Codex hooks:
 
 ```sh
 cd "$(chezmoi source-path)"
 ./scripts/install-agent-integrations
 ```
+
+On Ubuntu, the installer builds pinned Foot 1.28 and fcft 3.3.1 source releases
+and installs Foot under `/usr/local`. Ubuntu 24.04's Foot 1.16 duplicates Enter
+and Backspace release events when Herdr enables Kitty keyboard reporting. The
+apt package remains installed as a system fallback, while the normal
+`/usr/local/bin` path selects the fixed version.
+
+The Ubuntu installer also installs pinned nwg-displays 0.4.4. Open Displays
+from `Super+C` to arrange screens and assign workspaces. Closing the GUI saves
+the connected-monitor profile locally and updates the Chezmoi source; later
+workspace moves are recorded automatically by the Sway layout service.
 
 ## Validation
 

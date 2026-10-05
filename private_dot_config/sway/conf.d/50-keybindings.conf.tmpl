@@ -1,135 +1,153 @@
 # Executable search entries use: #@ shortcut :: description :: sway command
-# Reference-only entries omit the final command.
+# Descriptions start with a category and include familiar search terms.
+# Reference-only entries omit the final command and are labeled in the palette.
+# Every bound action must have an entry; alternate shortcuts can share one.
 # Super is the window-manager modifier. On the Kinesis Advantage2 it shares a
 # thumb cluster with Space and Return, so neither key is used in a Super chord.
 
 # Launching and session controls
-#@ Super+/ :: Search and execute Sway commands :: exec ~/.config/sway/scripts/keybindings
+#@ Super+/ :: Apps and session: Search and execute Sway commands :: exec ~/.config/sway/scripts/keybindings
 bindsym $mod+slash exec ~/.config/sway/scripts/keybindings
-#@ Palette only :: Configure displays graphically :: exec wdisplays
-#@ Super+t :: Open a plain terminal without tmux in the focused workspace :: exec foot --app-id=foot-current
+#@ Palette only :: Apps and session: Arrange monitors (screens / outputs) and workspaces graphically :: exec display-layouts gui
+#@ Super+t :: Apps and session: Open a plain terminal without tmux in the focused workspace :: exec foot --app-id=foot-current
 bindsym $mod+t exec foot --app-id=foot-current
-#@ Super+Shift+t :: Open or resume an independent persistent tmux terminal :: exec foot ~/.local/bin/terminal-main
+#@ Super+Shift+t :: Apps and session: Open or resume an independent persistent tmux terminal :: exec foot ~/.local/bin/terminal-main
 bindsym $mod+Shift+t exec foot ~/.local/bin/terminal-main
-#@ Super+Left Ctrl+t :: Open the agent-aware Herdr workspace :: exec foot ~/.local/bin/terminal-agents
+#@ Super+Left Ctrl+t :: Apps and session: Open the agent-aware Herdr workspace :: exec foot ~/.local/bin/terminal-agents
 bindsym $mod+Ctrl+t exec foot ~/.local/bin/terminal-agents
-#@ Palette only :: Open the deliberately shared tmux main session :: exec foot ~/.local/bin/terminal-main --shared
-#@ Super+d :: Open application launcher :: exec wofi --show drun
+#@ Palette only :: Apps and session: Open the deliberately shared tmux main session :: exec foot ~/.local/bin/terminal-main --shared
+#@ Super+d :: Apps and session: Open application launcher :: exec wofi --show drun
 bindsym $mod+d exec $menu
-#@ Super+Alt+q :: Close focused window :: kill
+#@ Super+Alt+q :: Apps and session: Close focused window :: kill
 bindsym $mod+Mod1+q kill
-#@ Super+Shift+c :: Reload desktop configuration :: exec ~/.config/sway/scripts/reload-desktop
+#@ Super+Shift+c :: Apps and session: Reload desktop configuration :: exec ~/.config/sway/scripts/reload-desktop
 bindsym $mod+Shift+c exec ~/.config/sway/scripts/reload-desktop
-#@ Super+Shift+e :: Log out with confirmation :: exec ~/.local/bin/session-action logout
+#@ Super+Shift+e :: Apps and session: Log out with confirmation :: exec ~/.local/bin/session-action logout
 bindsym $mod+Shift+e exec ~/.local/bin/session-action logout
-#@ Super+Shift+x :: Lock screen :: exec ~/.local/bin/lock-desktop
+#@ Super+Shift+x :: Apps and session: Lock screen :: exec ~/.local/bin/lock-desktop
 bindsym $mod+Shift+x exec ~/.local/bin/lock-desktop
-#@ Super+c :: Open graphical system controls :: exec ~/.config/sway/scripts/system-menu
+#@ Super+c :: Apps and session: Open system settings: Wi-Fi, Bluetooth, audio, displays, date and time, appearance :: exec ~/.config/sway/scripts/system-menu
 bindsym $mod+c exec ~/.config/sway/scripts/system-menu
-#@ Super+p :: Open lock, suspend, logout, restart, and shutdown menu :: exec ~/.config/sway/scripts/power-menu
+#@ Super+p :: Apps and session: Open lock, suspend, logout, restart, and shutdown menu :: exec ~/.config/sway/scripts/power-menu
 bindsym $mod+p exec ~/.config/sway/scripts/power-menu
 
 # Notifications
-#@ Super+n :: Hide latest notification :: exec ~/.local/bin/swaync-client --hide-latest --skip-wait
+#@ Super+n :: Notifications: Hide latest notification :: exec ~/.local/bin/swaync-client --hide-latest --skip-wait
 bindsym $mod+n exec ~/.local/bin/swaync-client --hide-latest --skip-wait
-#@ Super+Shift+n :: Toggle notification history :: exec ~/.local/bin/swaync-client --toggle-panel --skip-wait
+#@ Super+Shift+n :: Notifications: Toggle notification history :: exec ~/.local/bin/swaync-client --toggle-panel --skip-wait
 bindsym $mod+Shift+n exec ~/.local/bin/swaync-client --toggle-panel --skip-wait
-#@ Super+Left Ctrl+n :: Clear notifications :: exec ~/.local/bin/swaync-client --close-all --skip-wait
+#@ Super+Left Ctrl+n :: Notifications: Clear notifications :: exec ~/.local/bin/swaync-client --close-all --skip-wait
 bindsym $mod+Ctrl+n exec ~/.local/bin/swaync-client --close-all --skip-wait
 
 # Focus and movement
 {{ range .desktop.directions -}}
-#@ Super+{{ .key }} :: Focus {{ lower .label }} :: focus {{ .name }}
+#@ Super+{{ .key }} :: Windows: Focus the window {{ lower .label }} :: focus {{ .name }}
 bindsym $mod+{{ .key }} focus {{ .name }}
-#@ Super+Alt+{{ .key }} :: Move focused window {{ .name }} :: move {{ .name }}
+#@ Super+Alt+{{ .key }} / Super+Alt+{{ .label }} :: Windows: Move focused window {{ .name }} within the layout :: move {{ .name }}
 bindsym $mod+Mod1+{{ .key }} move {{ .name }}
 bindsym $mod+Mod1+{{ .label }} move {{ .name }}
 {{ end }}
-#@ Super+a :: Focus parent container :: focus parent
+#@ Super+a :: Windows: Focus the parent group of windows (container) :: focus parent
 bindsym $mod+a focus parent
-#@ Palette only :: Toggle focus between tiled and floating windows :: focus mode_toggle
+#@ Palette only :: Windows: Toggle focus between tiled and floating windows :: focus mode_toggle
 {{ range .desktop.directions -}}
-#@ Palette only :: Move focused window to output {{ .name }} :: move container to output {{ .name }}
+#@ Palette only :: Windows: Move focused window to the monitor {{ .name }} (screen / output) :: move container to output {{ .name }}
 {{ end }}
 
 # Whole-workspace movement
 {{ range .desktop.directions -}}
-#@ Super+Left Ctrl+{{ .key }} :: Move workspace to output {{ .name }} :: move workspace to output {{ .name }}
+#@ Super+Left Ctrl+{{ .key }} :: Workspaces: Move entire workspace to the monitor {{ .name }} (screen / output) :: move workspace to output {{ .name }}
 bindsym $mod+Ctrl+{{ .key }} move workspace to output {{ .name }}
 {{ end }}
 
 # Workspace selection and window routing
 {{ range .desktop.workspaces -}}
-#@ Super+{{ .key }} :: Switch to workspace {{ .name }} :: workspace number {{ .name }}
+#@ Super+{{ .key }} :: Workspaces: Switch to workspace {{ .name }} :: workspace number {{ .name }}
 bindsym $mod+{{ .key }} workspace number $ws{{ .name }}
-#@ Super+Shift+{{ .key }} :: Move window to workspace {{ .name }} :: move container to workspace number {{ .name }}
+#@ Super+Shift+{{ .key }} :: Workspaces: Move window to workspace {{ .name }} :: move container to workspace number {{ .name }}
 bindsym $mod+Shift+{{ .key }} move container to workspace number $ws{{ .name }}
 {{ end }}
-#@ Super+Tab :: Switch to previous workspace :: workspace back_and_forth
+#@ Super+Tab :: Workspaces: Return to the last visited workspace (back and forth) :: workspace back_and_forth
 bindsym $mod+Tab workspace back_and_forth
 
 # Layout
-#@ Super+Alt+b :: Split the next desktop window side-by-side :: splith
+#@ Super+Alt+b :: Layout: Split the next desktop window side-by-side :: splith
 bindsym $mod+Mod1+b splith
-#@ Super+Alt+v :: Split the next desktop window top-to-bottom :: splitv
+#@ Super+Alt+v :: Layout: Split the next desktop window top-to-bottom :: splitv
 bindsym $mod+Mod1+v splitv
-#@ Super+s :: Stack workspace windows :: layout stacking
+#@ Super+s :: Layout: Stack workspace windows :: layout stacking
 bindsym $mod+s layout stacking
-#@ Super+w :: Show workspace windows as tabs :: layout tabbed
+#@ Super+w :: Layout: Show workspace windows as tabs :: layout tabbed
 bindsym $mod+w layout tabbed
-#@ Super+e :: Toggle horizontal and vertical tiled layout :: layout toggle split
+#@ Super+e :: Layout: Toggle horizontal and vertical tiled layout :: layout toggle split
 bindsym $mod+e layout toggle split
-#@ Super+f :: Toggle full screen for the focused window :: fullscreen
+#@ Super+f :: Layout: Toggle full screen for the focused window :: fullscreen
 bindsym $mod+f fullscreen
-#@ Super+Shift+f :: Toggle the focused window between tiled and floating :: floating toggle
+#@ Super+Shift+f :: Layout: Toggle the focused window between tiled and floating :: floating toggle
 bindsym $mod+Shift+f floating toggle
 
 # Scratchpad
-#@ Super+Shift+- :: Send the focused window to the scratchpad :: move scratchpad
+#@ Super+Shift+- :: Scratchpad: Hide the focused window in the scratchpad :: move scratchpad
 bindsym $mod+Shift+minus move scratchpad
-#@ Super+- :: Show or cycle scratchpad windows :: scratchpad show
+#@ Super+- :: Scratchpad: Show or cycle hidden scratchpad windows :: scratchpad show
 bindsym $mod+minus scratchpad show
 
 # Resize mode
-#@ Super+r :: Enter desktop resize mode; arrows or H/J/K/L resize, Escape exits :: mode "resize"
+#@ Super+r :: Resize: Enter desktop resize mode; arrows or H/J/K/L resize, Escape exits :: mode "resize"
 bindsym $mod+r mode "resize"
 mode "resize" {
+    #@ Resize mode: H / Left :: Resize: Make the focused window narrower :: resize shrink width 20px
     bindsym h resize shrink width 20px
+    #@ Resize mode: J / Down :: Resize: Make the focused window taller :: resize grow height 20px
     bindsym j resize grow height 20px
+    #@ Resize mode: K / Up :: Resize: Make the focused window shorter :: resize shrink height 20px
     bindsym k resize shrink height 20px
+    #@ Resize mode: L / Right :: Resize: Make the focused window wider :: resize grow width 20px
     bindsym l resize grow width 20px
     bindsym Left resize shrink width 20px
     bindsym Down resize grow height 20px
     bindsym Up resize shrink height 20px
     bindsym Right resize grow width 20px
+    #@ Resize mode: Enter / Escape :: Resize: Exit resize mode :: mode "default"
     bindsym Return mode "default"
     bindsym Escape mode "default"
 }
 
 # Tmux references are intentionally non-executable palette entries and apply
 # only inside a persistent terminal opened with Super+Shift+T.
-#@ Ctrl+Alt+b / Ctrl+Alt+v :: Split the current local tmux pane side-by-side / top-to-bottom
-#@ Ctrl+j/k/l :: Focus the tmux pane down / up / right
-#@ Ctrl+Alt+h/j/k/l :: Move the current tmux pane
-#@ Ctrl+Alt+Shift+Arrow :: Resize the current tmux pane
-#@ Ctrl+Alt+f / Ctrl+Alt+q :: Zoom / close the current tmux pane
-#@ Ctrl+b, then c :: Create another tmux window in this terminal session
-#@ Ctrl+b, then n/p :: Select the next / previous tmux window
-#@ Ctrl+b, then Ctrl+s/Ctrl+r :: Save / restore terminal structure
+#@ Ctrl+Alt+b / Ctrl+Alt+v :: Tmux: Split the current local tmux pane side-by-side / top-to-bottom
+#@ Ctrl+j/k/l :: Tmux: Focus the tmux pane down / up / right
+#@ Ctrl+Alt+h/j/k/l :: Tmux: Move the current tmux pane
+#@ Ctrl+Alt+Shift+Arrow :: Tmux: Resize the current tmux pane
+#@ Ctrl+Alt+f / Ctrl+Alt+q :: Tmux: Zoom / close the current tmux pane
+#@ Ctrl+b, then c :: Tmux: Create another tmux window in this terminal session
+#@ Ctrl+b, then n/p :: Tmux: Select the next / previous tmux window
+#@ Ctrl+b, then Ctrl+s/Ctrl+r :: Tmux: Save / restore terminal structure
 
 # Screenshots
+#@ Print Screen :: Screenshots: Copy a screenshot of all screens to the clipboard (screen capture) :: exec grim - | wl-copy
 bindsym Print exec grim - | wl-copy
+#@ Shift+Print Screen :: Screenshots: Select a region and copy a screenshot to the clipboard (snip / capture) :: exec grim -g "$(slurp)" - | wl-copy
 bindsym Shift+Print exec grim -g "$(slurp)" - | wl-copy
 
 # Audio, media, and brightness work even while the session is locked.
+#@ Volume Up :: Audio and media: Increase speaker volume by 5% :: exec wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+
 bindsym --locked XF86AudioRaiseVolume exec wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+
+#@ Volume Down :: Audio and media: Decrease speaker volume by 5% :: exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
 bindsym --locked XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+#@ Speaker Mute :: Audio and media: Mute or unmute speaker audio :: exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
 bindsym --locked XF86AudioMute exec wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+#@ Mic Mute :: Audio and media: Mute or unmute the microphone :: exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
 bindsym --locked XF86AudioMicMute exec wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle
+#@ Play / Pause :: Audio and media: Play or pause music and media :: exec playerctl play-pause
 bindsym --locked XF86AudioPlay exec playerctl play-pause
+#@ Next Track :: Audio and media: Skip to the next media track :: exec playerctl next
 bindsym --locked XF86AudioNext exec playerctl next
+#@ Previous Track :: Audio and media: Return to the previous media track :: exec playerctl previous
 bindsym --locked XF86AudioPrev exec playerctl previous
+#@ Brightness Up / Super+Alt+= :: Brightness: Increase screen brightness by 5% :: exec brightnessctl set +5%
 bindsym --locked XF86MonBrightnessUp exec brightnessctl set +5%
+#@ Brightness Down / Super+Alt+- :: Brightness: Decrease screen brightness by 5% :: exec brightnessctl set 5%-
 bindsym --locked XF86MonBrightnessDown exec brightnessctl set 5%-
 bindsym $mod+Mod1+equal exec brightnessctl set +5%
 bindsym $mod+Mod1+minus exec brightnessctl set 5%-

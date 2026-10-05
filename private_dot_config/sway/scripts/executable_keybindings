@@ -15,7 +15,8 @@ catalog=$(awk '
             command=""
             if (count >= 3) command=fields[3]
             for (i=4; i<=count; i++) command=command " :: " fields[i]
-            printf "%s — %s\t%s\n", fields[1], fields[2], command
+            reference = command == "" ? " [reference only]" : ""
+            printf "%s — %s%s\t%s\n", fields[2], fields[1], reference, command
         }
     }
 ' "${config_files[@]}")
@@ -27,7 +28,9 @@ fi
 
 selection=$(printf '%s\n' "$catalog" \
     | cut -f1 \
-    | wofi --dmenu --prompt "Sway commands" --width 60% --height 70%) || exit 0
+    | wofi --dmenu --prompt "Search actions · Enter selects · Esc closes" \
+        --matching multi-contains --insensitive \
+        --width 60% --height 70% --cache-file /dev/null) || exit 0
 
 [[ -n "$selection" ]] || exit 0
 command=$(printf '%s\n' "$catalog" \

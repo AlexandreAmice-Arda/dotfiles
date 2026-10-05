@@ -1,0 +1,10 @@
+[Unit]
+Description=Location permission agent for Sway
+PartOf=sway-session.target
+After=sway-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/geoclue-2.0/demos/agent
+Restart=on-failure
+RestartSec=2

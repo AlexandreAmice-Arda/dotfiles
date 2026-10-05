@@ -1,0 +1,172 @@
+{
+  "profiles": {
+    "home": {
+      "label": "Home",
+      "monitors": [
+        "connector:eDP-1:Sharp Corporation 0x1518",
+        "description:Dell Inc. DELL SE2719HR 19K8JB3",
+        "description:Dell Inc. DELL SE2719HR 6N45XC3"
+      ],
+      "outputs": [
+        {
+          "adaptive_sync": false,
+          "connector": "",
+          "description": "Dell Inc. DELL SE2719HR 19K8JB3",
+          "dpms": true,
+          "enabled": true,
+          "identity": "description:Dell Inc. DELL SE2719HR 19K8JB3",
+          "mode": "1920x1080",
+          "position": [0, 185],
+          "scale": 1.0,
+          "scale_filter": "smart",
+          "transform": "normal"
+        },
+        {
+          "adaptive_sync": false,
+          "connector": "",
+          "description": "Dell Inc. DELL SE2719HR 6N45XC3",
+          "dpms": true,
+          "enabled": true,
+          "identity": "description:Dell Inc. DELL SE2719HR 6N45XC3",
+          "mode": "1920x1080",
+          "position": [1920, 185],
+          "scale": 1.0,
+          "scale_filter": "smart",
+          "transform": "normal"
+        },
+        {
+          "adaptive_sync": false,
+          "connector": "eDP-1",
+          "description": "",
+          "dpms": true,
+          "enabled": true,
+          "identity": "connector:eDP-1:Sharp Corporation 0x1518",
+          "mode": "1920x1200",
+          "position": [1147, 1265],
+          "scale": 1.0,
+          "scale_filter": "smart",
+          "transform": "normal"
+        }
+      ],
+      "workspaces": {
+        "1": "description:Dell Inc. DELL SE2719HR 19K8JB3",
+        "2": "description:Dell Inc. DELL SE2719HR 6N45XC3",
+        "3": "connector:eDP-1:Sharp Corporation 0x1518",
+        "4": "connector:eDP-1:Sharp Corporation 0x1518",
+        "5": "description:Dell Inc. DELL SE2719HR 19K8JB3",
+        "6": "description:Dell Inc. DELL SE2719HR 6N45XC3",
+        "7": "connector:eDP-1:Sharp Corporation 0x1518",
+        "8": "connector:eDP-1:Sharp Corporation 0x1518",
+        "9": "description:Dell Inc. DELL SE2719HR 19K8JB3",
+        "10": "connector:eDP-1:Sharp Corporation 0x1518"
+      }
+    },
+    "mobile": {
+      "label": "Mobile",
+      "monitors": ["connector:eDP-1:Sharp Corporation 0x1518"],
+      "outputs": [
+        {
+          "adaptive_sync": false,
+          "connector": "eDP-1",
+          "description": "",
+          "dpms": true,
+          "enabled": true,
+          "identity": "connector:eDP-1:Sharp Corporation 0x1518",
+          "mode": "1920x1200",
+          "position": [0, 0],
+          "scale": 1.0,
+          "scale_filter": "smart",
+          "transform": "normal"
+        }
+      ],
+      "workspaces": {
+        "1": "connector:eDP-1:Sharp Corporation 0x1518",
+        "2": "connector:eDP-1:Sharp Corporation 0x1518",
+        "3": "connector:eDP-1:Sharp Corporation 0x1518",
+        "4": "connector:eDP-1:Sharp Corporation 0x1518",
+        "5": "connector:eDP-1:Sharp Corporation 0x1518",
+        "6": "connector:eDP-1:Sharp Corporation 0x1518",
+        "7": "connector:eDP-1:Sharp Corporation 0x1518",
+        "8": "connector:eDP-1:Sharp Corporation 0x1518",
+        "9": "connector:eDP-1:Sharp Corporation 0x1518",
+        "10": "connector:eDP-1:Sharp Corporation 0x1518"
+      }
+    },
+    "office": {
+      "label": "Office",
+      "monitors": [
+        "connector:eDP-1:Sharp Corporation 0x1518",
+        "description:Ancor Communications Inc ASUS PB278 C9LMTF003960",
+        "description:Dell Inc. DELL U2715H H7YCC6B70Y1S",
+        "description:Dell Inc. DELL U3011 PH5NY1BH326L"
+      ],
+      "outputs": [
+        {
+          "adaptive_sync": false,
+          "connector": "",
+          "description": "Dell Inc. DELL U2715H H7YCC6B70Y1S",
+          "dpms": true,
+          "enabled": true,
+          "identity": "description:Dell Inc. DELL U2715H H7YCC6B70Y1S",
+          "mode": "2560x1440",
+          "position": [0, 221],
+          "scale": 1.0,
+          "scale_filter": "smart",
+          "transform": "normal"
+        },
+        {
+          "adaptive_sync": false,
+          "connector": "",
+          "description": "Dell Inc. DELL U3011 PH5NY1BH326L",
+          "dpms": true,
+          "enabled": true,
+          "identity": "description:Dell Inc. DELL U3011 PH5NY1BH326L",
+          "mode": "2560x1600",
+          "position": [2560, 591],
+          "scale": 1.0,
+          "scale_filter": "smart",
+          "transform": "normal"
+        },
+        {
+          "adaptive_sync": false,
+          "connector": "",
+          "description": "Ancor Communications Inc ASUS PB278 C9LMTF003960",
+          "dpms": true,
+          "enabled": true,
+          "identity": "description:Ancor Communications Inc ASUS PB278 C9LMTF003960",
+          "mode": "2560x1440",
+          "position": [5120, 0],
+          "scale": 1.0,
+          "scale_filter": "smart",
+          "transform": "90"
+        },
+        {
+          "adaptive_sync": false,
+          "connector": "eDP-1",
+          "description": "",
+          "dpms": true,
+          "enabled": true,
+          "identity": "connector:eDP-1:Sharp Corporation 0x1518",
+          "mode": "1920x1200",
+          "position": [640, 1661],
+          "scale": 1.0,
+          "scale_filter": "smart",
+          "transform": "normal"
+        }
+      ],
+      "workspaces": {
+        "1": "description:Dell Inc. DELL U2715H H7YCC6B70Y1S",
+        "2": "description:Dell Inc. DELL U3011 PH5NY1BH326L",
+        "3": "description:Ancor Communications Inc ASUS PB278 C9LMTF003960",
+        "4": "connector:eDP-1:Sharp Corporation 0x1518",
+        "5": "description:Dell Inc. DELL U2715H H7YCC6B70Y1S",
+        "6": "description:Dell Inc. DELL U3011 PH5NY1BH326L",
+        "7": "description:Ancor Communications Inc ASUS PB278 C9LMTF003960",
+        "8": "connector:eDP-1:Sharp Corporation 0x1518",
+        "9": "description:Dell Inc. DELL U2715H H7YCC6B70Y1S",
+        "10": "connector:eDP-1:Sharp Corporation 0x1518"
+      }
+    }
+  },
+  "version": 1
+}

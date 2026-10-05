@@ -51,7 +51,7 @@ printf '%s\n' "$opacity" > "$opacity_file"
 ln -sfn -- "$landscape" "$state_dir/wallpaper.png"
 
 opacity_tmp=$(mktemp "$state_dir/.foot-opacity.XXXXXX")
-printf '[colors]\nalpha=%s\n' "$opacity" > "$opacity_tmp"
+printf '[colors-dark]\nalpha=%s\n' "$opacity" > "$opacity_tmp"
 mv -f -- "$opacity_tmp" "$foot_opacity_file"
 
 if command -v swaymsg >/dev/null 2>&1 && [[ -n ${SWAYSOCK:-} ]]; then

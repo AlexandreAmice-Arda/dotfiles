@@ -42,4 +42,28 @@ if [ "$(dpkg --print-architecture)" = amd64 ] \
     printf 'missing pCloud Drive AppImage\n' >&2
     exit 1
 fi
+if ! command -v codex >/dev/null 2>&1 \
+    && [ ! -x "$HOME/.local/bin/codex" ] \
+    && [ ! -x "$HOME/bin/codex" ]; then
+    printf 'missing codex\n' >&2
+    exit 1
+fi
+if ! command -v nwg-displays >/dev/null 2>&1; then
+    printf 'missing nwg-displays; run scripts/install-nwg-displays\n' >&2
+    exit 1
+fi
+if [ "$(nwg-displays --version 2>/dev/null | awk '{print $NF}')" != 0.4.4 ]; then
+    printf 'nwg-displays 0.4.4 is required; run scripts/install-nwg-displays\n' >&2
+    exit 1
+fi
+if [ ! -x /usr/local/bin/foot ]; then
+    printf 'missing source-built Foot in /usr/local; run scripts/install-foot\n' >&2
+    exit 1
+fi
+foot_version=$(/usr/local/bin/foot --version | awk '{print $3}')
+if ! dpkg --compare-versions "$foot_version" ge 1.20.0; then
+    printf 'Foot %s still has the Herdr duplicate-key bug; version 1.20.0 or newer is required.\n' \
+        "$foot_version" >&2
+    exit 1
+fi
 printf 'Shared desktop applications are installed.\n'

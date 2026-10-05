@@ -1,0 +1,11 @@
+[Unit]
+Description=Automatic time-zone updates for Sway
+PartOf=sway-session.target
+Wants=sway-geoclue-agent.service
+After=sway-session.target sway-geoclue-agent.service
+
+[Service]
+Type=simple
+ExecStart=%h/.cargo/bin/automatic-timezoned
+Restart=on-failure
+RestartSec=2

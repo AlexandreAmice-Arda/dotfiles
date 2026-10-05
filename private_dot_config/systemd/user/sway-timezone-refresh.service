@@ -1,0 +1,8 @@
+[Unit]
+Description=Refresh Waybar after a time-zone change
+PartOf=sway-session.target
+After=sway-waybar.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl --user try-restart sway-waybar.service

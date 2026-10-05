@@ -1,0 +1,48 @@
+# Bash completion for tmux commands and session targets.
+# This is intentionally self-contained so it works with the bash-completion
+# versions shipped by Ubuntu and Homebrew.
+
+_dotfiles_tmux_complete_sessions()
+{
+    local current=$1 session
+
+    while IFS= read -r session; do
+        case $session in
+            "$current"*) COMPREPLY+=("$session") ;;
+        esac
+    done < <(command tmux list-sessions -F '#{session_name}' 2>/dev/null)
+}
+
+_dotfiles_tmux()
+{
+    local current previous subcommand command_name command_alias
+
+    COMPREPLY=()
+    current=${COMP_WORDS[COMP_CWORD]}
+    previous=${COMP_WORDS[COMP_CWORD - 1]-}
+    subcommand=${COMP_WORDS[1]-}
+
+    if ((COMP_CWORD == 1)); then
+        while read -r command_name command_alias; do
+            case $command_name in
+                "$current"*) COMPREPLY+=("$command_name") ;;
+            esac
+            case $command_alias in
+                "$current"?*) COMPREPLY+=("$command_alias") ;;
+            esac
+        done < <(command tmux list-commands \
+            -F '#{command_list_name} #{command_list_alias}' 2>/dev/null)
+        return
+    fi
+
+    case $previous:$subcommand in
+        -t:a|-t:at*|-t:attach*|-t:has*|-t:kill-session|-t:rename-session|-t:switch-client|-t:switchc)
+            _dotfiles_tmux_complete_sessions "$current"
+            ;;
+        -s:rename-session)
+            _dotfiles_tmux_complete_sessions "$current"
+            ;;
+    esac
+}
+
+complete -F _dotfiles_tmux tmux

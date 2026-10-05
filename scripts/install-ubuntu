@@ -72,6 +72,9 @@ fi
 sudo apt-get update
 # shellcheck disable=SC2086
 sudo apt-get install -y $packages
+sudo install -D -o root -g root -m 0644 \
+    "$repo_dir/packages/geoclue-beacondb.conf" \
+    /etc/geoclue/conf.d/99-beacondb.conf
 if [ "$install_signal" -eq 1 ]; then
     sudo apt-get install -y signal-desktop
 fi
@@ -103,6 +106,9 @@ else
         "$(dpkg --print-architecture)" >&2
 fi
 
+"$repo_dir/scripts/install-foot"
+"$repo_dir/scripts/install-codex"
+"$repo_dir/scripts/install-nwg-displays"
 "$repo_dir/scripts/check-ubuntu"
 
 has_backlight=0

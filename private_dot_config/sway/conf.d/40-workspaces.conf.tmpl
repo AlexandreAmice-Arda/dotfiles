@@ -2,11 +2,3 @@
 {{ range .desktop.workspaces -}}
 set $ws{{ .name }} "{{ .name }}"
 {{ end }}
-
-{{ if .isAmiceWorkstation -}}
-# Only this profile contains known output identities. Portable hosts rely on
-# Sway's automatic output placement.
-{{ range .desktop.profiles.amice_workstation.workspace_outputs -}}
-workspace $ws{{ .workspace }} output{{ range .candidates }} "{{ . }}"{{ end }}
-{{ end }}
-{{ end }}

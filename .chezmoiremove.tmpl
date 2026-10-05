@@ -1,4 +1,6 @@
 {{- if eq .chezmoi.os "linux" }}
+.config/kanshi
+.config/systemd/user/sway-kanshi.service
 .config/systemd/user/sway-rfkill.service
 .config/sway/scripts/apply-outputs
 {{-   if .isAmiceWorkstation }}

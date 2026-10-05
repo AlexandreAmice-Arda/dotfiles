@@ -14,4 +14,5 @@ exec swayidle -w \
         "systemctl --user start $battery_monitor" \
         resume "systemctl --user stop $battery_monitor" \
     before-sleep "$lock" \
+    after-resume 'swaymsg "output * power on"' \
     lock "$lock"

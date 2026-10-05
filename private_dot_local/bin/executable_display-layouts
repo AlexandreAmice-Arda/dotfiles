@@ -1,0 +1,619 @@
+#!/usr/bin/env python3
+"""Persist Sway output and workspace layouts by connected monitor set."""
+
+from __future__ import annotations
+
+import argparse
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import shlex
+import shutil
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+from typing import Any, Callable
+
+
+WORKSPACE_NAMES = tuple(str(number) for number in range(1, 11))
+STATE_PATH = Path(
+    os.environ.get(
+        "DISPLAY_LAYOUTS_STATE",
+        str(Path.home() / ".config/sway/display-layouts.json"),
+    )
+)
+LOCK_PATH = Path(
+    os.environ.get(
+        "DISPLAY_LAYOUTS_LOCK",
+        str(Path.home() / ".local/state/sway/display-layouts.lock"),
+    )
+)
+NWG_OUTPUTS_PATH = Path.home() / ".local/state/sway/nwg-outputs"
+NWG_WORKSPACES_PATH = Path.home() / ".config/sway/workspaces"
+
+_workspace_suppressed_until = 0.0
+_output_suppressed_until = 0.0
+_output_timer: threading.Timer | None = None
+_workspace_timers: dict[str, threading.Timer] = {}
+
+
+class LayoutError(RuntimeError):
+    """A user-visible layout management error."""
+
+
+def notify(summary: str, body: str, *, critical: bool = False) -> None:
+    if not shutil.which("notify-send"):
+        return
+    command = ["notify-send"]
+    if critical:
+        command.extend(["--urgency", "critical"])
+    command.extend([summary, body])
+    subprocess.run(command, check=False)
+
+
+def sway_json(message_type: str) -> list[dict[str, Any]]:
+    result = subprocess.run(
+        ["swaymsg", "--raw", "--type", message_type],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise LayoutError(result.stderr.strip() or f"swaymsg {message_type} failed")
+    try:
+        value = json.loads(result.stdout)
+    except json.JSONDecodeError as error:
+        raise LayoutError(f"Invalid Sway response for {message_type}: {error}") from error
+    if not isinstance(value, list):
+        raise LayoutError(f"Unexpected Sway response for {message_type}")
+    return value
+
+
+def sway_command(command: str) -> None:
+    result = subprocess.run(
+        ["swaymsg", "--raw", command],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise LayoutError(result.stderr.strip() or f"Sway command failed: {command}")
+    try:
+        replies = json.loads(result.stdout)
+    except json.JSONDecodeError as error:
+        raise LayoutError(f"Invalid response to Sway command: {command}") from error
+    failures = [reply for reply in replies if not reply.get("success", False)]
+    if failures:
+        message = failures[0].get("error", "unknown error")
+        raise LayoutError(f"Sway rejected `{command}`: {message}")
+
+
+def output_description(output: dict[str, Any]) -> str:
+    return " ".join(
+        str(output.get(field, "")).strip()
+        for field in ("make", "model", "serial")
+        if str(output.get(field, "")).strip()
+    )
+
+
+def output_identity(output: dict[str, Any]) -> str:
+    serial = str(output.get("serial", "")).strip()
+    if serial and serial.lower() not in {"unknown", "none", "null"}:
+        return f"description:{output_description(output)}"
+    fallback_description = " ".join(
+        str(output.get(field, "")).strip()
+        for field in ("make", "model")
+        if str(output.get(field, "")).strip()
+    )
+    return f"connector:{output['name']}:{fallback_description}"
+
+
+def connected_outputs() -> list[dict[str, Any]]:
+    return [output for output in sway_json("get_outputs") if not output.get("non_desktop")]
+
+
+def monitor_set(outputs: list[dict[str, Any]]) -> list[str]:
+    return sorted(output_identity(output) for output in outputs)
+
+
+def profile_key(monitors: list[str]) -> str:
+    digest = hashlib.sha256("\0".join(monitors).encode()).hexdigest()[:16]
+    return f"monitors-{digest}"
+
+
+def empty_state() -> dict[str, Any]:
+    return {"version": 1, "profiles": {}}
+
+
+def validate_state(state: Any) -> dict[str, Any]:
+    if not isinstance(state, dict) or state.get("version") != 1:
+        raise LayoutError("display-layouts.json has an unsupported schema version")
+    if not isinstance(state.get("profiles"), dict):
+        raise LayoutError("display-layouts.json has no profiles object")
+    return state
+
+
+def load_state() -> dict[str, Any]:
+    if not STATE_PATH.exists():
+        return empty_state()
+    try:
+        return validate_state(json.loads(STATE_PATH.read_text()))
+    except (OSError, json.JSONDecodeError) as error:
+        raise LayoutError(f"Cannot read {STATE_PATH}: {error}") from error
+
+
+def find_profile(
+    state: dict[str, Any], monitors: list[str]
+) -> tuple[str, dict[str, Any]] | tuple[None, None]:
+    for key, profile in state["profiles"].items():
+        if profile.get("monitors") == monitors:
+            return key, profile
+    return None, None
+
+
+def atomic_write_state(state: dict[str, Any]) -> None:
+    STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary_name = tempfile.mkstemp(
+        prefix=f".{STATE_PATH.name}.", dir=STATE_PATH.parent
+    )
+    try:
+        with os.fdopen(fd, "w") as temporary:
+            json.dump(state, temporary, indent=2, sort_keys=True)
+            temporary.write("\n")
+            temporary.flush()
+            os.fsync(temporary.fileno())
+        os.replace(temporary_name, STATE_PATH)
+    finally:
+        try:
+            os.unlink(temporary_name)
+        except FileNotFoundError:
+            pass
+
+
+def sync_to_chezmoi() -> None:
+    if os.environ.get("DISPLAY_LAYOUTS_NO_SYNC") == "1":
+        return
+    if not shutil.which("chezmoi"):
+        notify(
+            "Display layout saved locally",
+            "Chezmoi is unavailable, so the source repository was not updated.",
+            critical=True,
+        )
+        return
+    result = subprocess.run(
+        ["chezmoi", "add", str(STATE_PATH)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip() or "unknown error"
+        notify(
+            "Display layout saved locally",
+            f"Chezmoi synchronization failed: {detail}",
+            critical=True,
+        )
+
+
+def update_state(mutator: Callable[[dict[str, Any]], bool]) -> bool:
+    LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with LOCK_PATH.open("a+") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        state = load_state()
+        changed = mutator(state)
+        if changed:
+            atomic_write_state(state)
+        fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+    if changed:
+        sync_to_chezmoi()
+    return changed
+
+
+def live_output_map(outputs: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {output_identity(output): output for output in outputs}
+
+
+def live_workspace_map(outputs: list[dict[str, Any]]) -> dict[str, str]:
+    by_name = {output["name"]: output_identity(output) for output in outputs}
+    result: dict[str, str] = {}
+    for workspace in sway_json("get_workspaces"):
+        name = str(workspace.get("name", ""))
+        output_name = workspace.get("output")
+        if name in WORKSPACE_NAMES and output_name in by_name:
+            result[name] = by_name[output_name]
+    return result
+
+
+def mode_string(output: dict[str, Any]) -> str | None:
+    mode = output.get("current_mode")
+    if not mode:
+        return None
+    refresh = mode.get("refresh")
+    base = f"{mode['width']}x{mode['height']}"
+    if refresh is None:
+        return base
+    hz = f"{refresh / 1000:.3f}".rstrip("0").rstrip(".")
+    return f"{base}@{hz}Hz"
+
+
+def captured_output(output: dict[str, Any]) -> dict[str, Any]:
+    rect = output.get("rect") or {}
+    return {
+        "identity": output_identity(output),
+        "connector": output["name"],
+        "description": output_description(output),
+        "enabled": bool(output.get("active")),
+        "mode": mode_string(output),
+        "position": [int(rect.get("x", 0)), int(rect.get("y", 0))],
+        "scale": float(output.get("scale", 1.0)),
+        "transform": output.get("transform", "normal"),
+        "scale_filter": output.get("scale_filter", "smart"),
+        "adaptive_sync": output.get("adaptive_sync_status") == "enabled",
+        "dpms": bool(output.get("dpms", True)),
+    }
+
+
+def default_workspace_target(outputs: list[dict[str, Any]]) -> str:
+    for output in outputs:
+        if output.get("focused") and output.get("active"):
+            return output_identity(output)
+    for output in outputs:
+        if output.get("active"):
+            return output_identity(output)
+    raise LayoutError("No active output is available for workspace assignment")
+
+
+def capture_profile(
+    workspace_overrides: dict[str, str] | None = None,
+    *,
+    label: str | None = None,
+) -> dict[str, Any]:
+    outputs = connected_outputs()
+    monitors = monitor_set(outputs)
+    if not monitors:
+        raise LayoutError("No connected outputs were found")
+    state = load_state()
+    _, existing = find_profile(state, monitors)
+    valid_identities = set(monitors)
+    workspaces = {
+        key: value
+        for key, value in (existing or {}).get("workspaces", {}).items()
+        if value in valid_identities
+    }
+    workspaces.update(live_workspace_map(outputs))
+    if workspace_overrides:
+        workspaces.update(
+            {
+                key: value
+                for key, value in workspace_overrides.items()
+                if key in WORKSPACE_NAMES and value in valid_identities
+            }
+        )
+    fallback = default_workspace_target(outputs)
+    for workspace in WORKSPACE_NAMES:
+        workspaces.setdefault(workspace, fallback)
+    return {
+        "label": label or (existing or {}).get("label") or "Saved layout",
+        "monitors": monitors,
+        "outputs": [captured_output(output) for output in outputs],
+        "workspaces": {key: workspaces[key] for key in WORKSPACE_NAMES},
+    }
+
+
+def save_profile(
+    workspace_overrides: dict[str, str] | None = None,
+    *,
+    label: str | None = None,
+) -> dict[str, Any]:
+    profile = capture_profile(workspace_overrides, label=label)
+    key = profile_key(profile["monitors"])
+
+    def mutate(state: dict[str, Any]) -> bool:
+        if state["profiles"].get(key) == profile:
+            return False
+        state["profiles"][key] = profile
+        return True
+
+    update_state(mutate)
+    return profile
+
+
+def resolve_profile_outputs(
+    profile: dict[str, Any], outputs: list[dict[str, Any]]
+) -> dict[str, dict[str, Any]]:
+    live = live_output_map(outputs)
+    if set(profile["monitors"]) != set(live):
+        raise LayoutError("The saved profile does not match the connected monitor set")
+    return live
+
+
+def quote_sway(value: str) -> str:
+    return json.dumps(value)
+
+
+def apply_workspace_profile(
+    profile: dict[str, Any], live: dict[str, dict[str, Any]]
+) -> None:
+    global _workspace_suppressed_until
+    _workspace_suppressed_until = time.monotonic() + 3.0
+
+    for workspace, identity in profile["workspaces"].items():
+        output = live.get(identity)
+        if output and output.get("active"):
+            sway_command(
+                f"workspace {quote_sway(workspace)} output {quote_sway(output['name'])}"
+            )
+
+    existing = {
+        str(workspace["name"]): workspace for workspace in sway_json("get_workspaces")
+    }
+    focused = next(
+        (name for name, workspace in existing.items() if workspace.get("focused")), None
+    )
+    for workspace in WORKSPACE_NAMES:
+        identity = profile["workspaces"].get(workspace)
+        output = live.get(identity)
+        if workspace not in existing or not output or not output.get("active"):
+            continue
+        if existing[workspace].get("output") == output["name"]:
+            continue
+        sway_command(
+            f"workspace number {quote_sway(workspace)}; "
+            f"move workspace to output {quote_sway(output['name'])}"
+        )
+    if focused and focused in existing:
+        sway_command(f"workspace {quote_sway(focused)}")
+
+
+def run_output_hook() -> None:
+    hook = Path.home() / ".config/sway/scripts/output-profile-applied"
+    if hook.is_file() and os.access(hook, os.X_OK):
+        subprocess.run([str(hook)], check=False)
+
+
+def apply_profile(*, outputs_too: bool = True) -> bool:
+    global _output_suppressed_until, _workspace_suppressed_until
+    outputs = connected_outputs()
+    state = load_state()
+    _, profile = find_profile(state, monitor_set(outputs))
+    if profile is None:
+        return False
+    live = resolve_profile_outputs(profile, outputs)
+    if outputs_too:
+        _output_suppressed_until = time.monotonic() + 3.0
+        _workspace_suppressed_until = time.monotonic() + 3.0
+        for saved in profile["outputs"]:
+            output = live[saved["identity"]]
+            name = quote_sway(output["name"])
+            if not saved.get("enabled", True):
+                sway_command(f"output {name} disable")
+                continue
+            parts = [f"output {name} enable"]
+            if saved.get("mode"):
+                parts.append(f"mode {saved['mode']}")
+            position = saved.get("position", [0, 0])
+            parts.append(f"pos {int(position[0])} {int(position[1])}")
+            parts.append(f"transform {saved.get('transform', 'normal')}")
+            parts.append(f"scale {float(saved.get('scale', 1.0)):g}")
+            parts.append(f"scale_filter {saved.get('scale_filter', 'smart')}")
+            adaptive = "on" if saved.get("adaptive_sync") else "off"
+            parts.append(f"adaptive_sync {adaptive}")
+            dpms = "on" if saved.get("dpms", True) else "off"
+            parts.append(f"dpms {dpms}")
+            sway_command(" ".join(parts))
+        time.sleep(0.25)
+        outputs = connected_outputs()
+        live = resolve_profile_outputs(profile, outputs)
+    apply_workspace_profile(profile, live)
+    if outputs_too:
+        run_output_hook()
+    return True
+
+
+def resolve_workspace_target(
+    target: str, outputs: list[dict[str, Any]]
+) -> str | None:
+    for output in outputs:
+        if target in {output["name"], output_description(output)}:
+            return output_identity(output)
+    return None
+
+
+def parse_nwg_workspaces(outputs: list[dict[str, Any]]) -> dict[str, str]:
+    if not NWG_WORKSPACES_PATH.exists():
+        return {}
+    assignments: dict[str, str] = {}
+    for raw_line in NWG_WORKSPACES_PATH.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        try:
+            fields = shlex.split(line)
+        except ValueError as error:
+            raise LayoutError(f"Cannot parse nwg-displays workspace line: {error}") from error
+        if len(fields) < 4 or fields[0] != "workspace" or fields[2] != "output":
+            continue
+        workspace = fields[1]
+        identity = resolve_workspace_target(" ".join(fields[3:]), outputs)
+        if workspace in WORKSPACE_NAMES and identity:
+            assignments[workspace] = identity
+    return assignments
+
+
+def prepare_nwg_workspaces() -> None:
+    outputs = connected_outputs()
+    state = load_state()
+    _, profile = find_profile(state, monitor_set(outputs))
+    live = live_output_map(outputs)
+    fallback = default_workspace_target(outputs)
+    workspaces = dict((profile or {}).get("workspaces", {}))
+    workspaces.update(live_workspace_map(outputs))
+    NWG_WORKSPACES_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with NWG_WORKSPACES_PATH.open("w") as destination:
+        destination.write("# Prepared for nwg-displays; managed by display-layouts.\n\n")
+        for workspace in WORKSPACE_NAMES:
+            identity = workspaces.get(workspace, fallback)
+            output = live.get(identity) or live[fallback]
+            destination.write(f"workspace {workspace} output {output['name']}\n")
+
+
+def run_gui() -> int:
+    if not shutil.which("nwg-displays"):
+        raise LayoutError("nwg-displays is not installed; run scripts/install-nwg-displays")
+    prepare_nwg_workspaces()
+    NWG_OUTPUTS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    result = subprocess.run(
+        [
+            "nwg-displays",
+            "--outputs_path",
+            str(NWG_OUTPUTS_PATH),
+            "--num_ws",
+            str(len(WORKSPACE_NAMES)),
+        ],
+        check=False,
+    )
+    if result.returncode != 0:
+        raise LayoutError(f"nwg-displays exited with status {result.returncode}")
+    outputs = connected_outputs()
+    profile = save_profile(parse_nwg_workspaces(outputs))
+    live = resolve_profile_outputs(profile, outputs)
+    apply_workspace_profile(profile, live)
+    notify(
+        "Display layout saved",
+        "The monitor and workspace layout was saved; Chezmoi source sync was requested.",
+    )
+    return 0
+
+
+def save_workspace_move(workspace_name: str) -> None:
+    if time.monotonic() < _workspace_suppressed_until:
+        return
+    try:
+        outputs = connected_outputs()
+        monitors = monitor_set(outputs)
+        state = load_state()
+        key, profile = find_profile(state, monitors)
+        if key is None or profile is None:
+            return
+        current = next(
+            (
+                workspace
+                for workspace in sway_json("get_workspaces")
+                if str(workspace.get("name")) == workspace_name
+            ),
+            None,
+        )
+        if current is None:
+            return
+        by_name = {output["name"]: output_identity(output) for output in outputs}
+        identity = by_name.get(current.get("output"))
+        if identity is None or profile["workspaces"].get(workspace_name) == identity:
+            return
+
+        def mutate(latest: dict[str, Any]) -> bool:
+            latest_key, latest_profile = find_profile(latest, monitors)
+            if latest_key is None or latest_profile is None:
+                return False
+            if latest_profile["workspaces"].get(workspace_name) == identity:
+                return False
+            latest_profile["workspaces"][workspace_name] = identity
+            return True
+
+        if update_state(mutate):
+            sway_command(
+                f"workspace {quote_sway(workspace_name)} output "
+                f"{quote_sway(current['output'])}"
+            )
+            notify(
+                "Workspace placement saved",
+                f"Workspace {workspace_name} will reopen on {current['output']}.",
+            )
+    except LayoutError as error:
+        print(f"display-layouts: {error}", file=sys.stderr)
+
+
+def daemon() -> int:
+    try:
+        from i3ipc import Connection, Event
+    except ImportError as error:
+        raise LayoutError("python3-i3ipc is required by the display layout daemon") from error
+
+    connection = Connection()
+
+    def apply_after_output_change() -> None:
+        global _output_timer
+        _output_timer = None
+        try:
+            apply_profile()
+        except LayoutError as error:
+            print(f"display-layouts: {error}", file=sys.stderr)
+
+    def output_changed(_connection: Any, _event: Any) -> None:
+        global _output_timer, _workspace_suppressed_until
+        if time.monotonic() < _output_suppressed_until:
+            return
+        _workspace_suppressed_until = time.monotonic() + 3.0
+        if _output_timer:
+            _output_timer.cancel()
+        _output_timer = threading.Timer(1.0, apply_after_output_change)
+        _output_timer.daemon = True
+        _output_timer.start()
+
+    def workspace_moved(_connection: Any, event: Any) -> None:
+        if time.monotonic() < _workspace_suppressed_until:
+            return
+        workspace_name = str(getattr(event.current, "name", ""))
+        if workspace_name not in WORKSPACE_NAMES:
+            return
+        old_timer = _workspace_timers.get(workspace_name)
+        if old_timer:
+            old_timer.cancel()
+        timer = threading.Timer(0.4, save_workspace_move, args=(workspace_name,))
+        timer.daemon = True
+        _workspace_timers[workspace_name] = timer
+        timer.start()
+
+    connection.on(Event.OUTPUT, output_changed)
+    connection.on(Event.WORKSPACE_MOVE, workspace_moved)
+    apply_profile()
+    connection.main()
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("gui", help="configure and save the current layout")
+    save_parser = subparsers.add_parser("save", help="save the current live layout")
+    save_parser.add_argument("--label", help="human-readable profile label")
+    subparsers.add_parser("apply", help="apply the profile for connected monitors")
+    subparsers.add_parser("daemon", help="watch outputs and workspace moves")
+    args = parser.parse_args()
+
+    try:
+        if args.command == "gui":
+            return run_gui()
+        if args.command == "save":
+            save_profile(label=args.label)
+            notify(
+                "Display layout saved",
+                "The current layout was saved; Chezmoi source sync was requested.",
+            )
+            return 0
+        if args.command == "apply":
+            return 0 if apply_profile() else 3
+        if args.command == "daemon":
+            return daemon()
+    except LayoutError as error:
+        notify("Display layout error", str(error), critical=True)
+        print(f"display-layouts: {error}", file=sys.stderr)
+        return 1
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
