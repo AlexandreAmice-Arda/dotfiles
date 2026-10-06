@@ -5,6 +5,10 @@ for_window [window_role="task_dialog"] floating enable
 for_window [window_type="dialog"] floating enable
 for_window [window_type="menu"] floating enable
 
+# Cloudflare's main window requests floating; keep it in the normal layout.
+for_window [app_id="^warp-taskbar$"] floating disable
+for_window [class="(?i)^warp-taskbar$"] floating disable
+
 # Communication apps share workspace 10 on every Sway host.
 assign [app_id="^signal$"] workspace number $ws10
 assign [class="(?i)^signal$"] workspace number $ws10

@@ -74,6 +74,13 @@ Long-running Sway components are supervised by systemd user units and tied to
 the Sway session target. Small scripts connect components without embedding
 procedural behavior in compositor configuration.
 
+Chezmoi masks the vendor `waybar.service` and `swaync.service` with user-level
+links to `/dev/null`. Ubuntu enables these units globally at package installation;
+without the masks, an application activating `graphical-session.target` can
+start a second bar and a competing notification daemon. The Sway-specific units
+remain the owners of these components. Cloudflare One Client's `warp-taskbar`
+window is explicitly tiled.
+
 ## Prompt and terminal decisions
 
 Native terminal windows begin with a plain shell so an SSH session is never

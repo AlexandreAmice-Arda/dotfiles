@@ -42,6 +42,8 @@ tests/**
 .config/wofi
 .config/wofi/**
 .config/systemd/user/sway-*.service
+.config/systemd/user/waybar.service
+.config/systemd/user/swaync.service
 .config/systemd/user/sway-session.target
 .config/xdg-desktop-portal/sway-portals.conf
 .local/bin/display-layouts

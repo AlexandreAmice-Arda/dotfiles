@@ -1,0 +1,16 @@
+{{ if eq .chezmoi.os "linux" -}}
+#!/bin/sh
+set -eu
+
+# Never change the real session when rendering a temporary validation home.
+[ "${CHEZMOI_DEST_DIR:-$HOME}" = "$HOME" ] || exit 0
+systemctl --user show-environment >/dev/null 2>&1 || exit 0
+
+# Ubuntu enables these vendor units globally on installation. The managed
+# masks leave startup to sway-waybar and sway-swaync, even when another app
+# activates graphical-session.target.
+# waybar mask: {{ include "private_dot_config/systemd/user/symlink_waybar.service" | sha256sum }}
+# swaync mask: {{ include "private_dot_config/systemd/user/symlink_swaync.service" | sha256sum }}
+systemctl --user daemon-reload
+systemctl --user stop waybar.service swaync.service
+{{ end -}}
