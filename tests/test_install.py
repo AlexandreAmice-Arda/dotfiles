@@ -18,6 +18,11 @@ class InstallerTests(unittest.TestCase):
             scripts = root / "scripts"
             scripts.mkdir()
             shutil.copy2(SOURCE_ROOT / "scripts/install", scripts)
+            # The simulated Linux installer must not read the test host's OS.
+            os_release = root / "os-release"
+            os_release.write_text('ID=ubuntu\nVERSION_ID="24.04"\nVERSION_CODENAME=noble\n')
+            installer = scripts / "install"
+            installer.write_text(installer.read_text().replace("/etc/os-release", str(os_release)))
             shutil.copytree(SOURCE_ROOT / "packages", root / "packages")
             shutil.copy2(SOURCE_ROOT / ".chezmoidata.yaml", root)
             mock_bin = root / "bin"
