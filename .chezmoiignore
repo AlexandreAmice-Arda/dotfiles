@@ -79,6 +79,10 @@ tests/**
 .config/aerospace/**
 .config/ghostty
 .config/ghostty/**
+.hammerspoon
+.hammerspoon/**
+Library
+Library/**
 {{- end }}
 
 # Native appearance adapters are platform-specific.

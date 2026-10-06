@@ -36,11 +36,13 @@ cmd-shift-t = 'exec-and-forget open -na Ghostty --args -e {{ .chezmoi.homeDir }}
 #@ Apps: Open the Herdr agent workspace
 cmd-ctrl-t = 'exec-and-forget open -na Ghostty --args -e {{ .chezmoi.homeDir }}/.local/bin/terminal-agents'
 #@ Apps: Open application launcher
-cmd-d = 'exec-and-forget open -a /System/Library/CoreServices/Spotlight.app'
+# Apps opens Spotlight's visible launcher; opening Spotlight.app alone may show no panel.
+cmd-d = 'exec-and-forget open -a /System/Applications/Apps.app'
 #@ Apps: Search desktop commands and shortcuts
 cmd-slash = 'exec-and-forget {{ .chezmoi.homeDir }}/.local/bin/desktop-commands'
 #@ System: Open system settings
-cmd-c = 'exec-and-forget open -a "System Settings"'
+# Keep native Command+C/V/X clipboard shortcuts available to applications.
+cmd-ctrl-c = 'exec-and-forget open -a "System Settings"'
 #@ System: Reload desktop configuration
 cmd-shift-c = 'reload-config'
 #@ Windows: Close focused window
@@ -78,6 +80,11 @@ cmd-{{ .key }} = 'workspace {{ .name }}'
 #@ Workspaces: Move window to workspace {{ .name }}
 cmd-shift-{{ .key }} = 'move-node-to-workspace {{ .name }}'
 {{ end }}
+
+# Override automatic dialog floating for every detected window.
+[[on-window-detected]]
+check-further-callbacks = true
+run = 'layout tiling'
 
 [[on-window-detected]]
 if.app-id = 'com.tinyspeck.slackmacgap'

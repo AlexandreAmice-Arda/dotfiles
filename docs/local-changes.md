@@ -17,7 +17,8 @@ now follow Sway's chords:
 - Super+D opens the application launcher; macOS uses Spotlight.
 - Super+/ opens the command palette. The macOS palette reads annotated
   AeroSpace bindings and preserves the original target window when dispatching.
-- Super+C opens system controls; macOS uses System Settings.
+- Super+C opens system controls on Ubuntu; Command+Ctrl+C opens System Settings
+  on macOS, preserving Command+C for Copy.
 - Super+H/J/K/L focuses windows; Alt moves windows; Ctrl moves whole workspaces
   between monitors.
 - Super+E selects tiles or changes their orientation. Super+S/W selects
@@ -25,7 +26,8 @@ now follow Sway's chords:
 
 AeroSpace's explicit split bindings retain single-child containers by disabling
 container flattening. These desktop bindings override native Command shortcuts,
-including Copy, Save, Close, Hide, Find, and New Tab. Sway's scratchpad, power
+including Save, Close, Hide, Find, and New Tab. Native clipboard shortcuts remain
+available to applications. Sway's scratchpad, power
 menu, lock, and screenshot controls do not have matching AeroSpace bindings.
 
 ## Terminal panes

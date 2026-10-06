@@ -37,3 +37,7 @@ fi
 if command -v atuin >/dev/null 2>&1; then
     eval "$(atuin init zsh --disable-up-arrow --disable-ai)"
 fi
+
+# Ghostty sends xterm-style Ctrl+Arrow sequences for word navigation.
+bindkey '^[[1;5D' backward-word
+bindkey '^[[1;5C' forward-word

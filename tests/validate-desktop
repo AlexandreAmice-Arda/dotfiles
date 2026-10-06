@@ -86,6 +86,9 @@ require_file "$linux_portable/.local/bin/slack"
 require_file "$linux_portable/.local/share/applications/signal-desktop.desktop"
 require_file "$mac_portable/.config/aerospace/aerospace.toml"
 require_file "$mac_portable/.config/ghostty/config.ghostty"
+require_file "$mac_portable/Library/Application Support/Code/User/keybindings.json"
+require_absent "$linux_portable/Library"
+require_absent "$linux_workstation/Library"
 require_file "$mac_portable/.zshrc"
 require_absent "$mac_portable/.config/sway"
 require_absent "$mac_portable/.config/kanshi"
@@ -560,8 +563,10 @@ with open(sys.argv[1], 'rb') as stream:
     config = tomllib.load(stream)
 bindings = config['mode']['main']['binding']
 assert all(key.startswith('cmd-') for key in bindings), 'mixed desktop modifiers'
+assert not {'cmd-c', 'cmd-v', 'cmd-x', 'cmd-shift-v'} & bindings.keys(), 'desktop bindings intercept native clipboard shortcuts'
+assert bindings['cmd-ctrl-c'] == 'exec-and-forget open -a "System Settings"'
 assert 'desktop-commands' in bindings['cmd-slash']
-assert 'Spotlight.app' in bindings['cmd-d']
+assert bindings['cmd-d'] == 'exec-and-forget open -a /System/Applications/Apps.app'
 assert bindings['cmd-e'] == 'layout tiles horizontal vertical'
 assert bindings['cmd-alt-q'] == 'close'
 for key, direction in [('h', 'left'), ('j', 'down'), ('k', 'up'), ('l', 'right')]:
@@ -570,6 +575,38 @@ for key, direction in [('h', 'left'), ('j', 'down'), ('k', 'up'), ('l', 'right')
     assert bindings[f'cmd-ctrl-{key}'] == f'move-workspace-to-monitor {direction}'
 PYTHON
 ok 'uniform desktop modifiers and macOS command palette'
+python3 - "$mac_portable/Library/Application Support/Code/User/keybindings.json" <<'SHORTCUTS'
+import json, sys
+rules = json.load(open(sys.argv[1]))
+def resolve(key, **context):
+    context = dict(isMac=True, **context)
+    def matches(condition):
+        for term in condition.split(' && '):
+            value = bool(context.get(term.lstrip('!'), False))
+            if value == term.startswith('!'):
+                return False
+        return True
+    return next((rule for rule in reversed(rules)
+                 if rule['key'] == key and matches(rule['when'])), None)
+for selected in (False, True):
+    context = dict(terminalFocus=True, terminalTextSelected=selected, textInputFocus=True)
+    interrupt = resolve('ctrl+c', **context)
+    assert interrupt['command'] == 'workbench.action.terminal.sendSequence'
+    assert interrupt['args']['text'] == '\x03'
+    erase = resolve('ctrl+backspace', **context)
+    assert erase['args']['text'] == '\x17'
+    assert resolve('ctrl+a', **context) is None
+    assert resolve('ctrl+z', **context) is None
+    assert resolve('ctrl+s', **context) is None
+    assert bool(resolve('ctrl+shift+c', **context)) == selected
+    assert resolve('ctrl+shift+v', **context)['command'] == 'workbench.action.terminal.paste'
+assert resolve('ctrl+c', textInputFocus=True)['command'] == 'editor.action.clipboardCopyAction'
+assert resolve('ctrl+backspace', editorTextFocus=True)['command'] == 'deleteWordLeft'
+assert resolve('ctrl+z', textInputFocus=True)['command'] == 'undo'
+assert resolve('ctrl+y', textInputFocus=True)['command'] == 'redo'
+assert resolve('ctrl+s')['command'] == 'workbench.action.files.save'
+SHORTCUTS
+ok 'VS Code editor and terminal shortcut separation'
 require_file "$mac_portable/.local/bin/apply-appearance"
 require_file "$mac_portable/.local/libexec/appearance/macos.js"
 require_absent "$linux_portable/.local/libexec/appearance/macos.js"

@@ -102,13 +102,16 @@ cd "$(chezmoi source-path)"
 chezmoi diff
 chezmoi apply --verbose
 open -a AeroSpace
+open -a Hammerspoon
 desktop-doctor
 ```
 
 Grant AeroSpace permission in System Settings → Privacy & Security →
 Accessibility when macOS requests it. Quit and reopen AeroSpace after enabling
-permission if its CLI cannot connect. Open a fresh Ghostty window to load the
-managed shell setup.
+permission if its CLI cannot connect. Grant Hammerspoon Accessibility permission
+there too for common Ctrl editing/app shortcuts in GUI apps and Ghostty's
+Ctrl+scroll font zoom. Open a fresh Ghostty window to
+load the managed shell setup.
 
 The installer adopts identical applications already in `/Applications` and
 installs missing dependencies without routine package upgrades. An existing
