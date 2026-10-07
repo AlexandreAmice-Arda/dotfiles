@@ -91,6 +91,13 @@ require_absent "$linux_portable/Library"
 require_absent "$linux_workstation/Library"
 require_file "$mac_portable/.zshrc"
 require_absent "$mac_portable/.config/sway"
+for unit in waybar swaync; do
+    for home in "$linux_portable" "$linux_workstation"; do
+        [ "$(readlink "$home/.config/systemd/user/$unit.service")" = /dev/null ] \
+            || fail "vendor $unit.service is not masked in $home"
+    done
+    require_absent "$mac_portable/.config/systemd/user/$unit.service"
+done
 require_absent "$mac_portable/.config/kanshi"
 require_absent "$mac_portable/.config/terminator"
 for helper in display-layouts focus-notification-app focus-or-launch focus-pcloud start-sway \
