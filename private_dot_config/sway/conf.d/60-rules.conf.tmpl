@@ -10,8 +10,6 @@ for_window [app_id="^warp-taskbar$"] floating disable
 for_window [class="(?i)^warp-taskbar$"] floating disable
 
 # Communication apps share workspace 10 on every Sway host.
-assign [app_id="^signal$"] workspace number $ws10
-assign [class="(?i)^signal$"] workspace number $ws10
 assign [app_id="^slack$"] workspace number $ws10
 assign [class="(?i)^slack$"] workspace number $ws10
 
@@ -19,8 +17,3 @@ assign [class="(?i)^slack$"] workspace number $ws10
 # the focused workspace.
 assign [app_id="^foot$"] workspace number $ws9
 assign [class="(?i)^foot$"] workspace number $ws9
-
-# Treat the pCloud dashboard like an ordinary application window. Its smaller
-# menu/dialog windows still match the common dialog rules above.
-for_window [app_id="^pcloud$"] floating disable
-for_window [class="(?i)^pcloud$"] floating disable

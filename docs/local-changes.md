@@ -53,7 +53,9 @@ workspace disappear. No machine-specific monitor assignment is committed.
 - Add `scripts/install` to install the Brewfile without routine upgrades
   and install Codex, including Homebrew PATH discovery.
 - Remove Signal from the macOS package, startup, and workspace declarations;
-  Slack remains configured on workspace 10. Ubuntu retains Signal.
+  Slack remains configured on workspace 10. Ubuntu now follows the same app
+  selection: Signal and pCloud installation/startup integrations are retired.
+  Existing packages and personal application data are not uninstalled.
 - Exclude Linux-only display, focus, and battery helpers from macOS deployment.
 - Ignore Python bytecode caches in Git and Chezmoi.
 - Extend `desktop-doctor` with AeroSpace TOML and Ghostty configuration checks.
@@ -74,12 +76,14 @@ diagnostics. The graphical launcher and palette still need hands-on validation.
 
 ## Minimal macOS terminal appearance
 
-Ghostty follows Foot's shared font, Tokyo Night palette, selection colors,
+Ghostty follows Foot's shared font family, Tokyo Night palette, selection colors,
 padding, 95% opacity, and blinking beam cursor. Blur is disabled and unfocused
 Ghostty splits retain full opacity. The macOS title bar is hidden to reduce
 terminal chrome; this setting applies to new windows. Scrollback remains at
 Ghostty's default byte budget, since Foot's 10,000-line limit has no exact
-Ghostty equivalent. Foot's machine-local opacity picker remains Linux-specific.
+Ghostty equivalent. Ghostty intentionally uses size 15 while Foot uses size 11;
+the native terminals use different sizing and display scaling. The shared
+`apply-appearance` command controls machine-local opacity on both platforms.
 
 A macOS-only, idempotent Chezmoi script enables Dock auto-hiding and restarts
 Dock only when the preference changes. The Dock still appears when the pointer

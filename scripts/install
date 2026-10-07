@@ -420,20 +420,6 @@ install_cloudflare_one_repository() {
         /etc/apt/sources.list.d/cloudflare-warp.sources
 }
 
-install_signal_repository() {
-    wget -qO "$install_temp_dir/signal.asc" \
-        https://updates.signal.org/desktop/apt/keys.asc &&
-    gpg --batch --dearmor \
-        --output "$install_temp_dir/signal-desktop-keyring.gpg" \
-        "$install_temp_dir/signal.asc" &&
-    sudo install -o root -g root -m 0644 \
-        "$install_temp_dir/signal-desktop-keyring.gpg" \
-        /usr/share/keyrings/signal-desktop-keyring.gpg &&
-    sudo install -o root -g root -m 0644 \
-        "$repo_dir/packages/signal-desktop.sources" \
-        /etc/apt/sources.list.d/signal-desktop.sources
-}
-
 install_slack() {
     if ! command -v snap >/dev/null 2>&1; then
         sudo apt-get install -y snapd || return "$?"
@@ -467,14 +453,6 @@ run_step 'Enable universe repository' sudo add-apt-repository -y universe
 run_step 'Configure VS Code repository' install_vscode_repository
 run_step 'Configure Cloudflare One repository' install_cloudflare_one_repository
 
-architecture=$(dpkg --print-architecture)
-if [ "$architecture" = amd64 ]; then
-    run_step 'Configure Signal repository' install_signal_repository
-else
-    printf 'Signal Desktop is unavailable from its Ubuntu repository on %s; skipping it.\n' \
-        "$architecture" >&2
-fi
-
 run_step 'Refresh package lists' sudo apt-get update
 # shellcheck disable=SC2086
 run_step 'Install Ubuntu manifest packages' sudo apt-get install -y $packages
@@ -482,9 +460,6 @@ run_step 'Register Sway login session' install_sway_session
 run_step 'Configure GeoClue' sudo install -D -o root -g root -m 0644 \
     "$repo_dir/packages/geoclue-beacondb.conf" \
     /etc/geoclue/conf.d/99-beacondb.conf
-if [ "$architecture" = amd64 ]; then
-    run_step 'Install Signal Desktop' sudo apt-get install -y signal-desktop
-fi
 if [ ! -x /usr/bin/slack ] && ! snap list slack >/dev/null 2>&1; then
     run_step 'Install Slack' install_slack
 fi

@@ -161,6 +161,61 @@ from `Super+C` to arrange screens and assign workspaces. Closing the GUI saves
 the connected-monitor profile locally and updates the Chezmoi source; later
 workspace moves are recorded automatically by the Sway layout service.
 
+## Updating either platform
+
+Both machines follow `main` in `AlexandreAmice-Arda/dotfiles`; separate OS
+branches are unnecessary. Commit any local source edits before pulling. If a
+machine still uses the original repository as `origin`, point it at this fork.
+Do not use `chezmoi update` for this rollout: install dependencies before applying
+the new configuration.
+
+Ubuntu:
+
+```sh
+cd "$(chezmoi source-path)" &&
+git remote set-url origin https://github.com/AlexandreAmice-Arda/dotfiles.git &&
+git switch main &&
+git pull --ff-only origin main &&
+chezmoi init &&
+./scripts/install &&
+./tests/validate-desktop &&
+chezmoi diff &&
+chezmoi apply --verbose
+```
+
+Log out completely, select **Sway** at login, then run
+`~/.local/bin/desktop-doctor`. The installer refreshes the system login launcher.
+Signal and pCloud are no longer installed or started by these dotfiles; existing
+application packages and personal data remain on the machine.
+
+macOS:
+
+```sh
+cd "$(chezmoi source-path)" &&
+git remote set-url origin https://github.com/AlexandreAmice-Arda/dotfiles.git &&
+git switch main &&
+git pull --ff-only origin main &&
+chezmoi init &&
+./scripts/install &&
+./tests/validate-desktop &&
+chezmoi diff &&
+chezmoi apply --verbose &&
+open -a AeroSpace &&
+open -a Hammerspoon
+```
+
+Grant AeroSpace and Hammerspoon Accessibility permission, reload Hammerspoon
+from its menu if it was already running, and open a new Ghostty window. Run
+`~/.local/bin/desktop-doctor` there. Native macOS GUI behavior and physical
+Ubuntu display startup still need verification on each machine; rendering and
+automated tests do not exercise those sessions.
+
+Shared configuration keeps Tokyo Night colors, wallpaper choices, workspaces,
+tmux, Herdr, Starship, Atuin, and Neovim aligned. Sway/Foot and
+AeroSpace/Ghostty remain native adapters. Ghostty's size 15 versus Foot's size
+11, macOS clipboard handling, and platform-specific system controls are
+intentional differences.
+
 ## Validation
 
 Run the clean-room integration validator before committing:

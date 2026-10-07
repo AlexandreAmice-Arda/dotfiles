@@ -99,6 +99,12 @@ elif name == "snap":
         self.assertIn("Software installation complete.", result.stdout)
         self.assertEqual(commands[-1], "check-ubuntu")
 
+    def test_retired_apps_are_not_installed(self):
+        result, commands = self.run_installer([])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any("signal-desktop" in command or "pcloud" in command
+                             for command in commands))
+
     def test_failed_child_and_check_are_reported_after_later_steps(self):
         result, commands = self.run_installer(["install-foot", "install-nwg-displays", "check-ubuntu"])
         self.assertEqual(result.returncode, 1)
@@ -147,7 +153,7 @@ elif name == "snap":
         self.assertEqual(result.returncode, 1)
         self.assertFalse(any("microsoft.gpg" in command for command in commands))
         self.assertFalse(any("vscode.sources" in command for command in commands))
-        self.assertTrue(any("signal-desktop.sources" in command for command in commands))
+        self.assertTrue(any("cloudflare-warp.sources" in command for command in commands))
         self.assertIn("install-nwg-displays", commands)
         self.assertIn("Configure VS Code repository (exit 7)", result.stderr)
 

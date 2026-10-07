@@ -41,9 +41,6 @@ require_file "$HOME/.local/bin/terminal-main"
 require_file "$HOME/.local/bin/suspend-if-on-battery"
 require_file /usr/libexec/polkit-mate-authentication-agent-1
 require_file /usr/bin/code
-{{ if eq .chezmoi.arch "amd64" -}}
-require_file /opt/Signal/signal-desktop
-{{ end -}}
 if [ -x /usr/bin/slack ] || [ -x /snap/bin/slack ]; then
     ok 'Slack executable installed'
 else
@@ -124,9 +121,6 @@ fi
 
 if [ -n "${SWAYSOCK:-}" ] && command -v systemctl >/dev/null 2>&1; then
     session_units='sway-waybar sway-swaync sway-idle sway-display-layouts sway-nm-applet sway-polkit-agent sway-blueman-applet sway-slack'
-{{ if eq .chezmoi.arch "amd64" -}}
-    session_units="$session_units sway-signal"
-{{ end -}}
     for unit in $session_units; do
         systemctl --user is-active --quiet "$unit.service" \
             && ok "active service: $unit" || fail "inactive service: $unit"

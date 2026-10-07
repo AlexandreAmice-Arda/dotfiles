@@ -42,7 +42,7 @@ require_file() {
 }
 
 require_absent() {
-    [ ! -e "$1" ] || fail "platform/profile leak: $1"
+    { [ ! -e "$1" ] && [ ! -L "$1" ]; } || fail "platform/profile leak: $1"
 }
 
 linux_portable=$(materialize linux-portable linux portable | tail -n 1)
@@ -73,17 +73,17 @@ require_file "$linux_portable/.config/systemd/user/sway-timezone-refresh.service
 require_file "$linux_workstation/.config/systemd/user/sway-timezone-refresh.service"
 require_file "$linux_portable/.config/sway/scripts/output-profile-applied"
 require_file "$linux_workstation/.config/sway/scripts/output-profile-applied"
-require_file "$linux_portable/.config/sway/scripts/start-pcloud"
-require_file "$linux_workstation/.config/sway/scripts/start-pcloud"
+require_absent "$linux_portable/.config/sway/scripts/start-pcloud"
+require_absent "$linux_workstation/.config/sway/scripts/start-pcloud"
 require_absent "$linux_workstation/.config/sway/scripts/arrange-code-windows"
 require_absent "$linux_workstation/.config/sway/scripts/start-work-session"
-require_file "$linux_workstation/.config/systemd/user/sway-signal.service"
+require_absent "$linux_workstation/.config/systemd/user/sway-signal.service"
 require_file "$linux_workstation/.config/systemd/user/sway-slack.service"
 require_file "$linux_workstation/.local/bin/slack"
-require_file "$linux_portable/.config/systemd/user/sway-signal.service"
+require_absent "$linux_portable/.config/systemd/user/sway-signal.service"
 require_file "$linux_portable/.config/systemd/user/sway-slack.service"
 require_file "$linux_portable/.local/bin/slack"
-require_file "$linux_portable/.local/share/applications/signal-desktop.desktop"
+require_absent "$linux_portable/.local/share/applications/signal-desktop.desktop"
 require_file "$mac_portable/.config/aerospace/aerospace.toml"
 require_file "$mac_portable/.config/ghostty/config.ghostty"
 require_file "$mac_portable/Library/Application Support/Code/User/keybindings.json"
@@ -100,7 +100,7 @@ for unit in waybar swaync; do
 done
 require_absent "$mac_portable/.config/kanshi"
 require_absent "$mac_portable/.config/terminator"
-for helper in display-layouts focus-notification-app focus-or-launch focus-pcloud start-sway \
+for helper in display-layouts focus-notification-app focus-or-launch start-sway \
     suspend-if-on-battery; do
     require_file "$linux_portable/.local/bin/$helper"
     require_absent "$mac_portable/.local/bin/$helper"
@@ -294,9 +294,6 @@ grep -Fqx 'cask "slack"' "$source_root/Brewfile" \
 grep -Fqx 'URIs: https://packages.microsoft.com/repos/code' \
     "$source_root/packages/vscode.sources" \
     || fail 'Microsoft Visual Studio Code apt repository is undeclared'
-grep -Fqx 'URIs: https://updates.signal.org/desktop/apt' \
-    "$source_root/packages/signal-desktop.sources" \
-    || fail 'Signal Desktop apt repository is undeclared'
 grep -Fq 'https://chatgpt.com/codex/install.sh' \
     "$source_root/scripts/install" \
     || fail 'Official Codex installer is undeclared'
@@ -325,8 +322,6 @@ for home in "$linux_portable" "$linux_workstation"; do
     grep -Fq "workspace number \$ws10" \
         "$home/.config/sway/conf.d/60-rules.conf" \
         || fail 'Communication apps are not assigned to workspace 10'
-    grep -Fq 'app_id="^signal$"' "$home/.config/sway/conf.d/60-rules.conf" \
-        || fail 'Signal workspace assignment is missing'
     grep -Fq 'app_id="^slack$"' "$home/.config/sway/conf.d/60-rules.conf" \
         || fail 'Slack workspace assignment is missing'
 done
@@ -614,6 +609,15 @@ assert resolve('ctrl+y', textInputFocus=True)['command'] == 'redo'
 assert resolve('ctrl+s')['command'] == 'workbench.action.files.save'
 SHORTCUTS
 ok 'VS Code editor and terminal shortcut separation'
+if command -v luajit >/dev/null 2>&1; then
+    (cd "$source_root" && luajit tests/validate-hammerspoon.lua)
+elif command -v lua >/dev/null 2>&1; then
+    (cd "$source_root" && lua tests/validate-hammerspoon.lua)
+elif command -v nvim >/dev/null 2>&1; then
+    (cd "$source_root" && nvim --headless -u NONE -l tests/validate-hammerspoon.lua)
+else
+    warn 'Lua and Neovim unavailable; skipped Hammerspoon shortcut routing tests'
+fi
 require_file "$mac_portable/.local/bin/apply-appearance"
 require_file "$mac_portable/.local/libexec/appearance/macos.js"
 require_absent "$linux_portable/.local/libexec/appearance/macos.js"
@@ -638,8 +642,14 @@ for i in range(16):
     field = ('regular' + str(i)) if i < 8 else ('bright' + str(i - 8))
     assert foot['colors-dark'][field] == ghostty['palette.' + str(i)]
 assert 'ghostty-opacity.conf' in ghostty['config-file']
-assert (linux / '.tmux.conf').read_text() == (mac / '.tmux.conf').read_text()
-assert (linux / '.config/starship.toml').read_text() == (mac / '.config/starship.toml').read_text()
+for relative in ('.tmux.conf', '.config/starship.toml', '.config/atuin/config.toml',
+                 '.config/herdr/config.toml', '.local/bin/terminal-main',
+                 '.local/bin/terminal-agents'):
+    assert (linux / relative).read_bytes() == (mac / relative).read_bytes(), relative
+for source in (linux / '.config/nvim').rglob('*'):
+    if source.is_file():
+        relative = source.relative_to(linux)
+        assert source.read_bytes() == (mac / relative).read_bytes(), str(relative)
 assert 'tokyonight-night' in (mac / '.config/nvim/lua/plugins/theme.lua').read_text()
 THEME
 ok 'shared terminal, prompt, tmux, and editor theme'

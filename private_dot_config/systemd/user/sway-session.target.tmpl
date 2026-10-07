@@ -5,6 +5,3 @@ Wants=sway-nm-applet.service sway-polkit-agent.service
 Wants=sway-blueman-applet.service sway-slack.service
 Wants=sway-datetime.service sway-geoclue-agent.service sway-display-layouts.service
 Wants=sway-timezone-refresh.path
-{{ if eq .chezmoi.arch "amd64" -}}
-Wants=sway-signal.service
-{{ end -}}

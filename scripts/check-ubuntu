@@ -26,13 +26,6 @@ fi
 
 printf 'All %d Ubuntu manifest packages are installed.\n' "$checked"
 
-if [ "$(dpkg --print-architecture)" = amd64 ]; then
-    status=$(dpkg-query -W -f='${db:Status-Abbrev}' signal-desktop 2>/dev/null || true)
-    if [ "$status" != ii\  ]; then
-        printf 'missing signal-desktop\n' >&2
-        exit 1
-    fi
-fi
 if [ ! -x /usr/bin/slack ] && ! snap list slack >/dev/null 2>&1; then
     printf 'missing slack\n' >&2
     exit 1

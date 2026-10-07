@@ -1,5 +1,10 @@
 {{- if eq .chezmoi.os "linux" }}
 .config/kanshi
+.config/systemd/user/sway-signal.service
+.config/sway/scripts/start-pcloud
+.config/autostart/pcloud.desktop
+.local/bin/focus-pcloud
+.local/share/applications/signal-desktop.desktop
 .config/systemd/user/sway-kanshi.service
 .config/systemd/user/sway-rfkill.service
 .config/sway/scripts/apply-outputs

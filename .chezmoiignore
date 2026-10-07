@@ -49,7 +49,6 @@ tests/**
 .local/bin/display-layouts
 .local/bin/focus-notification-app
 .local/bin/focus-or-launch
-.local/bin/focus-pcloud
 .local/bin/lock-desktop
 .local/bin/session-action
 .local/bin/start-sway
@@ -60,13 +59,7 @@ tests/**
 .local/bin/waybar
 .local/bin/wlogout
 .local/bin/slack
-.local/share/applications/signal-desktop.desktop
 .local/libexec/desktop-doctor/linux
-{{- end }}
-
-{{- if ne .chezmoi.arch "amd64" }}
-.config/systemd/user/sway-signal.service
-.local/share/applications/signal-desktop.desktop
 {{- end }}
 
 {{- if ne .chezmoi.os "darwin" }}

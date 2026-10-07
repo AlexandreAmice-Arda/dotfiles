@@ -21,7 +21,7 @@ Package declarations are separate from repository tooling. The root
 `Brewfile` is the macOS manifest and `packages/ubuntu.txt` is the Ubuntu
 manifest. `scripts/install` selects the platform, installs its manifest and
 Codex, and continues independent steps after failures. On Ubuntu it also
-configures vendor repositories for VS Code, Signal, and Cloudflare One Client
+configures vendor repositories for VS Code and Cloudflare One Client
 (WARP), and installs Slack through its supported Snap. It registers the
 existing system-wide Sway session with a launcher that detects GPU drivers
 and connected displays at login, retaining both GPUs on hybrid machines.

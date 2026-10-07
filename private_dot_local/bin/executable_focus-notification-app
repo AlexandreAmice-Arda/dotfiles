@@ -41,10 +41,6 @@ if [[ ${FOCUS_HELPER_DRY_RUN:-0} == 1 ]]; then
     exit 0
 fi
 
-if [[ "${app_name,,}${desktop_entry,,}" == *pcloud* ]]; then
-    exec "$HOME/.local/bin/focus-pcloud"
-fi
-
 # SwayNC runs action scripts alongside the notification's native action. Give
 # the app a short opportunity to show or create its window before focusing it.
 for _ in $(seq 1 50); do
