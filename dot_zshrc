@@ -11,6 +11,10 @@ alias l='ls -CF'
 
 autoload -Uz compinit && compinit
 
+if command -v herdr >/dev/null 2>&1; then
+    source <(command herdr completion zsh)
+fi
+
 # fzf keeps file/directory widgets and completion. Atuin is initialized last
 # so it owns Ctrl-R without replacing the normal Up-arrow history behavior.
 if command -v fzf >/dev/null 2>&1; then
