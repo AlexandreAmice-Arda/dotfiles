@@ -12,7 +12,8 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 
 
 class InstallerTests(unittest.TestCase):
-    def run_installer(self, failures, component=None, platform="Linux", rust_available=True, arguments=()):
+    def run_installer(self, failures, component=None, platform="Linux", rust_available=True, arguments=(),
+                      gtklock_version="v2.1.0"):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             scripts = root / "scripts"
@@ -64,6 +65,8 @@ elif name == "dpkg" and args == ["--print-architecture"]:
     print("amd64")
 elif name == "dpkg-query":
     print("ii ")
+elif name == "gtklock" and args == ["--version"]:
+    print("gtklock " + os.environ["INSTALL_TEST_GTKLOCK_VERSION"])
 elif name == "getent":
     print("video:x:44:")
 elif name == "snap":
@@ -71,15 +74,16 @@ elif name == "snap":
 ''')
             mock.chmod(0o755)
             for name in ("uname", "dpkg", "sudo", "wget", "gpg", "curl",
-                         "sha256sum", "install", "snap", "find", "getent", "sh", "dpkg-query", "brew", "cargo", "rustc"):
+                         "sha256sum", "install", "snap", "find", "getent", "sh", "dpkg-query", "brew", "cargo", "rustc", "gtklock"):
                 (mock_bin / name).symlink_to(mock)
-            for name in ("check-ubuntu",):
+            for name in ("check-ubuntu", "install-sway-stack", "install-ghostty"):
                 (scripts / name).symlink_to(mock)
             env = os.environ.copy()
             # Keep host-installed Rust and nwg-displays out of component tests.
             env.update(PATH=f"{mock_bin}:/usr/bin:/bin", HOME=str(root), USER="installer-test",
                        INSTALL_TEST_LOG=str(log), INSTALL_TEST_FAILURES="\n".join(failures),
                        INSTALL_TEST_PLATFORM=platform, CARGO_HOME=str(root / ".cargo"),
+                       INSTALL_TEST_GTKLOCK_VERSION=gtklock_version,
                        RUSTUP_HOME=str(root / ".rustup"),
                        INSTALL_TEST_RUST_AVAILABLE="1" if rust_available else "0")
             if component is None:
@@ -97,6 +101,7 @@ elif name == "snap":
         result, commands = self.run_installer([])
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Software installation complete.", result.stdout)
+        self.assertFalse(any("signal-desktop" in command for command in commands))
         self.assertEqual(commands[-1], "check-ubuntu")
 
     def test_retired_apps_are_not_installed(self):
@@ -106,7 +111,7 @@ elif name == "snap":
                              for command in commands))
 
     def test_failed_child_and_check_are_reported_after_later_steps(self):
-        result, commands = self.run_installer(["install-foot", "install-nwg-displays", "check-ubuntu"])
+        result, commands = self.run_installer(["install-ghostty", "install-nwg-displays", "check-ubuntu"])
         self.assertEqual(result.returncode, 1)
         self.assertIn("install-codex", commands)
         self.assertEqual(commands[-1], "check-ubuntu")
@@ -185,10 +190,51 @@ elif name == "snap":
                 self.assertIn("install-codex", commands)
                 self.assertIn("Configure Cloudflare One repository (exit 7)", result.stderr)
 
-    def test_foot_component_checksum_failure_stops_before_build(self):
-        result, commands = self.run_installer(["sha256sum *"], component="foot")
-        self.assertEqual(result.returncode, 7)
-        self.assertFalse(any(command.startswith("sudo ") for command in commands))
+    def test_ghostty_replaces_foot_in_linux_install(self):
+        result, commands = self.run_installer([])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("install-ghostty", commands)
+        self.assertNotIn("install-foot", commands)
+
+    def test_gtklock_only_installs_module_without_other_components(self):
+        result, commands = self.run_installer([], arguments=("--gtklock-powerbar",))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("install-gtklock-powerbar", commands)
+        self.assertFalse(any("apt-get" in command or command == "check-ubuntu"
+                             or command.startswith("install-foot") for command in commands))
+
+    def test_sway_stack_only_builds_before_registering_login_launcher(self):
+        result, commands = self.run_installer([], arguments=("--sway-stack",))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        build = commands.index('install-sway-stack')
+        launcher = next(i for i, command in enumerate(commands)
+                        if command.endswith(' /usr/local/bin/start-sway'))
+        self.assertLess(build, launcher)
+        self.assertNotIn('check-ubuntu', commands)
+
+    def test_failed_sway_stack_does_not_switch_login_launcher(self):
+        result, commands = self.run_installer(['install-sway-stack'], arguments=("--sway-stack",))
+        self.assertEqual(result.returncode, 7, result.stderr)
+        self.assertFalse(any(command.endswith(' /usr/local/bin/start-sway') for command in commands))
+
+    def test_gtklock_module_selects_compatible_release_and_checks_archive(self):
+        for gtklock, module in (("v2.1.0", "v2.0.1"), ("v3.0.0", "v3.0.0"),
+                                ("v4.0.0", "v4.0.0")):
+            with self.subTest(gtklock=gtklock):
+                result, commands = self.run_installer(["sha256sum *"],
+                                                     component="gtklock-powerbar",
+                                                     gtklock_version=gtklock)
+                self.assertEqual(result.returncode, 7, result.stderr)
+                download = next(command for command in commands if command.startswith("curl "))
+                self.assertTrue(download.endswith("/refs/tags/" + module), download)
+                self.assertFalse(any(command.startswith("install ") for command in commands))
+
+    def test_unsupported_gtklock_fails_before_download(self):
+        result, commands = self.run_installer([], component="gtklock-powerbar",
+                                             gtklock_version="v5.0.0")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Unsupported GTKLock version", result.stderr)
+        self.assertFalse(any(command.startswith("curl ") for command in commands))
 
     def test_macos_installs_homebrew_and_codex_without_ubuntu_packages(self):
         result, commands = self.run_installer([], platform="Darwin")

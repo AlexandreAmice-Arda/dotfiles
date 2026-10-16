@@ -17,7 +17,7 @@ case " {{ range .desktop.support.qualified_ubuntu }}{{ . }} {{ end }}" in
 esac
 
 for command_name in \
-    sway swaymsg swayidle nwg-displays jq foot tmux wofi gtklock brightnessctl wpctl \
+    sway swaymsg swayidle nwg-displays jq ghostty tmux wofi gtklock gdmflexiserver brightnessctl wpctl \
     playerctl grim slurp wl-copy notify-send nm-applet nm-connection-editor \
     blueman-manager blueman-applet powerprofilesctl pavucontrol \
     gnome-system-monitor
@@ -25,11 +25,21 @@ do
     require_command "$command_name"
 done
 
-foot_version=$(foot --version 2>/dev/null | awk '{print $3}')
-if [ -n "$foot_version" ] && dpkg --compare-versions "$foot_version" ge 1.20.0; then
-    ok "Foot version avoids duplicate Herdr key events: $foot_version"
+if [ -r "$HOME/.local/lib/sway-stack/current/ready" ]; then
+    require_file "$HOME/.local/lib/sway-stack/current/lib/gtklock/powerbar-module.so"
 else
-    fail "Foot 1.20.0 or newer is required; found ${foot_version:-unknown}"
+    require_file "$HOME/.local/lib/gtklock/powerbar-module.so"
+fi
+require_file "$HOME/.local/bin/gtklock"
+
+require_file "$HOME/.config/ghostty/config.ghostty"
+require_file "$HOME/.local/share/applications/com.mitchellh.ghostty.desktop"
+if command -v ghostty >/dev/null 2>&1; then
+    if ghostty_validation=$(ghostty +validate-config 2>&1) && [ -z "$ghostty_validation" ]; then
+        ok 'Ghostty config valid'
+    else
+        fail "Ghostty config validation failed: $ghostty_validation"
+    fi
 fi
 
 for wrapper in waybar swaync swaync-client wlogout; do
@@ -54,10 +64,6 @@ require_file "$HOME/.config/systemd/user/sway-display-layouts.service"
 if command -v sway >/dev/null 2>&1 && [ -r "$HOME/.config/sway/config" ]; then
     sway --unsupported-gpu --validate --config "$HOME/.config/sway/config" >/dev/null 2>&1 \
         && ok 'Sway config valid' || fail 'Sway config invalid'
-fi
-if command -v foot >/dev/null 2>&1 && [ -r "$HOME/.config/foot/foot.ini" ]; then
-    foot --check-config --config "$HOME/.config/foot/foot.ini" >/dev/null 2>&1 \
-        && ok 'Foot config valid' || fail 'Foot config invalid'
 fi
 
 for file in \
@@ -111,7 +117,7 @@ for wallpaper in midnight dusk dawn; do
     require_file "$HOME/.local/share/tokyo-night/wallpapers/$wallpaper-portrait.png"
 done
 require_file "$HOME/.local/libexec/waybar/desktop-temperature"
-require_file "$HOME/.local/state/tokyo-night/foot-opacity.ini"
+require_file "$HOME/.local/state/tokyo-night/ghostty-opacity.conf"
 require_file "$HOME/.local/state/tokyo-night/wallpaper.png"
 
 if [ -x "$HOME/.local/bin/suspend-if-on-battery" ]; then

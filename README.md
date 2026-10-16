@@ -77,7 +77,10 @@ For an existing install, `./scripts/install --sway-session` updates only the
 launcher and login entry, without reinstalling software. It needs sudo for the
 system files. Startup diagnostics are saved to
 `~/.local/state/sway/session.log` (or `$XDG_STATE_HOME/sway/session.log`), with
-the previous attempt retained as `session.previous.log`. NVIDIA support remains
+the previous attempt retained as `session.previous.log`. NVIDIA sessions default to
+software cursors (`WLR_NO_HARDWARE_CURSORS=1`) to avoid invisible cursor planes.
+After changing the launcher, run `./scripts/install --sway-session` to update
+the root-owned login entry, then log out and back in. NVIDIA support remains
 experimental; configuration validation does not verify real display startup.
 
 Existing checkouts upgrading to this layout must run `chezmoi init` once to
@@ -150,16 +153,40 @@ missing. On Ubuntu it also installs pinned `automatic-timezoned` with Cargo for
 the Sway timezone service. Cargo commands are available in a new shell after
 applying the managed shell configuration.
 
-On Ubuntu, the installer builds pinned Foot 1.28 and fcft 3.3.1 source releases
-and installs Foot under `/usr/local`. Ubuntu 24.04's Foot 1.16 duplicates Enter
-and Backspace release events when Herdr enables Kitty keyboard reporting. The
-apt package remains installed as a system fallback, while the normal
-`/usr/local/bin` path selects the fixed version.
+Ghostty is the terminal on Linux and macOS. On Linux, `scripts/install-ghostty`
+installs the pinned, checksum-verified AppImage under `~/.local/opt/ghostty-1.3.1`,
+extracted so it does not require FUSE. `chezmoi apply` deploys its launcher,
+shared Tokyo Night settings, and application-menu entry. Linux uses the shared
+size 11 font; macOS retains size 15. Existing Foot installations and their
+managed settings remain available for rollback, but setup no longer builds Foot.
 
 The Ubuntu installer also installs pinned nwg-displays 0.4.4. Open Displays
 from `Super+C` to arrange screens and assign workspaces. Closing the GUI saves
 the connected-monitor profile locally and updates the Chezmoi source; later
 workspace moves are recorded automatically by the Sway layout service.
+
+The Ubuntu installer builds Sway 1.11 with wlroots 0.19.3 and GTKLock 4 in a
+private `~/.local/lib/sway-stack/1.11` directory. Sway 1.11 adds explicit GPU
+synchronization, which is important for NVIDIA window flickering; Ubuntu
+24.04's Sway 1.9 does not support it. Wayland, Pixman, and libinput dependencies
+are pinned alongside the compositor, with embedded library paths rather than
+a global `LD_LIBRARY_PATH`. System libraries remain available to other apps.
+
+To install this stack on an existing machine, run `./scripts/install --sway-stack`,
+then `chezmoi apply`, and log out and back in. If the stack is already prepared,
+`./scripts/install --sway-session` refreshes the root-owned GDM launcher. Check
+the running compositor with `swaymsg -t get_version`; `sway --version` only
+reports the selected executable. GTKLock uses a matching powerbar module, so
+the switch-user button remains available. To return to the system stack,
+remove `~/.local/lib/sway-stack/current` before the next login.
+
+GTKLock shows a **Switch user** button that returns to GDM's login screen while
+keeping the Sway session locked and its applications running. This requires
+GDM (`gdm3`, the default Ubuntu display manager). The installer builds a pinned
+GTKLock powerbar module matching the installed GTKLock major version. To add
+it to an existing installation, run `./scripts/install --gtklock-powerbar`,
+then `chezmoi apply --recursive ~/.config/gtklock`. The button appears the next
+time you lock.
 
 ## Updating either platform
 
@@ -211,10 +238,10 @@ Ubuntu display startup still need verification on each machine; rendering and
 automated tests do not exercise those sessions.
 
 Shared configuration keeps Tokyo Night colors, wallpaper choices, workspaces,
-tmux, Herdr, Starship, Atuin, and Neovim aligned. Sway/Foot and
-AeroSpace/Ghostty remain native adapters. Ghostty's size 15 versus Foot's size
-11, macOS clipboard handling, and platform-specific system controls are
-intentional differences.
+tmux, Herdr, Starship, Atuin, and Neovim aligned. Sway and AeroSpace remain
+native window-manager adapters; both platforms use Ghostty. Ghostty's size 15
+on macOS versus size 11 on Linux, macOS clipboard handling, and system controls
+are intentional differences.
 
 ## Validation
 

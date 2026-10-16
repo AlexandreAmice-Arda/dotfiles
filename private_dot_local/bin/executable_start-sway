@@ -1,4 +1,10 @@
 #!/bin/sh
+# GDM starts Wayland sessions without a login shell. Load the shared user
+# environment before enabling strict mode, as a normal login shell would.
+if [ -r "$HOME/.profile" ]; then
+    # shellcheck source=/dev/null
+    . "$HOME/.profile"
+fi
 set -eu
 
 has_nvidia=0
@@ -34,6 +40,8 @@ done
 if [ "$has_nvidia" -eq 1 ]; then
     # Sway refuses even an unused proprietary NVIDIA GPU without this flag.
     set -- --unsupported-gpu "$@"
+    # NVIDIA cursor planes can fail to render on wlroots 0.17.
+    export WLR_NO_HARDWARE_CURSORS="${WLR_NO_HARDWARE_CURSORS:-1}"
     # Prefer a GPU with a connected monitor and retain the other GPUs for
     # outputs and hotplug. Restricting the list to Intel can hide every monitor.
     devices=$connected_other
@@ -55,4 +63,10 @@ mkdir -p "$log_dir"
 if [ -f "$log_dir/session.log" ]; then
     mv -f "$log_dir/session.log" "$log_dir/session.previous.log"
 fi
-exec /usr/bin/sway --debug "$@" >"$log_dir/session.log" 2>&1
+sway_binary=/usr/bin/sway
+stack="$HOME/.local/lib/sway-stack/current"
+if [ -r "$stack/ready" ] && [ -x "$stack/bin/sway" ] \
+    && [ -x "$stack/bin/gtklock" ]; then
+    sway_binary="$stack/bin/sway"
+fi
+exec "$sway_binary" --debug "$@" >"$log_dir/session.log" 2>&1

@@ -48,10 +48,10 @@ for rotated Sway outputs and macOS screens taller than they are wide. Solid is
 an optional image generated from the shared background color outside the exact
 archive extraction directory.
 
-`apply-appearance --opacity 1.00|0.95|0.89` updates the platform's local terminal
-include. New terminal windows use it; existing Ghostty windows need a config
-reload. The default remains 95%. `--restore` reapplies the saved choices, which
-is also useful after attaching another screen. No hotplug service is installed
+`apply-appearance --opacity 1.00|0.95|0.89` updates local terminal includes
+(both Foot and Ghostty on Linux). New terminal windows use it; existing Ghostty
+windows need a config reload. The default remains 95%. `--restore` reapplies
+the saved choices, which is also useful after attaching another screen. No hotplug service is installed
 on macOS. macOS wallpaper changes apply to currently connected screens, not
 every hidden native Space.
 

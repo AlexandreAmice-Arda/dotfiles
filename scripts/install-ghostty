@@ -1,0 +1,41 @@
+#!/bin/sh
+set -eu
+
+# Extract the AppImage into a private prefix so launching needs neither
+# FUSE nor changes to the system's GTK/OpenGL libraries.
+version=1.3.1
+case "$(uname -m)" in
+    x86_64)
+        arch=x86_64
+        checksum=fde48d2b716afd1978766879bbf1aae30dd305e8ad86a1037a2614a14d82dc28
+        ;;
+    aarch64|arm64)
+        arch=aarch64
+        checksum=55b7d1e2073b80954e23167a70f9e5994189d81e954d36dad4d2dc2d2fe6c121
+        ;;
+    *) printf 'Ghostty installation supports x86_64 and aarch64 Linux hosts.\n' >&2; exit 1 ;;
+esac
+
+prefix="$HOME/.local/opt/ghostty-$version"
+if [ ! -x "$prefix/AppRun" ]; then
+    # Refuse to merge a partial install with a newly downloaded release.
+    if [ -e "$prefix" ] || [ -L "$prefix" ]; then
+        printf 'Incomplete Ghostty installation exists: %s\n' "$prefix" >&2
+        exit 1
+    fi
+    mkdir -p "$HOME/.local/opt"
+    temporary=$(mktemp -d "$HOME/.local/opt/.ghostty-install.XXXXXX")
+    trap 'rm -rf -- "$temporary"' EXIT
+    archive="$temporary/Ghostty.AppImage"
+    curl --fail --location --silent --show-error --output "$archive" \
+        "https://github.com/pkgforge-dev/ghostty-appimage/releases/download/v$version/Ghostty-$version-$arch.AppImage"
+    printf '%s  %s\n' "$checksum" "$archive" | sha256sum --check --status -
+    chmod +x "$archive"
+    (cd "$temporary" && "$archive" --appimage-extract >/dev/null)
+    "$temporary/squashfs-root/AppRun" +version >/dev/null
+    # Some AppImage runtimes make squashfs-root a symlink to AppDir.
+    mv "$(readlink -f "$temporary/squashfs-root")" "$prefix"
+fi
+
+"$prefix/AppRun" +version
+printf 'Ghostty is installed in %s. Run chezmoi apply to deploy its launcher and settings.\n' "$prefix"

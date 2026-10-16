@@ -66,7 +66,7 @@ adjacent monitor. Number keys select workspaces; Shift routes the focused window
 
 Important chords:
 
-- `Super+T` / `Command+T`: plain terminal, suitable for transparent SSH use.
+- `Super+T` / `Command+T`: plain Ghostty terminal, suitable for transparent SSH use.
 - Add `Shift`: independent persistent local tmux terminal.
 - Add left Ctrl instead: agent-aware Herdr workspace.
 - `Super+/`: searchable desktop command palette and shortcut reference.

@@ -8,15 +8,19 @@ export PATH
 grant_backlight=0
 integrations_only=0
 session_only=0
+gtklock_only=0
+sway_stack_only=0
 case "${1:-}" in
     "") ;;
     --grant-backlight) grant_backlight=1 ;;
     --agent-integrations) integrations_only=1 ;;
     --sway-session) session_only=1 ;;
-    *) printf 'usage: %s [--grant-backlight | --agent-integrations | --sway-session]\n' "$0" >&2; exit 2 ;;
+    --gtklock-powerbar) gtklock_only=1 ;;
+    --sway-stack) sway_stack_only=1 ;;
+    *) printf 'usage: %s [--grant-backlight | --agent-integrations | --sway-session | --gtklock-powerbar | --sway-stack]\n' "$0" >&2; exit 2 ;;
 esac
 [ "$#" -le 1 ] || {
-    printf 'usage: %s [--grant-backlight | --agent-integrations | --sway-session]\n' "$0" >&2
+    printf 'usage: %s [--grant-backlight | --agent-integrations | --sway-session | --gtklock-powerbar | --sway-stack]\n' "$0" >&2
     exit 2
 }
 
@@ -76,27 +80,46 @@ cargo install --locked --version "$version" --root "$HOME/.cargo" automatic-time
 AUTOMATIC_TIMEZONED_INSTALL
 }
 
-install_foot() {
-    # A separate strict shell stops this component at its first failure.
-    sh -eu -s -- foot <<'FOOT_INSTALL'
-foot_version=1.28.0
-foot_sha256=4296be402b5684d049534598e69db92b918f92beac9dab76b585207045f0b037
-fcft_version=3.3.1
-fcft_sha256=9949fbce0826669369c3b9361ac04b0459fdc51037e2ccf2e2483794909903f4
-minimum_fixed_version=1.20.0
+install_gtklock_powerbar() {
+    sh -eu -s -- gtklock-powerbar <<'GTKLOCK_POWERBAR_INSTALL'
+stack="$HOME/.local/lib/sway-stack/current"
+if [ -r "$stack/ready" ] && [ -r "$stack/lib/gtklock/powerbar-module.so" ]; then
+    printf 'GTKLock powerbar is supplied by the Sway graphics stack.\n'
+    exit 0
+fi
+gtklock_version=$(gtklock --version | awk '{print $2}')
+case "$gtklock_version" in
+    v2.*)
+        version=2.0.1
+        checksum=61e80400c95235e0a9fe2e3f1db8ec63de4678c265e5e27b22661d789f2ff2ca
+        ;;
+    v3.*)
+        version=3.0.0
+        checksum=56234ad947597e590c0275cc6d5182c958d2193e5a18d8e57d632871c2ff5238
+        ;;
+    v4.*)
+        version=4.0.0
+        checksum=7fefa48ddb9a60e58b5c72df6da2005e1dd38fdc779c5d535aac80da9b508e9e
+        ;;
+    *) printf 'Unsupported GTKLock version: %s\n' "$gtklock_version" >&2; exit 1 ;;
+esac
 
-build_packages='meson ninja-build pkg-config wayland-protocols libxkbcommon-dev
-libpixman-1-dev libwayland-dev libutf8proc-dev libtllist-dev
-libfontconfig1-dev libfreetype-dev libharfbuzz-dev libutempter-dev ncurses-bin'
+module_dir="$HOME/.local/lib/gtklock"
+if [ -r "$module_dir/powerbar-module.so" ] \
+    && [ -r "$module_dir/powerbar-version" ] \
+    && [ "$(cat "$module_dir/powerbar-version")" = "$version" ]; then
+    printf 'GTKLock powerbar %s is already installed.\n' "$version"
+    exit 0
+fi
+
 missing_packages=
-for package in $build_packages; do
+for package in build-essential pkg-config libgtk-3-dev meson ninja-build; do
     if ! dpkg-query -W -f='${db:Status-Abbrev}' "$package" 2>/dev/null \
         | grep -q '^ii '; then
         missing_packages="$missing_packages $package"
     fi
 done
 if [ -n "$missing_packages" ]; then
-    printf 'Installing Foot build dependencies (sudo authentication may be requested).\n'
     sudo apt-get update
     # shellcheck disable=SC2086
     sudo apt-get install -y $missing_packages
@@ -104,52 +127,27 @@ fi
 
 install_temp_dir=$(mktemp -d)
 trap 'rm -rf -- "$install_temp_dir"' EXIT
-foot_archive="$install_temp_dir/foot-$foot_version.tar.gz"
-fcft_archive="$install_temp_dir/fcft-$fcft_version.tar.gz"
-foot_source="$install_temp_dir/foot"
-
-curl --fail --location --show-error --output "$foot_archive" \
-    "https://codeberg.org/dnkl/foot/archive/$foot_version.tar.gz"
-curl --fail --location --show-error --output "$fcft_archive" \
-    "https://codeberg.org/dnkl/fcft/archive/$fcft_version.tar.gz"
-printf '%s  %s\n' "$foot_sha256" "$foot_archive" | sha256sum --check --status -
-printf '%s  %s\n' "$fcft_sha256" "$fcft_archive" | sha256sum --check --status -
-
-mkdir -p "$foot_source/subprojects/fcft"
-tar -xzf "$foot_archive" -C "$foot_source" --strip-components=1
-tar -xzf "$fcft_archive" -C "$foot_source/subprojects/fcft" \
-    --strip-components=1
-
-meson setup "$foot_source/bld" "$foot_source" \
-    --prefix=/usr/local \
-    --buildtype=release \
-    -Dtests=false \
-    -Ddocs=disabled
-meson compile -C "$foot_source/bld"
-printf 'Installing Foot %s under /usr/local (sudo authentication may be requested).\n' \
-    "$foot_version"
-sudo meson install -C "$foot_source/bld"
-
-installed_version=$(/usr/local/bin/foot --version | awk '{print $3}')
-if ! dpkg --compare-versions "$installed_version" ge "$minimum_fixed_version"; then
-    printf 'Installed Foot %s is older than required version %s.\n' \
-        "$installed_version" "$minimum_fixed_version" >&2
-    exit 1
-fi
-
-# Remove the temporary Debian-package workaround created by the older installer.
-old_install="$HOME/.local/opt/foot-1.21.0"
-for old_link in "$HOME/.local/bin/foot" "$HOME/.local/bin/footclient"; do
-    if [ "$(readlink "$old_link" 2>/dev/null || true)" = "$old_install/bin/foot" ]; then
-        rm -f -- "$old_link"
-    fi
-done
-if [ -d "$old_install" ]; then
-    rm -rf -- "$old_install"
-fi
-
-printf 'Installed Foot %s from source under /usr/local.\n' "$installed_version"
-FOOT_INSTALL
+archive="$install_temp_dir/powerbar.tar.gz"
+source_dir="$install_temp_dir/source"
+curl --fail --location --show-error --output "$archive" \
+    "https://codeload.github.com/jovanlanik/gtklock-powerbar-module/tar.gz/refs/tags/v$version"
+printf '%s  %s\n' "$checksum" "$archive" | sha256sum --check --status -
+mkdir -p "$source_dir"
+tar -xzf "$archive" -C "$source_dir" --strip-components=1
+case "$version" in
+    4.*)
+        meson setup "$source_dir/build" "$source_dir" --buildtype=release
+        meson compile -C "$source_dir/build"
+        module="$source_dir/build/powerbar-module.so"
+        ;;
+    *)
+        make -C "$source_dir"
+        module="$source_dir/powerbar-module.so"
+        ;;
+esac
+install -D -m 0755 "$module" "$module_dir/powerbar-module.so"
+printf '%s\n' "$version" > "$module_dir/powerbar-version"
+GTKLOCK_POWERBAR_INSTALL
 }
 
 install_codex() {
@@ -443,6 +441,17 @@ if [ "$session_only" -eq 1 ]; then
     exit "$?"
 fi
 
+if [ "$gtklock_only" -eq 1 ]; then
+    install_gtklock_powerbar
+    exit "$?"
+fi
+
+if [ "$sway_stack_only" -eq 1 ]; then
+    "$repo_dir/scripts/install-sway-stack"
+    install_sway_session
+    exit "$?"
+fi
+
 packages=$(sed '/^[[:space:]]*#/d; /^[[:space:]]*$/d' "$repo_dir/packages/ubuntu.txt")
 install_temp_dir=$(mktemp -d)
 trap 'rm -rf -- "$install_temp_dir"' EXIT
@@ -456,6 +465,8 @@ run_step 'Configure Cloudflare One repository' install_cloudflare_one_repository
 run_step 'Refresh package lists' sudo apt-get update
 # shellcheck disable=SC2086
 run_step 'Install Ubuntu manifest packages' sudo apt-get install -y $packages
+run_step 'Install Sway graphics stack' "$repo_dir/scripts/install-sway-stack"
+run_step 'Install GTKLock user switching' install_gtklock_powerbar
 run_step 'Register Sway login session' install_sway_session
 run_step 'Configure GeoClue' sudo install -D -o root -g root -m 0644 \
     "$repo_dir/packages/geoclue-beacondb.conf" \
@@ -466,7 +477,7 @@ fi
 
 run_step 'Install Rust and Cargo' install_rust
 run_step 'Install automatic-timezoned' install_automatic_timezoned
-run_step 'Install Foot' install_foot
+run_step 'Install Ghostty' "$repo_dir/scripts/install-ghostty"
 run_step 'Install Codex' install_codex
 run_step 'Install nwg-displays' install_nwg_displays
 

@@ -7,7 +7,7 @@ names such as `private_dot_config` map directly into the target home. Shared
 data in `.chezmoidata.yaml` renders native adapters rather than attempting to
 make both platforms run the same desktop stack:
 
-- Ubuntu uses Sway, Foot, Waybar, SwayNC, Wofi, wlogout, and GTKLock.
+- Ubuntu uses Sway, Ghostty, Waybar, SwayNC, Wofi, wlogout, and GTKLock.
 - macOS uses AeroSpace, Ghostty, and native macOS facilities.
 - Shell configuration, Tokyo Night colors, H/J/K/L directions, workspaces,
   tmux, Herdr, Starship, Atuin, fzf, and zoxide are shared where their behavior

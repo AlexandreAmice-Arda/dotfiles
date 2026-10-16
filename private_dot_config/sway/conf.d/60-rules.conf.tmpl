@@ -13,7 +13,9 @@ for_window [class="(?i)^warp-taskbar$"] floating disable
 assign [app_id="^slack$"] workspace number $ws10
 assign [class="(?i)^slack$"] workspace number $ws10
 
-# Persistent terminals use workspace 9; ordinary foot-current windows stay in
-# the focused workspace.
+# Persistent terminals use workspace 9; plain ghostty.current windows stay
+# in the focused workspace. Retain Foot's rules for the installed fallback.
+assign [app_id="^com\.mitchellh\.ghostty$"] workspace number $ws9
+assign [class="^com\.mitchellh\.ghostty$"] workspace number $ws9
 assign [app_id="^foot$"] workspace number $ws9
 assign [class="(?i)^foot$"] workspace number $ws9

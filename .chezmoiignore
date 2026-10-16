@@ -41,6 +41,7 @@ tests/**
 .config/wlogout/**
 .config/wofi
 .config/wofi/**
+.config/xdg-terminals.list
 .config/systemd/user/sway-*.service
 .config/systemd/user/waybar.service
 .config/systemd/user/swaync.service
@@ -50,6 +51,8 @@ tests/**
 .local/bin/focus-notification-app
 .local/bin/focus-or-launch
 .local/bin/lock-desktop
+.local/bin/gtklock
+.local/bin/sway
 .local/bin/session-action
 .local/bin/start-sway
 .local/bin/suspend-if-on-battery
@@ -59,6 +62,9 @@ tests/**
 .local/bin/waybar
 .local/bin/wlogout
 .local/bin/slack
+.local/bin/ghostty
+.local/share/applications/com.mitchellh.ghostty.desktop
+.local/share/applications/slack_slack.desktop
 .local/libexec/desktop-doctor/linux
 {{- end }}
 
@@ -72,8 +78,6 @@ tests/**
 .local/bin/desktop-commands
 .config/aerospace
 .config/aerospace/**
-.config/ghostty
-.config/ghostty/**
 .hammerspoon
 .hammerspoon/**
 Library

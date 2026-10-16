@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+
+stack="$HOME/.local/lib/sway-stack/current"
+if [ -r "$stack/ready" ] && [ -x "$stack/bin/sway" ]; then
+    exec "$stack/bin/sway" "$@"
+fi
+exec /usr/bin/sway "$@"

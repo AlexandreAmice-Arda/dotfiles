@@ -11,10 +11,9 @@ mood=$(cat "$state_dir/mood")
 opacity=$(cat "$state_dir/opacity")
 case "$mood" in midnight|dusk|dawn|solid) ;; *) mood=midnight ;; esac
 case "$opacity" in 1.00|0.95|0.89) ;; *) opacity=0.95 ;; esac
-{{ if eq .chezmoi.os "darwin" -}}
 [ -f "$state_dir/ghostty-opacity.conf" ] \
     || printf 'background-opacity = %s\n' "$opacity" > "$state_dir/ghostty-opacity.conf"
-{{ else -}}
+{{ if eq .chezmoi.os "linux" -}}
 [ -f "$state_dir/foot-opacity.ini" ] \
     || printf '[colors-dark]\nalpha=%s\n' "$opacity" > "$state_dir/foot-opacity.ini"
 {{ end -}}

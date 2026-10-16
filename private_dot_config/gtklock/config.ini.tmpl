@@ -4,3 +4,12 @@ style={{ .chezmoi.homeDir }}/.config/gtklock/style.css
 background={{ .chezmoi.homeDir }}/.local/state/tokyo-night/wallpaper.png
 time-format=%A · %H:%M
 idle-hide=false
+modules={{ .chezmoi.homeDir }}/.local/lib/gtklock/powerbar-module.so
+
+[powerbar]
+show-labels=true
+reboot-command=
+poweroff-command=
+suspend-command=
+logout-command=
+userswitch-command=/usr/bin/gdmflexiserver

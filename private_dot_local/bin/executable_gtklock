@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+stack="$HOME/.local/lib/sway-stack/current"
+if [ -r "$stack/ready" ] && [ -x "$stack/bin/gtklock" ]; then
+    # Match the module ABI to the locker, including when rolling back the stack.
+    exec "$stack/bin/gtklock" \
+        --modules="$stack/lib/gtklock/powerbar-module.so" "$@"
+fi
+exec /usr/bin/gtklock "$@"

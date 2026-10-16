@@ -86,6 +86,13 @@ require_file "$linux_portable/.local/bin/slack"
 require_absent "$linux_portable/.local/share/applications/signal-desktop.desktop"
 require_file "$mac_portable/.config/aerospace/aerospace.toml"
 require_file "$mac_portable/.config/ghostty/config.ghostty"
+for home in "$linux_portable" "$linux_workstation"; do
+    require_file "$home/.config/ghostty/config.ghostty"
+    require_file "$home/.local/bin/ghostty"
+    require_file "$home/.local/share/applications/com.mitchellh.ghostty.desktop"
+done
+require_absent "$mac_portable/.local/bin/ghostty"
+require_absent "$mac_portable/.local/share/applications/com.mitchellh.ghostty.desktop"
 require_file "$mac_portable/Library/Application Support/Code/User/keybindings.json"
 require_absent "$linux_portable/Library"
 require_absent "$linux_workstation/Library"
@@ -101,7 +108,7 @@ done
 require_absent "$mac_portable/.config/kanshi"
 require_absent "$mac_portable/.config/terminator"
 for helper in display-layouts focus-notification-app focus-or-launch start-sway \
-    suspend-if-on-battery; do
+    suspend-if-on-battery sway gtklock; do
     require_file "$linux_portable/.local/bin/$helper"
     require_absent "$mac_portable/.local/bin/$helper"
 done
@@ -156,9 +163,13 @@ import tomllib
 
 with open(sys.argv[1], "rb") as config_file:
     config = tomllib.load(config_file)
-expected = "${custom.remote}$directory$line_break$git_branch$git_status$cmd_duration$line_break$character"
+expected = "${custom.remote}$directory$python$line_break$git_branch$git_status$cmd_duration$line_break$character"
 if config.get("format") != expected:
     raise SystemExit("Starship prompt does not keep path, context, and input on separate lines")
+if config["python"].get("format") != r"([  \($virtualenv\)]($style))":
+    raise SystemExit("Starship does not show the active Python environment")
+if any(config["python"].get(key) != [] for key in ("detect_extensions", "detect_files", "detect_folders")):
+    raise SystemExit("Starship Python indicator can appear without an active environment")
 if config["directory"].get("truncation_length") != 0:
     raise SystemExit("Starship directory path is still truncated")
 if config["directory"].get("truncate_to_repo") is not False:
@@ -183,7 +194,7 @@ grep -Fq 'atuin init zsh --disable-up-arrow --disable-ai' \
 grep -Fq 'enter_accept = false' "$linux_portable/.config/atuin/config.toml" \
     || fail 'Atuin selections are not configured for review before execution'
 
-# Super+T starts a non-login Bash beneath Foot. Reproduce its minimal inherited
+# Super+T starts a non-login Bash beneath Ghostty. Reproduce its minimal inherited
 # PATH and ensure the managed wrapper is visible before Starship initializes.
 mkdir -p "$linux_portable/.local/opt/starship-1.26.0"
 cat > "$linux_portable/.local/opt/starship-1.26.0/starship" <<'EOF'
@@ -302,17 +313,14 @@ grep -Fq 'install_codex' \
     || fail 'Ubuntu setup does not install Codex'
 grep -Fq 'install_codex' "$source_root/scripts/install" \
     || fail 'macOS setup does not install Codex'
-grep -Fq "https://codeberg.org/dnkl/foot/archive/\$foot_version.tar.gz" \
-    "$source_root/scripts/install" \
-    || fail 'Pinned Foot installer does not use the official source archive'
-grep -Fq '4296be402b5684d049534598e69db92b918f92beac9dab76b585207045f0b037' \
-    "$source_root/scripts/install" \
-    || fail 'Foot source checksum is missing'
-grep -Fq '9949fbce0826669369c3b9361ac04b0459fdc51037e2ccf2e2483794909903f4' \
-    "$source_root/scripts/install" \
-    || fail 'fcft source checksum is missing'
-grep -Fq "run_step 'Install Foot' install_foot" "$source_root/scripts/install" \
-    || fail 'Ubuntu setup does not install a Herdr-compatible Foot version'
+grep -Fq "run_step 'Install Ghostty'" "$source_root/scripts/install" \
+    || fail 'Ubuntu setup does not install Ghostty'
+for checksum in \
+    fde48d2b716afd1978766879bbf1aae30dd305e8ad86a1037a2614a14d82dc28 \
+    55b7d1e2073b80954e23167a70f9e5994189d81e954d36dad4d2dc2d2fe6c121; do
+    grep -Fq "$checksum" "$source_root/scripts/install-ghostty" \
+        || fail 'Ghostty architecture checksum is missing'
+done
 grep -Fq '07bd92f892457d0153d7fea53e838555f9753974a53a4d989d294b6e75c40104' \
     "$source_root/scripts/install" \
     || fail 'nwg-displays source checksum is missing'
@@ -398,6 +406,17 @@ for home in "$linux_portable" "$linux_workstation"; do
 
     jq empty "$home/.config/waybar/config.json"
     jq empty "$home/.config/swaync/config.json"
+    python3 - "$home" <<'GTKLOCK'
+import configparser, pathlib, sys
+home = pathlib.Path(sys.argv[1])
+config = configparser.ConfigParser(interpolation=None)
+config.read(home / '.config/gtklock/config.ini')
+assert config['main']['modules'] == str(home / '.local/lib/gtklock/powerbar-module.so')
+assert config['powerbar'].getboolean('show-labels')
+assert config['powerbar']['userswitch-command'] == '/usr/bin/gdmflexiserver'
+for action in ('reboot', 'poweroff', 'suspend', 'logout'):
+    assert config['powerbar'][action + '-command'] == ''
+GTKLOCK
     check_shell_tree "$home"
 done
 ok 'Linux configs and shell syntax'
@@ -446,24 +465,28 @@ grep -Fq "cmd-ctrl-t = 'exec-and-forget open -na Ghostty --args -e $mac_portable
 if grep -Fq 'terminal-main' "$linux_portable/.config/foot/foot.ini"; then
     fail 'Foot still starts tmux implicitly'
 fi
-if grep -Fq 'terminal-main' "$mac_portable/.config/ghostty/config.ghostty"; then
-    fail 'Ghostty still starts tmux implicitly'
-fi
 if grep -Fq 'terminal-agents' "$linux_portable/.config/foot/foot.ini"; then
     fail 'Foot still starts Herdr implicitly'
 fi
-if grep -Fq 'terminal-agents' "$mac_portable/.config/ghostty/config.ghostty"; then
-    fail 'Ghostty still starts Herdr implicitly'
-fi
-grep -Fq "bindsym \$mod+t exec foot --app-id=foot-current" \
+for home in "$linux_portable" "$linux_workstation" "$mac_portable"; do
+    if grep -Eq 'terminal-(main|agents)' "$home/.config/ghostty/config.ghostty"; then
+        fail 'Ghostty starts a multiplexer implicitly'
+    fi
+done
+grep -Fq "bindsym \$mod+t exec \"$linux_portable/.local/bin/ghostty\" --class=com.mitchellh.ghostty.current" \
     "$linux_portable/.config/sway/conf.d/50-keybindings.conf" \
     || fail 'Sway plain terminal is not on Super+T'
-grep -Fq "bindsym \$mod+Shift+t exec foot ~/.local/bin/terminal-main" \
+grep -Fq "bindsym \$mod+Shift+t exec \"$linux_portable/.local/bin/ghostty\" -e ~/.local/bin/terminal-main" \
     "$linux_portable/.config/sway/conf.d/50-keybindings.conf" \
     || fail 'Sway persistent terminal is not explicit on Super+Shift+T'
-grep -Fq "bindsym \$mod+Ctrl+t exec foot ~/.local/bin/terminal-agents" \
+grep -Fq "bindsym \$mod+Ctrl+t exec \"$linux_portable/.local/bin/ghostty\" -e ~/.local/bin/terminal-agents" \
     "$linux_portable/.config/sway/conf.d/50-keybindings.conf" \
     || fail 'Sway agent terminal is not explicit on Super+Ctrl+T'
+grep -Fqx "term=$linux_portable/.local/bin/ghostty" "$linux_portable/.config/wofi/config" \
+    || fail 'Wofi does not use Ghostty for terminal applications'
+[ "$(head -n 1 "$linux_portable/.config/xdg-terminals.list")" = com.mitchellh.ghostty.desktop ] \
+    || fail 'Ghostty is not the preferred desktop terminal'
+require_absent "$mac_portable/.config/xdg-terminals.list"
 ok 'Kinesis thumb-cluster ergonomics'
 
 # Exercise the terminal adapter without touching the user's real tmux server.
@@ -622,6 +645,20 @@ require_file "$mac_portable/.local/bin/apply-appearance"
 require_file "$mac_portable/.local/libexec/appearance/macos.js"
 require_absent "$linux_portable/.local/libexec/appearance/macos.js"
 require_file "$mac_portable/.local/state/tokyo-night/ghostty-opacity.conf"
+for home in "$linux_portable" "$linux_workstation" "$mac_portable"; do
+    require_file "$home/.local/state/tokyo-night/ghostty-opacity.conf"
+    if command -v ghostty >/dev/null 2>&1; then
+        ghostty +validate-config --config-file="$home/.config/ghostty/config.ghostty" \
+            >"$work_dir/ghostty.log" 2>&1 || {
+                cat "$work_dir/ghostty.log" >&2
+                fail "invalid Ghostty config in $home"
+            }
+        [ ! -s "$work_dir/ghostty.log" ] || {
+            cat "$work_dir/ghostty.log" >&2
+            fail "Ghostty config diagnostics in $home"
+        }
+    fi
+done
 python3 - "$linux_portable" "$mac_portable" <<'THEME'
 import configparser, pathlib, sys
 linux, mac = map(pathlib.Path, sys.argv[1:])
@@ -642,6 +679,12 @@ for i in range(16):
     field = ('regular' + str(i)) if i < 8 else ('bright' + str(i - 8))
     assert foot['colors-dark'][field] == ghostty['palette.' + str(i)]
 assert 'ghostty-opacity.conf' in ghostty['config-file']
+assert ghostty['font-size'] == '15'
+linux_ghostty = (linux / '.config/ghostty/config.ghostty').read_text()
+assert 'font-size = 11' in linux_ghostty
+assert 'gtk-titlebar = false' in linux_ghostty
+assert 'macos-titlebar-style' not in linux_ghostty
+assert 'macos-option-as-alt' not in linux_ghostty
 for relative in ('.tmux.conf', '.config/starship.toml', '.config/atuin/config.toml',
                  '.config/herdr/config.toml', '.local/bin/terminal-main',
                  '.local/bin/terminal-agents'):
@@ -691,6 +734,8 @@ if command -v shellcheck >/dev/null 2>&1; then
     done < <(find "$linux_workstation" "$mac_portable" -type f -perm -u+x -print0)
     shellcheck "$source_root/scripts/check-ubuntu" \
         "$source_root/scripts/install" \
+        "$source_root/scripts/install-ghostty" \
+        "$source_root/scripts/install-sway-stack" \
         "$source_root/tests/validate-desktop"
     ok 'ShellCheck'
 else
@@ -701,7 +746,8 @@ python3 -B -m unittest "$source_root/tests/test_display_layouts.py" \
     "$source_root/tests/test_macos_palette.py" \
     "$source_root/tests/test_appearance.py" \
     "$source_root/tests/test_install.py" \
-    "$source_root/tests/test_sway_session.py"
+    "$source_root/tests/test_sway_session.py" \
+    "$source_root/tests/test_sway_stack.py"
 ok 'display layout, macOS palette, and appearance unit tests'
 
 personal_pattern='/home/(amice|demo)|PH5NY1BH326L|H7YCC6B70Y1S|6N45XC3'
