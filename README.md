@@ -160,6 +160,12 @@ shared Tokyo Night settings, and application-menu entry. Linux uses the shared
 size 11 font; macOS retains size 15. Existing Foot installations and their
 managed settings remain available for rollback, but setup no longer builds Foot.
 
+Wofi keeps fuzzy application search. `scripts/install-wofi` builds pinned Wofi
+1.4.1 with its fuzzy ranking limit raised from 256 to 4096 bytes, so apps with
+long desktop metadata (including Blender) still receive a relevance score.
+The Ubuntu installer runs this step; for an existing machine, run it directly,
+then run `chezmoi apply` and reload Sway to select the managed launcher.
+
 The Ubuntu installer also installs pinned nwg-displays 0.4.4. Open Displays
 from `Super+C` to arrange screens and assign workspaces. Closing the GUI saves
 the connected-monitor profile locally and updates the Chezmoi source; later

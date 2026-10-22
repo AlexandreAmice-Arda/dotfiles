@@ -53,6 +53,7 @@ tests/**
 .local/bin/lock-desktop
 .local/bin/gtklock
 .local/bin/sway
+.local/bin/wofi
 .local/bin/session-action
 .local/bin/start-sway
 .local/bin/suspend-if-on-battery

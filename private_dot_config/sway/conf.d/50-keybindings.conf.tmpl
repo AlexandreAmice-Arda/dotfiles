@@ -16,7 +16,7 @@ bindsym $mod+Shift+t exec "{{ .chezmoi.homeDir }}/.local/bin/ghostty" -e ~/.loca
 #@ Super+Left Ctrl+t :: Apps and session: Open the agent-aware Herdr workspace :: exec "{{ .chezmoi.homeDir }}/.local/bin/ghostty" -e ~/.local/bin/terminal-agents
 bindsym $mod+Ctrl+t exec "{{ .chezmoi.homeDir }}/.local/bin/ghostty" -e ~/.local/bin/terminal-agents
 #@ Palette only :: Apps and session: Open the deliberately shared tmux main session :: exec "{{ .chezmoi.homeDir }}/.local/bin/ghostty" -e ~/.local/bin/terminal-main --shared
-#@ Super+d :: Apps and session: Open application launcher :: exec wofi --show drun
+#@ Super+d :: Apps and session: Open application launcher :: exec ~/.local/bin/wofi --show drun
 bindsym $mod+d exec $menu
 #@ Super+Alt+q :: Apps and session: Close focused window :: kill
 bindsym $mod+Mod1+q kill

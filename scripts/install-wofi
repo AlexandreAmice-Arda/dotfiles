@@ -1,0 +1,53 @@
+#!/bin/sh
+set -eu
+
+repo_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+version=1.4.1
+checksum=e95e35c03551c39178c16ad6213a88e3883a236e942d7f2666c780d934c270bb
+prefix="$HOME/.local/lib/wofi/$version-fuzzy4096"
+
+if [ -x "$prefix/bin/wofi" ]; then
+    "$prefix/bin/wofi" --version
+    exit 0
+fi
+if [ -e "$prefix" ] || [ -L "$prefix" ]; then
+    printf 'Incomplete Wofi installation exists: %s\n' "$prefix" >&2
+    exit 1
+fi
+
+missing_tools=0
+for tool in cc meson ninja pkg-config curl patch; do
+    command -v "$tool" >/dev/null 2>&1 || missing_tools=1
+done
+if [ "$missing_tools" -eq 1 ] || ! pkg-config --exists gtk+-3.0 wayland-client gio-unix-2.0; then
+    sudo apt-get install -y build-essential meson ninja-build pkg-config \
+        curl patch libgtk-3-dev libwayland-dev libglib2.0-dev
+fi
+
+mkdir -p "$HOME/.local/lib/wofi"
+temporary=$(mktemp -d "$HOME/.local/lib/wofi/.build.XXXXXX")
+trap 'rm -rf -- "$temporary"' EXIT
+archive="$temporary/wofi.tar.gz"
+curl --fail --location --silent --show-error --output "$archive" \
+    "https://deb.debian.org/debian/pool/main/w/wofi/wofi_$version.orig.tar.gz"
+printf '%s  %s\n' "$checksum" "$archive" | sha256sum --check --status -
+mkdir "$temporary/source"
+tar -xzf "$archive" -C "$temporary/source" --strip-components=1
+patch --batch --fuzz=0 -d "$temporary/source" -p1 < "$repo_dir/packages/wofi-fuzzy-limit.patch"
+
+# Exercise the upstream matcher with the patch before installing the binary.
+cc -D_GNU_SOURCE -I "$temporary/source/inc" \
+    "$repo_dir/tests/test_wofi_matching.c" "$temporary/source/src/match.c" \
+    -o "$temporary/test-matching"
+"$temporary/test-matching"
+
+# The release archive's revision is pinned; avoid depending on Mercurial.
+sed -i "s/if hg.found()/if false/" "$temporary/source/meson.build"
+meson setup "$temporary/build" "$temporary/source" \
+    --buildtype=release --wrap-mode=nodownload
+meson compile -C "$temporary/build"
+"$temporary/build/wofi" --version
+mkdir -p "$temporary/install/bin"
+install -m 0755 "$temporary/build/wofi" "$temporary/install/bin/wofi"
+mv "$temporary/install" "$prefix"
+printf 'Wofi %s installed with a 4096-byte fuzzy ranking limit.\n' "$version"

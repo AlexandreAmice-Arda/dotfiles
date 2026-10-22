@@ -466,6 +466,7 @@ run_step 'Refresh package lists' sudo apt-get update
 # shellcheck disable=SC2086
 run_step 'Install Ubuntu manifest packages' sudo apt-get install -y $packages
 run_step 'Install Sway graphics stack' "$repo_dir/scripts/install-sway-stack"
+run_step 'Install Wofi fuzzy ranking fix' "$repo_dir/scripts/install-wofi"
 run_step 'Install GTKLock user switching' install_gtklock_powerbar
 run_step 'Register Sway login session' install_sway_session
 run_step 'Configure GeoClue' sudo install -D -o root -g root -m 0644 \

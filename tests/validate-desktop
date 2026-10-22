@@ -92,6 +92,9 @@ for home in "$linux_portable" "$linux_workstation"; do
     require_file "$home/.local/share/applications/com.mitchellh.ghostty.desktop"
 done
 require_absent "$mac_portable/.local/bin/ghostty"
+require_file "$linux_portable/.local/bin/wofi"
+require_file "$linux_workstation/.local/bin/wofi"
+require_absent "$mac_portable/.local/bin/wofi"
 require_absent "$mac_portable/.local/share/applications/com.mitchellh.ghostty.desktop"
 require_file "$mac_portable/Library/Application Support/Code/User/keybindings.json"
 require_absent "$linux_portable/Library"
@@ -735,6 +738,7 @@ if command -v shellcheck >/dev/null 2>&1; then
     shellcheck "$source_root/scripts/check-ubuntu" \
         "$source_root/scripts/install" \
         "$source_root/scripts/install-ghostty" \
+        "$source_root/scripts/install-wofi" \
         "$source_root/scripts/install-sway-stack" \
         "$source_root/tests/validate-desktop"
     ok 'ShellCheck'

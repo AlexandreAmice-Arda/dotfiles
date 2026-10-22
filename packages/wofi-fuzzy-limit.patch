@@ -1,0 +1,7 @@
+--- a/inc/match.h
++++ b/inc/match.h
+@@ -26,3 +26,3 @@
+ #define SCORE_MIN -INFINITY
+-#define MATCH_FUZZY_MAX_LEN 256
++#define MATCH_FUZZY_MAX_LEN 4096
+ #define MAX_MULTI_CONTAINS_FILTER_SIZE 256

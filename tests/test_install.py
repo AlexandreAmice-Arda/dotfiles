@@ -76,7 +76,7 @@ elif name == "snap":
             for name in ("uname", "dpkg", "sudo", "wget", "gpg", "curl",
                          "sha256sum", "install", "snap", "find", "getent", "sh", "dpkg-query", "brew", "cargo", "rustc", "gtklock"):
                 (mock_bin / name).symlink_to(mock)
-            for name in ("check-ubuntu", "install-sway-stack", "install-ghostty"):
+            for name in ("check-ubuntu", "install-sway-stack", "install-ghostty", "install-wofi"):
                 (scripts / name).symlink_to(mock)
             env = os.environ.copy()
             # Keep host-installed Rust and nwg-displays out of component tests.
