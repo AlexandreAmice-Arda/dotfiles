@@ -117,3 +117,32 @@ Ghostty's native validator accepted the runtime include, and Neovim compiled
 and evaluated its new theme specification. AppKit confirmed Midnight on both
 connected Mac screens, native appearance was dark, and the purple accent was
 applied. Native Sway/Foot verification still requires an Ubuntu machine.
+
+## Ubuntu session corrections
+
+Signal and pCloud no longer have installation, startup, workspace, or focus
+integration. Chezmoi removes their old managed launchers and pCloud autostart
+entry; application data remains machine-local. Existing system packages and
+APT repository files are not uninstalled by Chezmoi.
+
+NVIDIA Sway sessions default to software cursors to avoid cursor rendering
+failures. The root-owned login launcher must be refreshed with
+`./scripts/install --sway-session`; the environment change takes effect at
+the next login. Slack starts with GPU acceleration disabled because the
+installed snap ran without mapping a Wayland window when acceleration was
+enabled. Its visible window was verified on workspace 10 after restarting.
+
+## NVIDIA window flickering
+
+The desktop now supports a private, pinned Sway 1.11/wlroots 0.19.3 stack with
+explicit synchronization, plus GTKLock 4 and its matching switch-user module.
+Ubuntu 24.04's Sway 1.9 remains the fallback. The installer verifies source
+archives and only selects the new stack after all components build and pass
+runtime dependency checks. The root-owned GDM launcher must be refreshed with
+`./scripts/install --sway-session` after preparing the stack.
+
+The aggressive 2 ms output render deadline has been replaced by default
+compositor timing. NVIDIA headless startup confirmed the explicit-sync and
+session-lock protocols, and GTKLock received the lock acknowledgement with
+the existing theme and powerbar. Physical-screen flickering still needs to be
+checked after logging into the new compositor.

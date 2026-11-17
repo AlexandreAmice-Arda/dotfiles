@@ -5,6 +5,7 @@ add_newline = false
 format = """
 ${custom.remote}\
 $directory\
+$python\
 $line_break\
 $git_branch\
 $git_status\
@@ -24,6 +25,15 @@ style = "bold #{{ .desktop.theme.blue }}"
 format = "[$path]($style)"
 truncation_length = 0
 truncate_to_repo = false
+
+[python]
+# Show only the active environment, even outside a Python project.
+format = '([  \($virtualenv\)]($style))'
+style = "#{{ .desktop.theme.cyan }}"
+detect_extensions = []
+detect_files = []
+detect_folders = []
+generic_venv_names = [".venv", "venv", "env"]
 
 [git_branch]
 symbol = ""

@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+
+binary="$HOME/.local/lib/wofi/1.4.1-fuzzy4096/bin/wofi"
+if [ -x "$binary" ]; then
+    exec "$binary" "$@"
+fi
+exec /usr/bin/wofi "$@"

@@ -45,8 +45,22 @@ class AppearanceTests(unittest.TestCase):
                 self.invoke('--mood', 'solid', '--opacity', '1.00', '--no-native', '--quiet', system=system)
                 state, data = appearance.paths()
                 self.assertEqual((state / filename).read_text(), expected)
+                self.assertEqual((state / 'ghostty-opacity.conf').read_text(), 'background-opacity = 1.00\n')
                 self.assertEqual((state / 'wallpaper.png').resolve(), (data / 'solid.png').resolve())
                 self.assertTrue(((data / 'solid.png').resolve()).read_bytes().startswith(b'\x89PNG\r\n\x1a\n'))
+
+    def test_linux_initialization_adds_ghostty_without_overwriting_foot(self):
+        state, _, _, _ = appearance.initialize('Linux')
+        (state / 'opacity').write_text('0.89\n')
+        (state / 'foot-opacity.ini').write_text('[colors-dark]\nalpha=0.89\n')
+        (state / 'ghostty-opacity.conf').unlink()
+        appearance.initialize('Linux')
+        self.assertEqual((state / 'ghostty-opacity.conf').read_text(), 'background-opacity = 0.89\n')
+        self.assertEqual((state / 'foot-opacity.ini').read_text(), '[colors-dark]\nalpha=0.89\n')
+        with patch.object(appearance, 'BACKGROUND', '1a1b26'):
+            self.invoke('--mood', 'solid', '--opacity', '1.00', '--no-native', '--quiet', system='Linux')
+        self.assertEqual((state / 'ghostty-opacity.conf').read_text(), 'background-opacity = 1.00\n')
+        self.assertEqual((state / 'foot-opacity.ini').read_text(), '[colors-dark]\nalpha=1.00\n')
 
     def test_artwork_modes_and_portrait_fallback(self):
         state, data, _, _ = appearance.initialize('Darwin')

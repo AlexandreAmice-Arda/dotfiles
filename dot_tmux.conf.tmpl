@@ -20,8 +20,8 @@ set -g renumber-windows on
 set -s focus-events on
 set -s escape-time 10
 
-# Foot supports true color and OSC 8 hyperlinks, but its terminfo entry does
-# not advertise RGB to tmux 3.4. Declare both features explicitly.
+# Declare true color and OSC 8 hyperlinks explicitly for tmux 3.4.
+set -as terminal-features ',xterm-ghostty:RGB:hyperlinks'
 set -as terminal-features ',foot*:RGB:hyperlinks'
 
 # Focus panes directly, without the tmux prefix. Foot and Ghostty map

@@ -44,14 +44,8 @@ if [ "$(/usr/bin/python3 -c 'from importlib.metadata import version; print(versi
     printf 'nwg-displays 0.4.4 is required; run scripts/install\n' >&2
     exit 1
 fi
-if [ ! -x /usr/local/bin/foot ]; then
-    printf 'missing source-built Foot in /usr/local; run scripts/install\n' >&2
-    exit 1
-fi
-foot_version=$(/usr/local/bin/foot --version | awk '{print $3}')
-if ! dpkg --compare-versions "$foot_version" ge 1.20.0; then
-    printf 'Foot %s still has the Herdr duplicate-key bug; version 1.20.0 or newer is required.\n' \
-        "$foot_version" >&2
+if ! ghostty +version >/dev/null 2>&1; then
+    printf 'missing working Ghostty; run scripts/install-ghostty and chezmoi apply\n' >&2
     exit 1
 fi
 for tool in cargo rustc; do

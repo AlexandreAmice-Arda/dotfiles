@@ -44,3 +44,21 @@ window {
 }
 
 #warning-label { color: @tn_pink; }
+
+#powerbar-revealer {
+  margin-bottom: 36px;
+}
+
+#userswitch-button {
+  color: @tn_foreground;
+  background: alpha(@tn_background, 0.88);
+  border: 1px solid @tn_blue;
+  border-radius: 13px;
+  font-family: "{{ .desktop.fonts.interface }}";
+  padding: 11px 18px;
+}
+
+#userswitch-button:hover, #userswitch-button:focus {
+  border-color: @tn_cyan;
+  background: @tn_surface;
+}

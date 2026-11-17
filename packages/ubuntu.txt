@@ -1,6 +1,5 @@
 sway
 swayidle
-foot
 tmux
 git
 curl

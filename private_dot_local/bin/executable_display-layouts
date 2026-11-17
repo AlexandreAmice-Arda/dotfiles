@@ -8,6 +8,7 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shlex
 import shutil
@@ -375,7 +376,63 @@ def run_output_hook() -> None:
         subprocess.run([str(hook)], check=False)
 
 
-def apply_profile(*, outputs_too: bool = True) -> bool:
+def output_topology(outputs: list[dict[str, Any]]) -> list[tuple[str, str]]:
+    # Power, mode, and active state changes are not monitor hotplug events.
+    return sorted((output_identity(output), output["name"]) for output in outputs)
+
+
+def output_changes(
+    saved: dict[str, Any], output: dict[str, Any], *, restore_power: bool
+) -> list[str]:
+    active = bool(output.get("active"))
+    if not saved.get("enabled", True):
+        return ["disable"] if active else []
+    if active and not restore_power and not output.get("power", output.get("dpms", True)):
+        return []
+    parts = [] if active else ["enable"]
+    mode = saved.get("mode")
+    if mode:
+        match = re.fullmatch(r"(\d+)x(\d+)(?:@([\d.]+)Hz)?", mode)
+        current = output.get("current_mode") or {}
+        matches = bool(match) and (
+            current.get("width") == int(match[1])
+            and current.get("height") == int(match[2])
+            and (match[3] is None or abs(
+                current.get("refresh", 0) - float(match[3]) * 1000
+            ) < 1)
+        )
+        if not matches:
+            parts.append(f"mode {mode}")
+    position = saved.get("position", [0, 0])
+    rect = output.get("rect") or {}
+    if [rect.get("x"), rect.get("y")] != position:
+        parts.append(f"pos {int(position[0])} {int(position[1])}")
+    transform = saved.get("transform", "normal")
+    if output.get("transform") != transform:
+        parts.append(f"transform {transform}")
+    scale = float(saved.get("scale", 1.0))
+    if output.get("scale") != scale:
+        parts.append(f"scale {scale:g}")
+    scale_filter = saved.get("scale_filter", "smart")
+    # Sway reports smart's effective filter, rather than the word "smart".
+    effective_filter = (
+        "nearest" if scale.is_integer() else "linear"
+    ) if scale_filter == "smart" else scale_filter
+    if output.get("scale_filter") != effective_filter:
+        parts.append(f"scale_filter {scale_filter}")
+    adaptive = bool(saved.get("adaptive_sync"))
+    if (output.get("adaptive_sync_status") == "enabled") != adaptive:
+        parts.append(f"adaptive_sync {'on' if adaptive else 'off'}")
+    power = bool(saved.get("dpms", True))
+    if restore_power and bool(output.get("power", output.get("dpms", True))) != power:
+        parts.append(f"power {'on' if power else 'off'}")
+    return parts
+
+
+def apply_profile(
+    *, outputs_too: bool = True, restore_power: bool = True,
+    refresh_hook: bool = False,
+) -> bool:
     global _output_suppressed_until, _workspace_suppressed_until
     outputs = connected_outputs()
     state = load_state()
@@ -383,33 +440,22 @@ def apply_profile(*, outputs_too: bool = True) -> bool:
     if profile is None:
         return False
     live = resolve_profile_outputs(profile, outputs)
+    changed = False
     if outputs_too:
         _output_suppressed_until = time.monotonic() + 3.0
         _workspace_suppressed_until = time.monotonic() + 3.0
         for saved in profile["outputs"]:
             output = live[saved["identity"]]
-            name = quote_sway(output["name"])
-            if not saved.get("enabled", True):
-                sway_command(f"output {name} disable")
-                continue
-            parts = [f"output {name} enable"]
-            if saved.get("mode"):
-                parts.append(f"mode {saved['mode']}")
-            position = saved.get("position", [0, 0])
-            parts.append(f"pos {int(position[0])} {int(position[1])}")
-            parts.append(f"transform {saved.get('transform', 'normal')}")
-            parts.append(f"scale {float(saved.get('scale', 1.0)):g}")
-            parts.append(f"scale_filter {saved.get('scale_filter', 'smart')}")
-            adaptive = "on" if saved.get("adaptive_sync") else "off"
-            parts.append(f"adaptive_sync {adaptive}")
-            dpms = "on" if saved.get("dpms", True) else "off"
-            parts.append(f"dpms {dpms}")
-            sway_command(" ".join(parts))
-        time.sleep(0.25)
-        outputs = connected_outputs()
-        live = resolve_profile_outputs(profile, outputs)
+            parts = output_changes(saved, output, restore_power=restore_power)
+            if parts:
+                sway_command(f"output {quote_sway(output['name'])} " + " ".join(parts))
+                changed = True
+        if changed:
+            time.sleep(0.25)
+            outputs = connected_outputs()
+            live = resolve_profile_outputs(profile, outputs)
     apply_workspace_profile(profile, live)
-    if outputs_too:
+    if outputs_too and (changed or refresh_hook):
         run_output_hook()
     return True
 
@@ -543,12 +589,18 @@ def daemon() -> int:
         raise LayoutError("python3-i3ipc is required by the display layout daemon") from error
 
     connection = Connection()
+    topology = output_topology(connected_outputs())
 
     def apply_after_output_change() -> None:
         global _output_timer
+        nonlocal topology
         _output_timer = None
         try:
-            apply_profile()
+            current = output_topology(connected_outputs())
+            if current == topology:
+                return
+            topology = current
+            apply_profile(restore_power=False, refresh_hook=True)
         except LayoutError as error:
             print(f"display-layouts: {error}", file=sys.stderr)
 
@@ -579,7 +631,8 @@ def daemon() -> int:
 
     connection.on(Event.OUTPUT, output_changed)
     connection.on(Event.WORKSPACE_MOVE, workspace_moved)
-    apply_profile()
+    apply_profile(restore_power=False)
+    topology = output_topology(connected_outputs())
     connection.main()
     return 0
 

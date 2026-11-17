@@ -1,4 +1,4 @@
-"""Check GPU selection with synthetic sysfs and a recording compositor."""
+"""Check session setup with synthetic sysfs and a recording compositor."""
 import json
 import os
 from pathlib import Path
@@ -11,9 +11,11 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 
 
 class SwaySessionTests(unittest.TestCase):
-    def launch(self, drivers, override=None, connected=()):
+    def launch(self, drivers, override=None, connected=(), stack_ready=None, profile=None):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
+            if profile is not None:
+                (root / '.profile').write_text(profile)
             drm = root / "drm"
             drm.mkdir()
             for card, driver in drivers.items():
@@ -33,14 +35,30 @@ class SwaySessionTests(unittest.TestCase):
                 "#!/usr/bin/python3\nimport json, os, sys\n"
                 "print(json.dumps({'args': sys.argv[1:], "
                 "'devices': os.environ.get('WLR_DRM_DEVICES'), "
+                "'software_cursor': os.environ.get('WLR_NO_HARDWARE_CURSORS'), "
+                "'path': os.environ['PATH'].replace(os.environ['HOME'], '~'), "
                 "'desktop': os.environ.get('XDG_CURRENT_DESKTOP')}))\n")
             compositor.chmod(0o755)
+            if stack_ready is not None:
+                stack = root / '.local/lib/sway-stack/current'
+                (stack / 'bin').mkdir(parents=True)
+                stack_sway = stack / 'bin/sway'
+                stack_sway.write_text(compositor.read_text().replace(
+                    'sys.argv[1:]', "['--private-stack', *sys.argv[1:]]"))
+                stack_sway.chmod(0o755)
+                if stack_ready != 'missing-locker':
+                    (stack / 'bin/gtklock').symlink_to(compositor)
+                if stack_ready:
+                    (stack / 'ready').write_text('verified\n')
             launcher = root / "start-sway"
             source = (SOURCE_ROOT / "private_dot_local/bin/executable_start-sway").read_text()
             launcher.write_text(source.replace('/sys/class/drm', str(drm))
                                .replace('/usr/bin/sway', str(compositor)))
             env = os.environ.copy()
             env.pop('WLR_DRM_DEVICES', None)
+            env.pop('WLR_NO_HARDWARE_CURSORS', None)
+            env['HOME'] = str(root)
+            env['PATH'] = '/usr/bin:/bin'
             env['XDG_STATE_HOME'] = str(root / 'state')
             if override is not None:
                 env['WLR_DRM_DEVICES'] = override
@@ -53,7 +71,15 @@ class SwaySessionTests(unittest.TestCase):
         for drivers in ({}, {'card3': 'i915'}, {'card2': 'amdgpu'}, {'card0': 'nouveau'}):
             with self.subTest(drivers=drivers):
                 self.assertEqual(self.launch(drivers),
-                                 {'args': ['--debug', '--test'], 'devices': None, 'desktop': 'sway'})
+                                 {'args': ['--debug', '--test'], 'devices': None, 'software_cursor': None,
+                                  'desktop': 'sway', 'path': '/usr/bin:/bin'})
+
+    def test_graphical_login_loads_user_paths_before_strict_mode(self):
+        result = self.launch({}, profile=(
+            '# Profiles may contain optional checks that return false.\n'
+            '[ -d "$HOME/missing" ]\n'
+            'export PATH="$HOME/.local/bin:$HOME/bin:$PATH"\n'))
+        self.assertEqual(result['path'], '~/.local/bin:~/bin:/usr/bin:/bin')
 
     def test_hybrid_gpu_selection_does_not_depend_on_pci_or_card_number(self):
         result = self.launch({'card7': 'nvidia', 'card4': 'i915', 'card9': 'amdgpu'}, connected=('card4', 'card9'))
@@ -64,6 +90,7 @@ class SwaySessionTests(unittest.TestCase):
         result = self.launch({'card2': 'nvidia'})
         self.assertEqual(result['args'], ['--debug', '--unsupported-gpu', '--test'])
         self.assertEqual(result['devices'], '/dev/dri/card2')
+        self.assertEqual(result['software_cursor'], '1')
 
     def test_monitor_on_nvidia_with_disconnected_intel(self):
         result = self.launch({'card1': 'i915', 'card2': 'nvidia'}, connected=('card2',))
@@ -77,6 +104,16 @@ class SwaySessionTests(unittest.TestCase):
         result = self.launch({'card2': 'nvidia', 'card1': 'i915'}, '/dev/dri/card2')
         self.assertEqual(result['devices'], '/dev/dri/card2')
         self.assertIn('--unsupported-gpu', result['args'])
+
+    def test_completed_stack_is_used_for_login(self):
+        self.assertEqual(self.launch({}, stack_ready=True)['args'],
+                         ['--private-stack', '--debug', '--test'])
+
+    def test_incomplete_stack_keeps_system_compositor(self):
+        for ready in (False, 'missing-locker'):
+            with self.subTest(ready=ready):
+                self.assertEqual(self.launch({}, stack_ready=ready)['args'],
+                                 ['--debug', '--test'])
 
 
 if __name__ == '__main__':
