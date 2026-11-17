@@ -41,3 +41,13 @@ fi
 # Ghostty sends xterm-style Ctrl+Arrow sequences for word navigation.
 bindkey '^[[1;5D' backward-word
 bindkey '^[[1;5C' forward-word
+
+duotunnel() {
+    AUTOSSH_GATETIME=0 autossh -M 0 -N \
+        -o ServerAliveInterval=15 \
+        -o ServerAliveCountMax=3 \
+        -o ExitOnForwardFailure=yes \
+        -o ConnectTimeout=10 \
+        -L 8765:127.0.0.1:8765 \
+        amice@duodrone
+}

@@ -7,6 +7,8 @@ name = "tokyo-night"
 
 [keys]
 prefix = "ctrl+b"
+# Leave Ctrl+V available for ordinary text paste during remote attach.
+remote_image_paste = "ctrl+alt+shift+v"
 
 # Keep Herdr's prefix bindings while adding the direct pane vocabulary used by
 # tmux. Foot and Ghostty map Ctrl-Backspace separately, so H/J/K/L are all

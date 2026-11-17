@@ -1,7 +1,9 @@
 -- Run from the repository root with: luajit tests/validate-hammerspoon.lua
 -- Exercise routing without posting keys to real apps or touching the clipboard.
 local callback
+local mouseCallback
 local frontApp
+local pointerApp
 local posted = {}
 local codes = {}
 for i, key in ipairs({
@@ -22,15 +24,26 @@ local function app(id)
 end
 local gui = app("com.apple.TextEdit")
 frontApp = gui
+pointerApp = gui
 hs = {
     autoLaunch = function() end,
-    application = {frontmostApplication = function() return frontApp end},
+    application = {
+        frontmostApplication = function() return frontApp end,
+        applicationForPID = function() return pointerApp end,
+    },
+    axuielement = {systemElementAtPosition = function()
+        return pointerApp and {pid = function() return 1 end}
+    end},
     keycodes = {map = codes},
     eventtap = {
-        event = {types = {keyDown = 10, keyUp = 11, scrollWheel = 22},
-            properties = {eventSourceUserData = 42, keyboardEventAutorepeat = 43}},
+        event = {types = {keyDown = 10, keyUp = 11, scrollWheel = 22,
+            leftMouseDown = 1, leftMouseUp = 2, leftMouseDragged = 3,
+            rightMouseDown = 4, rightMouseUp = 5, rightMouseDragged = 6},
+            properties = {eventSourceUserData = 42, keyboardEventAutorepeat = 43,
+                mouseEventButtonNumber = 44}},
         new = function(types, fn)
             if types[1] == 10 then callback = fn end
+            if types[1] == 1 then mouseCallback = fn end
             return {start = function(self) return self end}
         end,
     },
@@ -40,6 +53,8 @@ local function event(key, flags, kind)
     function e:getKeyCode() return self.code end
     function e:getFlags() return copy(self.flags) end
     function e:getType() return self.kind end
+    function e:setType(kind) self.kind = kind; return self end
+    function e:location() return {x = 20, y = 30} end
     function e:getProperty(property) return self.properties[property] or 0 end
     function e:setKeyCode(code) self.code = code; return self end
     function e:setFlags(mods) self.flags = copy(mods); return self end
@@ -107,7 +122,14 @@ end
 unchanged("h", {ctrl = true})
 unchanged("tab", {ctrl = true})
 unchanged("a", {ctrl = true, shift = true})
-for _, id in ipairs({"com.mitchellh.ghostty", "com.apple.Terminal", "com.googlecode.iterm2",
+frontApp = app("com.mitchellh.ghostty")
+chord("left", {ctrl = true}, "left", {alt = true}, true)
+chord("right", {ctrl = true}, "right", {alt = true}, true)
+for _, key in ipairs({"a", "c", "v", "x", "z", "y", "s", "delete"}) do
+    unchanged(key, {ctrl = true})
+end
+unchanged("left", {ctrl = true, shift = true})
+for _, id in ipairs({"com.apple.Terminal", "com.googlecode.iterm2",
     "net.kovidgoyal.kitty", "org.alacritty", "com.github.wez.wezterm", "dev.warp.Warp-Stable", "co.zeit.hyper", "com.microsoft.VSCode"}) do
     frontApp = app(id)
     for _, key in ipairs({"a", "c", "v", "x", "z", "y", "s", "left", "delete"}) do
@@ -137,4 +159,52 @@ assert(callback(event("t", {}, 11)))
 assert(#posted == 3)
 for _, entry in ipairs(posted) do assert(entry.app == gui) end
 unchanged("t", {ctrl = true}) -- key-up cleared the previous route
-print("Hammerspoon shortcut routing passed: mappings, modifiers, terminal exclusions, repeats, key-up, and app targeting")
+
+local mouseTypes = hs.eventtap.event.types
+local buttonNumber = hs.eventtap.event.properties.mouseEventButtonNumber
+local function mouse(kind, flags, button)
+    return event("a", flags, kind):setProperty(buttonNumber, button)
+end
+local function mouseFlags(actual, expected)
+    for _, mod in ipairs({"ctrl", "cmd", "alt", "shift", "fn"}) do
+        assert(not not actual[mod] == not not expected[mod], "mouse modifier " .. mod)
+    end
+end
+local function commandClick(appId, downKind, upKind, button)
+    pointerApp = app(appId)
+    frontApp = gui -- App targeting follows the pointer, even before activation.
+    local down = mouse(downKind, {ctrl = true, shift = true}, button)
+    assert(mouseCallback(down) == false)
+    assert(down:getType() == mouseTypes.leftMouseDown)
+    assert(down:getProperty(buttonNumber) == 0)
+    mouseFlags(down:getFlags(), {cmd = true, shift = true})
+    pointerApp = gui -- The rest of the gesture stays paired with its press.
+    local drag = mouse(mouseTypes.leftMouseDragged, {}, 0)
+    assert(mouseCallback(drag) == false)
+    assert(drag:getType() == mouseTypes.leftMouseDragged)
+    mouseFlags(drag:getFlags(), {cmd = true})
+    local up = mouse(upKind, {}, button)
+    assert(mouseCallback(up) == false)
+    assert(up:getType() == mouseTypes.leftMouseUp)
+    mouseFlags(up:getFlags(), {cmd = true})
+    local extraUp = mouse(mouseTypes.leftMouseUp, {}, 0)
+    assert(mouseCallback(extraUp) == false)
+    mouseFlags(extraUp:getFlags(), {})
+end
+commandClick("com.google.Chrome", mouseTypes.leftMouseDown, mouseTypes.leftMouseUp, 0)
+commandClick("com.microsoft.VSCode", mouseTypes.rightMouseDown, mouseTypes.rightMouseUp, 0)
+pointerApp = gui
+for _, flags in ipairs({{}, {ctrl = true, cmd = true}}) do
+    local down = mouse(mouseTypes.leftMouseDown, flags, 0)
+    assert(mouseCallback(down) == false)
+    mouseFlags(down:getFlags(), flags)
+end
+local unrelated = mouse(mouseTypes.leftMouseDown, {ctrl = true}, 0)
+assert(mouseCallback(unrelated) == false)
+mouseFlags(unrelated:getFlags(), {ctrl = true})
+pointerApp = app("com.google.Chrome")
+local right = mouse(mouseTypes.rightMouseDown, {ctrl = true}, 1)
+assert(mouseCallback(right) == false)
+assert(right:getType() == mouseTypes.rightMouseDown)
+mouseFlags(right:getFlags(), {ctrl = true})
+print("Hammerspoon shortcut and mouse routing passed")

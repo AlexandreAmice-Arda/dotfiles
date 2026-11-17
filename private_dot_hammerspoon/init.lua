@@ -84,7 +84,18 @@ appShortcuts = hs.eventtap.new({keyEvent.types.keyDown, keyEvent.types.keyUp}, f
     end
 
     local app = hs.application.frontmostApplication()
-    if not app or terminalApps[app:bundleID()] or nativeShortcutApps[app:bundleID()] then
+    if not app then
+        return false
+    end
+    if app:bundleID() == "com.mitchellh.ghostty" and not flags.shift and
+        (key == "left" or key == "right") then
+        -- Ghostty already sends Meta-B/F for Option+Arrow. Route Ctrl+Arrow
+        -- through that working binding even in windows with an older config.
+        local shortcut = {app = app, code = code, flags = {alt = true}, native = true}
+        heldShortcuts[code] = shortcut
+        return sendShortcut(event, shortcut)
+    end
+    if terminalApps[app:bundleID()] or nativeShortcutApps[app:bundleID()] then
         return false
     end
 
@@ -106,6 +117,63 @@ appShortcuts = hs.eventtap.new({keyEvent.types.keyDown, keyEvent.types.keyUp}, f
         native = navigation ~= nil}
     heldShortcuts[code] = shortcut
     return sendShortcut(event, shortcut)
+end):start()
+
+-- Keep the keyboard layout intact while making left-handed Ctrl+click act
+-- like Cmd+click in the two apps that use it for links and navigation.
+local commandClickApps = {
+    ["com.google.Chrome"] = true,
+    ["com.microsoft.VSCode"] = true,
+}
+local mouseTypes = keyEvent.types
+local mouseButtonNumber = keyEvent.properties.mouseEventButtonNumber
+local commandClickHeld = false
+local mouseUp = {
+    [mouseTypes.leftMouseUp] = true,
+    [mouseTypes.rightMouseUp] = true,
+}
+local mouseDrag = {
+    [mouseTypes.leftMouseDragged] = true,
+    [mouseTypes.rightMouseDragged] = true,
+}
+
+local function commandMouseEvent(event, kind)
+    local flags = event:getFlags()
+    flags.ctrl = nil
+    flags.cmd = true
+    event:setType(mouseTypes[kind]):setProperty(mouseButtonNumber, 0):setFlags(flags)
+end
+
+appCommandClicks = hs.eventtap.new({
+    mouseTypes.leftMouseDown, mouseTypes.leftMouseUp, mouseTypes.leftMouseDragged,
+    mouseTypes.rightMouseDown, mouseTypes.rightMouseUp, mouseTypes.rightMouseDragged,
+}, function(event)
+    local eventType = event:getType()
+    local leftButton = event:getProperty(mouseButtonNumber) == 0
+    if not leftButton then
+        return false -- A physical right-click keeps its context menu.
+    end
+
+    if eventType == mouseTypes.leftMouseDown or eventType == mouseTypes.rightMouseDown then
+        commandClickHeld = false
+        local flags = event:getFlags()
+        if not flags.ctrl or flags.cmd then
+            return false
+        end
+        local element = hs.axuielement.systemElementAtPosition(event:location())
+        local app = element and hs.application.applicationForPID(element:pid())
+        if not app or not commandClickApps[app:bundleID()] then
+            return false
+        end
+        commandClickHeld = true
+        commandMouseEvent(event, "leftMouseDown")
+    elseif mouseDrag[eventType] and commandClickHeld then
+        commandMouseEvent(event, "leftMouseDragged")
+    elseif mouseUp[eventType] and commandClickHeld then
+        commandClickHeld = false
+        commandMouseEvent(event, "leftMouseUp")
+    end
+    return false
 end):start()
 
 -- Translate Ctrl+vertical scrolling into Ghostty's font-size shortcuts.

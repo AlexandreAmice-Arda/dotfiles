@@ -27,6 +27,11 @@ On macOS, Hammerspoon translates common Ctrl shortcuts for GUI applications.
 It sends the translated events directly to the active app so AeroSpace does
 not intercept Save, Find, New Tab, Close Tab, or numbered tab selection.
 The physical Command shortcuts above still operate the desktop.
+In Chrome and VS Code, Hammerspoon also makes Ctrl+left-click act like
+Command+left-click. Chrome opens links in a new tab; VS Code applies its own
+Command-click action to links and code navigation. Ctrl+Shift+click likewise
+uses Command+Shift+click. Physical right-click still opens context menus.
+This mouse mapping is limited to those two apps and does not change the keyboard.
 
 | Ctrl shortcut | macOS app receives / usual action |
 | --- | --- |
@@ -46,9 +51,14 @@ The physical Command shortcuts above still operate the desktop.
 | Ctrl+Home/End, optionally Shift | Command+Up/Down, optionally Shift: document start/end or selection |
 
 Actions follow each app's macOS bindings; not every app implements every action.
-Ghostty, Terminal, iTerm2, Kitty, Alacritty, WezTerm, Warp, and Hyper are excluded
-so their Ctrl shortcuts retain terminal behavior. Combinations including
+Terminal, iTerm2, Kitty, Alacritty, WezTerm, Warp, and Hyper are excluded
+so their Ctrl shortcuts retain terminal behavior. Ghostty is also excluded
+except that Ctrl+Left/Right is routed to its Option+Arrow word bindings.
+Combinations including
 Option or Command, and unlisted Ctrl shortcuts, pass through unchanged.
+Ghostty binds Ctrl+Shift+V to paste from the system clipboard and
+Ctrl+Left/Right to move by word in terminal input; the latter also works in
+older Ghostty windows through Hammerspoon's Option+Arrow routing.
 Word navigation and deletion modify the original events so holding a key
 continues to repeat normally.
 
@@ -116,3 +126,19 @@ palette opened. `Super+E` selects tiles or toggles their orientation; `Super+S`
 and `Super+W` select vertical and horizontal accordion layouts. AeroSpace has
 no direct Sway scratchpad equivalent. Lock/power and screenshot shortcuts above
 remain Sway-specific; macOS uses its native controls for those actions.
+
+On macOS, chezmoi moves the native screenshot shortcuts to function keys so
+Command+Shift+number remains available for moving windows between workspaces:
+
+| Action | Shortcut |
+| --- | --- |
+| Capture entire screen to file | Command+Shift+F3 |
+| Capture selected region to file | Command+Shift+F4 |
+| Open screenshot/recording controls | Command+Shift+F5 |
+| Copy entire screen to clipboard | Command+Control+Shift+F3 |
+| Copy selected region to clipboard | Command+Control+Shift+F4 |
+
+These shortcuts require actual F3/F4/F5 key events; keyboards with media-key
+defaults may require holding Fn as well. Existing screenshot format and save
+location settings are preserved. If the settings refresh fails during apply,
+log out and back in to activate the new shortcuts.

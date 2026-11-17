@@ -41,5 +41,15 @@ verifies that the integration is reported as installed. The hook supplies the
 native Codex session identity used by Herdr to resume `codex` after a full
 Herdr server restart. Live agent state is detected from the terminal UI.
 
+For remote attach, Ctrl+Alt+Shift+V sends a clipboard image to the remote
+session. Ghostty's Ctrl+Shift+V pastes clipboard text; Herdr no longer
+intercepts Ctrl+V for image upload.
+
+For Mac clipboard access to a remote Herdr session, launch `herdr --remote HOST`
+from a plain local Ghostty window, using the same SSH host alias as `ssh HOST`.
+The client then runs on the Mac and can write copied text to its clipboard.
+Running `ssh HOST` followed by `herdr` leaves the Herdr client on the remote
+host and relies on the terminal accepting OSC 52 clipboard writes.
+
 Check the complete setup with `desktop-doctor`. After editing the managed
 config, apply it and run `herdr server reload-config` if a server is active.

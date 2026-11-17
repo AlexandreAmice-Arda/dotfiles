@@ -699,6 +699,7 @@ fi
 
 python3 -B -m unittest "$source_root/tests/test_display_layouts.py" \
     "$source_root/tests/test_macos_palette.py" \
+    "$source_root/tests/test_macos_screenshots.py" \
     "$source_root/tests/test_appearance.py" \
     "$source_root/tests/test_install.py" \
     "$source_root/tests/test_sway_session.py"

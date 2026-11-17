@@ -5,8 +5,11 @@ set -eu
 [ "$(uname -s)" = Darwin ] || exit 0
 [ "${CHEZMOI_DEST_DIR:-$HOME}" = "$HOME" ] || exit 0
 
-# Free Ctrl+Left/Right for terminal word navigation instead of switching Spaces.
-defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 79 '{ enabled = 0; }'
-defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 81 '{ enabled = 0; }'
+# macOS registers two shortcut IDs for each Space direction. Disable both so
+# Ctrl+Left/Right reaches the focused application for word navigation.
+for shortcut_id in 79 80 81 82; do
+    defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys \
+        -dict-add "$shortcut_id" '{ enabled = 0; }'
+done
 killall Dock || true
 {{- end }}

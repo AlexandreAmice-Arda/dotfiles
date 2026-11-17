@@ -17,6 +17,10 @@ macos-option-as-alt = true
 
 # Keep Ctrl-Backspace consistent with Foot and readline shells.
 keybind = ctrl+backspace=text:\x17
+keybind = ctrl+shift+v=paste_from_clipboard
+# Match Ghostty's Option+Arrow word navigation in terminal applications.
+keybind = ctrl+left=esc:b
+keybind = ctrl+right=esc:f
 
 background = {{ .desktop.theme.background }}
 foreground = {{ .desktop.theme.foreground }}

@@ -1,0 +1,38 @@
+#!/bin/sh
+{{ if eq .chezmoi.os "darwin" -}}
+set -eu
+
+# Rendering another platform or a temporary home must not change host settings.
+[ "$(uname -s)" = Darwin ] || exit 0
+[ "${CHEZMOI_DEST_DIR:-$HOME}" = "$HOME" ] || exit 0
+
+set_screenshot_shortcut() {
+    defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys \
+        -dict-add "$1" "<dict>
+            <key>enabled</key><true/>
+            <key>value</key><dict>
+                <key>parameters</key><array>
+                    <integer>65535</integer>
+                    <integer>$2</integer>
+                    <integer>$3</integer>
+                </array>
+                <key>type</key><string>standard</string>
+            </dict>
+        </dict>"
+}
+
+# Function key codes: F3=99, F4=118, F5=96; 65535 means no character.
+# Modifier masks: Command+Shift=1179648, Command+Control+Shift=1441792.
+# Replace the native number-key shortcuts so AeroSpace owns Command+Shift+number.
+set_screenshot_shortcut 28 99 1179648  # Entire screen to file: Command+Shift+F3.
+set_screenshot_shortcut 29 99 1441792  # Entire screen to clipboard: add Control.
+set_screenshot_shortcut 30 118 1179648 # Selected region to file: Command+Shift+F4.
+set_screenshot_shortcut 31 118 1441792 # Selected region to clipboard: add Control.
+set_screenshot_shortcut 184 96 1179648 # Screenshot controls: Command+Shift+F5.
+
+# This macOS helper lives outside the standard PATH. Reload the current session.
+if ! PATH="$PATH:/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources" \
+    activateSettings -u; then
+    printf '%s\n' 'Screenshot shortcuts saved; log out and back in to activate them.' >&2
+fi
+{{- end }}
