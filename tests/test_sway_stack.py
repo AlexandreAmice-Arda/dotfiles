@@ -14,7 +14,7 @@ SOURCE_ROOT = Path(__file__).resolve().parents[1]
 class SwayStackTests(unittest.TestCase):
     def test_corrupted_download_does_not_activate_or_mark_stack_ready(self):
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
+            root = Path(directory).resolve()
             (root / 'scripts').mkdir()
             (root / 'packages').mkdir()
             shutil.copy2(SOURCE_ROOT / 'scripts/install-sway-stack', root / 'scripts')

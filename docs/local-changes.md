@@ -46,7 +46,8 @@ controls, and the Ctrl+B prefix remains available.
 Workspaces 1–10 are persistent, rather than a hard maximum. AeroSpace can
 create an extra empty workspace when an attached monitor has no assigned
 workspace. Moving an existing workspace to that monitor lets the unused empty
-workspace disappear. No machine-specific monitor assignment is committed.
+workspace disappear. The macOS setup assigns workspaces 1–5 to the left
+monitor and 6–10 to the right monitor using AeroSpace monitor numbers.
 
 ## macOS setup changes already present in this checkout
 
@@ -146,3 +147,17 @@ compositor timing. NVIDIA headless startup confirmed the explicit-sync and
 session-lock protocols, and GTKLock received the lock acknowledgement with
 the existing theme and powerbar. Physical-screen flickering still needs to be
 checked after logging into the new compositor.
+
+## November 2026 upstream sync
+
+Merged upstream's portable desktop migration while retaining the fork's
+Ghostty and Sway stack, Cloudflare WARP, retired Signal/pCloud integrations,
+Sway service ownership, and local macOS keyboard, mouse, and monitor settings.
+
+Display layout changes now replace generated workspace output rules on reload,
+so moving a workspace does not retain its old monitor priority. The daemon
+reports missing dependencies without notification spam or repeated restarts.
+The saved Linux monitor profiles include upstream's additional display layout
+and use a private source filename. SwayNC actions expand the home directory
+through a shell, including homes containing spaces. Older macOS releases get
+a Spotlight fallback for the application launcher.

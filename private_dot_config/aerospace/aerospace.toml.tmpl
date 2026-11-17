@@ -51,8 +51,8 @@ cmd-shift-t = 'exec-and-forget open -na Ghostty --args -e {{ .chezmoi.homeDir }}
 #@ Apps: Open the Herdr agent workspace
 cmd-ctrl-t = 'exec-and-forget open -na Ghostty --args -e {{ .chezmoi.homeDir }}/.local/bin/terminal-agents'
 #@ Apps: Open application launcher
-# Apps opens Spotlight's visible launcher; opening Spotlight.app alone may show no panel.
-cmd-d = 'exec-and-forget open -a /System/Applications/Apps.app'
+# Apps opens the launcher on newer macOS; older releases use Spotlight.
+cmd-d = 'exec-and-forget open -a /System/Applications/Apps.app || open -a /System/Library/CoreServices/Spotlight.app'
 #@ Apps: Search desktop commands and shortcuts
 cmd-slash = 'exec-and-forget {{ .chezmoi.homeDir }}/.local/bin/desktop-commands'
 #@ System: Open system settings

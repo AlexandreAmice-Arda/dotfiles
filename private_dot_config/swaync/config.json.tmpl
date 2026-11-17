@@ -29,7 +29,7 @@
   "script-fail-notify": true,
   "scripts": {
     "focus-application-on-action": {
-      "exec": {{ printf "%s/.local/bin/focus-notification-app" .chezmoi.homeDir | toJson }},
+      "exec": "sh -c \"$HOME/.local/bin/focus-notification-app\"",
       "run-on": "action"
     }
   },

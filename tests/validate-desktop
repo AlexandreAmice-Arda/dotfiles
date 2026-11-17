@@ -594,7 +594,7 @@ assert all(key.startswith('cmd-') for key in bindings), 'mixed desktop modifiers
 assert not {'cmd-c', 'cmd-v', 'cmd-x', 'cmd-shift-v'} & bindings.keys(), 'desktop bindings intercept native clipboard shortcuts'
 assert bindings['cmd-ctrl-c'] == 'exec-and-forget open -a "System Settings"'
 assert 'desktop-commands' in bindings['cmd-slash']
-assert bindings['cmd-d'] == 'exec-and-forget open -a /System/Applications/Apps.app'
+assert bindings['cmd-d'] == 'exec-and-forget open -a /System/Applications/Apps.app || open -a /System/Library/CoreServices/Spotlight.app'
 assert bindings['cmd-e'] == 'layout tiles horizontal vertical'
 assert bindings['cmd-alt-q'] == 'close'
 for key, direction in [('h', 'left'), ('j', 'down'), ('k', 'up'), ('l', 'right')]:
@@ -747,6 +747,7 @@ else
 fi
 
 python3 -B -m unittest "$source_root/tests/test_display_layouts.py" \
+    "$source_root/tests/test_notification_focus.py" \
     "$source_root/tests/test_macos_palette.py" \
     "$source_root/tests/test_macos_screenshots.py" \
     "$source_root/tests/test_appearance.py" \
