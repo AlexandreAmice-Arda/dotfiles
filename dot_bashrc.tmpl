@@ -151,9 +151,9 @@ export OMP_CANCELLATION=true
 export OMP_PROC_BIND=true
 {{- end }}
 
-mkcd() {
-    mkdir -p "$1" && cd "$1"
-}
+if [ -r "$HOME/.config/shell/common.sh" ]; then
+    . "$HOME/.config/shell/common.sh"
+fi
 
 # Machine- or employer-specific additions belong here, outside chezmoi.
 if [ -r "$HOME/.bashrc.local" ]; then

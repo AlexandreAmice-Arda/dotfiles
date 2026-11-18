@@ -9,9 +9,9 @@ alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
 
-mkcd() {
-    mkdir -p "$1" && cd "$1"
-}
+if [ -r "$HOME/.config/shell/common.sh" ]; then
+    . "$HOME/.config/shell/common.sh"
+fi
 
 autoload -Uz compinit && compinit
 
